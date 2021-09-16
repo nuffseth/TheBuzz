@@ -1,4 +1,4 @@
-package edu.lehigh.cse216.rok224.admin;
+package edu.lehigh.cse216.rok224.backend;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -102,7 +102,7 @@ public class Database {
      * 
      * @return A Database object, or null if we cannot connect properly
      */
-    public static Database getDatabase(String ip, String port, String user, String pass) {
+    static Database getDatabase(String ip, String port, String user, String pass) {
         // Create an un-configured Database object
         Database db = new Database();
 
