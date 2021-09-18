@@ -26,7 +26,6 @@ class NewEntryForm {
      * Clear the form's input fields
      */
     clearForm(){
-        $("#newTitle").val("");
         $("#newMessage").val("");
         // reset the UI
         $("#addElement").hide();
@@ -40,10 +39,9 @@ class NewEntryForm {
     submitForm(){
         // get the values of the two fields, force them to be strings, and check 
         // that neither is empty
-        let title = "" + $("#newTitle").val();
         let msg = "" + $("#newMessage").val();
         let like: number = 0;
-        if (title === "" || msg === "") {
+        if (msg === "") {
             window.alert("Error: title or message is not valid");
             return;
         }
@@ -53,7 +51,7 @@ class NewEntryForm {
             type: "POST",
             url: "/messages",
             dataType: "json",
-            data: JSON.stringify({ mTitle: title, mMessage: msg, mLike: like}),
+            data: JSON.stringify({mMessage: msg, mLike: like}),
             success: newEntryForm.onSubmitResponse
         });
     }
@@ -105,7 +103,6 @@ class EditEntryForm {
      */
     init(data: any) {
         if (data.mStatus === "ok") {
-            $("#editTitle").val(data.mData.mTitle);
             $("#editMessage").val(data.mData.mContent);
             $("#editId").val(data.mData.mId);
             $("#editCreated").text(data.mData.mCreated);
@@ -126,7 +123,6 @@ class EditEntryForm {
      * Clear the form's input fields
      */
     clearForm() {
-        $("#editTitle").val("");
         $("#editMessage").val("");
         $("#editId").val("");
         $("#editCreated").text("");
@@ -142,11 +138,11 @@ class EditEntryForm {
     submitForm() {
         // get the values of the two fields, force them to be strings, and check 
         // that neither is empty
-        let title = "" + $("#editTitle").val();
         let msg = "" + $("#editMessage").val();
         // NB: we assume that the user didn't modify the value of #editId
         let id = "" + $("#editId").val();
-        if (title === "" || msg === "") {
+        let like: number = 0;
+        if (msg === "") {
             window.alert("Error: title or message is not valid");
             return;
         }
@@ -156,7 +152,7 @@ class EditEntryForm {
             type: "PUT",
             url: "/messages/" + id,
             dataType: "json",
-            data: JSON.stringify({ mTitle: title, mMessage: msg, mLike: like}),
+            data: JSON.stringify({mMessage: msg, mLike: like}),
             success: editEntryForm.onSubmitResponse
         });
     }
@@ -212,7 +208,7 @@ class ElementList {
     private update(data: any) {
         $("#messageList").html("<table>");
         for (let i = 0; i < data.mData.length; ++i) {
-            $("#messageList").append("<tr><td>" + data.mData[i].mTitle +
+            $("#messageList").append("<tr><td>" + data.mData[i].mMessage +
                 "</td>" + mainList.buttons(data.mData[i].mId) + "<td>" + data.mData[i].mLike + "</td></tr>");
         }
         $("#messageList").append("</table>");
@@ -262,11 +258,12 @@ class ElementList {
      */
     private clickLike(){
         let id = $(this).data("value");
-        like++;
+        let like = $(this).data.mData[id].mLike;
+        let msg = $(this).data.mData[id].mMessage;
         $.ajax({
             type: "PUT",
             url: "/messages/" + id,
-            dataType: JSON.stringify({ mTitle: title, mMessage: msg, mLike : like}),
+            dataType: JSON.stringify({mMessage: msg, mLike : ++like}),
             success: mainList.update
         });
     }
