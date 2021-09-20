@@ -142,7 +142,7 @@ public class App {
                     continue;
                 Database.RowData res = db.selectOne(id);
                 if (res != null) {
-                    System.out.println("  [" + res.mId + "] " + res.mSubject);
+                    System.out.println("  [" + res.mId + "] ");
                     System.out.println("  --> " + res.mMessage);
                 }
             } else if (action == '*') {
@@ -152,7 +152,7 @@ public class App {
                 System.out.println("  Current Database Contents");
                 System.out.println("  -------------------------");
                 for (Database.RowData rd : res) {
-                    System.out.println("  [" + rd.mId + "] " + rd.mSubject);
+                    System.out.println("  [" + rd.mId + "] ");
                 }
             } else if (action == '-') {
                 int id = getInt(in, "Enter the row ID");
@@ -163,11 +163,8 @@ public class App {
                     continue;
                 System.out.println("  " + res + " rows deleted");
             } else if (action == '+') {
-                String subject = getString(in, "Enter the subject");
                 String message = getString(in, "Enter the message");
-                if (subject.equals("") || message.equals(""))
-                    continue;
-                int res = db.insertRow(subject, message, 0);
+                int res = db.insertRow(message, 0);
                 System.out.println(res + " rows added");
             } else if (action == '~') {
                 int id = getInt(in, "Enter the row ID :> ");

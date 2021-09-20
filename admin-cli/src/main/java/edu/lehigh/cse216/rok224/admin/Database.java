@@ -65,10 +65,7 @@ public class Database {
          * The ID of this row of the database
          */
         int mId;
-        /**
-         * The subject stored in this row
-         */
-        String mSubject;
+
         /**
          * The message stored in this row
          */
@@ -82,9 +79,8 @@ public class Database {
         /**
          * Construct a RowData object by providing values for its fields
          */
-        public RowData(int id, String subject, String message, int likes) {
+        public RowData(int id, String message, int likes) {
             mId = id;
-            mSubject = subject;
             mMessage = message;
             mLikes = likes;    
         }
@@ -137,14 +133,14 @@ public class Database {
             // Note: no "IF NOT EXISTS" or "IF EXISTS" checks on table 
             // creation/deletion, so multiple executions will cause an exception
             db.mCreateTable = db.mConnection.prepareStatement(
-                    "CREATE TABLE tblData (id SERIAL PRIMARY KEY, subject VARCHAR(50) "
-                    + "NOT NULL, message VARCHAR(500) NOT NULL)");
+                    "CREATE TABLE tblData (id SERIAL PRIMARY KEY, "
+                    + "message VARCHAR(500) NOT NULL, likes INT)");
             db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData");
 
             // Standard CRUD operations
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?");
             db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)");
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT id, subject FROM tblData");
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT id FROM tblData");
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id=?");
             db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?");
         } catch (SQLException e) {
@@ -184,16 +180,14 @@ public class Database {
     /**
      * Insert a row into the database
      * 
-     * @param subject The subject for this new row
      * @param message The message body for this new row
      * @param likes The amount of likes a message has
      * 
      * @return The number of rows that were inserted
      */
-    int insertRow(String subject, String message, int likes) {
+    int insertRow(String message, int likes) {
         int count = 0;
         try {
-            mInsertOne.setString(1, subject);
             mInsertOne.setString(2, message);
             mInsertOne.setInt(3, likes);
             count += mInsertOne.executeUpdate();
@@ -204,7 +198,7 @@ public class Database {
     }
 
     /**
-     * Query the database for a list of all subjects and their IDs
+     * Query the database for a list of all their IDs
      * 
      * @return All rows, as an ArrayList
      */
@@ -213,7 +207,7 @@ public class Database {
         try {
             ResultSet rs = mSelectAll.executeQuery();
             while (rs.next()) {
-                res.add(new RowData(rs.getInt("id"), rs.getString("subject"), null, rs.getInt(rs.getInt("likes"))));
+                res.add(new RowData(rs.getInt("id"), null, rs.getInt(rs.getInt("likes"))));
             }
             rs.close();
             return res;
@@ -236,7 +230,7 @@ public class Database {
             mSelectOne.setInt(1, id);
             ResultSet rs = mSelectOne.executeQuery();
             if (rs.next()) {
-                res = new RowData(rs.getInt("id"), rs.getString("subject"), rs.getString("message"), rs.getInt("likes"));
+                res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
