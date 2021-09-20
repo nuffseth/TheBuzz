@@ -167,7 +167,7 @@ public class App {
                 String message = getString(in, "Enter the message");
                 if (subject.equals("") || message.equals(""))
                     continue;
-                int res = db.insertRow(subject, message);
+                int res = db.insertRow(subject, message, 0);
                 System.out.println(res + " rows added");
             } else if (action == '~') {
                 int id = getInt(in, "Enter the row ID :> ");
