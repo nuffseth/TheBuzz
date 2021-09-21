@@ -12,6 +12,23 @@ import com.google.gson.*;
  * For now, our app creates an HTTP server that can only get and add data.
  */
 public class App {
+
+    /**
+     * Get an integer environment varible if it exists, and otherwise return the
+     * default value.
+     * 
+     * @envar      The name of the environment variable to get.
+     * @defaultVal The integer value to use as the default if envar isn't found
+     * 
+     * @returns The best answer we could come up with for a value for envar
+     */
+    static int getIntFromEnv(String envar, int defaultVal) {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        if (processBuilder.environment().get(envar) != null) {
+            return Integer.parseInt(processBuilder.environment().get(envar));
+        }
+        return defaultVal;
+    }
     public static void main(String[] args) {
 
         // gson provides us with a way to turn JSON into objects, and objects
@@ -48,6 +65,10 @@ public class App {
         } else {
             Spark.staticFiles.externalLocation(static_location_override);
         }
+
+        
+        // Get the port on which to listen for requests
+        Spark.port(getIntFromEnv("PORT", 4567));
 
         // Set up a route for serving the main page
         Spark.get("/", (req, res) -> {
