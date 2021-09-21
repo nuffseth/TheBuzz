@@ -25,11 +25,17 @@ public class DataRowLite {
     public String mContent;
 
     /**
+     * The like for this row of data
+     */
+    public int mLike;
+
+    /**
      * Create a DataRowLite by copying fields from a DataRow
      */
     public DataRowLite(DataRow data) {
         this.mId = data.mId;
         this.mTitle = data.mTitle;
         this.mContent = data.mContent;
+        this.mLike = data.mLike;
     }
 }
