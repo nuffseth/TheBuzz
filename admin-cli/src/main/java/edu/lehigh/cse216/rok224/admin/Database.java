@@ -90,9 +90,12 @@ public class Database {
         int mLikes;
 
         /**
-         * Construct a RowData object by providing values for its fields
+         * Constructor for RowData
+         * @param id: Id of post
+         * @param message: The message itself
+         * @param likes: The amount of likes it has
          */
-        public RowData(int id, String message, int likes) {
+        public RowData(int id, String message, int likes){
             mId = id;
             mMessage = message;
             mLikes = likes;    
@@ -169,7 +172,7 @@ public class Database {
             db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?");
             db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?");
 
-        } catch (SQLException e) {
+        } catch (SQLException e){
             System.err.println("Error creating prepared statement");
             e.printStackTrace();
             db.disconnect();
@@ -186,14 +189,14 @@ public class Database {
      * 
      * @return True if the connection was cleanly closed, false otherwise
      */
-    boolean disconnect() {
-        if (mConnection == null) {
+    boolean disconnect(){
+        if (mConnection == null){
             System.err.println("Unable to close connection: Connection was null");
             return false;
         }
         try {
             mConnection.close();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             System.err.println("Error: Connection.close() threw a SQLException");
             e.printStackTrace();
             mConnection = null;
@@ -211,13 +214,13 @@ public class Database {
      * 
      * @return The number of rows that were inserted
      */
-    int insertRow(String message, int likes) {
+    int insertRow(String message, int likes){
         int count = 0;
         try {
             mInsertOne.setString(2, message);
             mInsertOne.setInt(3, likes);
             count += mInsertOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return count;
@@ -228,16 +231,16 @@ public class Database {
      * 
      * @return All rows, as an ArrayList
      */
-    ArrayList<RowData> selectAll() {
+    ArrayList<RowData> selectAll(){
         ArrayList<RowData> res = new ArrayList<RowData>();
         try {
             ResultSet rs = mSelectAll.executeQuery();
-            while (rs.next()) {
+            while (rs.next()){
                 res.add(new RowData(rs.getInt("id"), null, rs.getInt(rs.getInt("likes"))));
             }
             rs.close();
             return res;
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
             return null;
         }
@@ -250,7 +253,7 @@ public class Database {
      * 
      * @return The data for the requested row, or null if the ID was invalid
      */
-    RowData selectOne(int id) {
+    RowData selectOne(int id){
         RowData res = null;
         try {
             mSelectOne.setInt(1, id);
@@ -258,7 +261,7 @@ public class Database {
             if (rs.next()) {
                 res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
             }
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -276,7 +279,7 @@ public class Database {
         try {
             mDeleteOne.setInt(1, id);
             res = mDeleteOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -296,7 +299,7 @@ public class Database {
             mUpdateOne.setString(1, message);
             mUpdateOne.setInt(2, id);
             res = mUpdateOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -305,10 +308,10 @@ public class Database {
     /**
      * Create tblData.  If it already exists, this will print an error
      */
-    void createTable() {
+    void createTable(){
         try {
             mCreateTable.execute();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
     }
@@ -320,7 +323,7 @@ public class Database {
     void dropTable(){
         try {
             mDropTable.execute();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
     }
