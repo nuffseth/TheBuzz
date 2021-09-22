@@ -124,7 +124,6 @@ public class Database {
         // Give the Database object a connection, fail if we cannot get one
         try {
             Class.forName("org.postgresql.Driver");
-            Class.forName("org.postgresql.Driver");
             URI dbUri = new URI(url);
             String username = dbUri.getUserInfo().split(":")[0];
             String password = dbUri.getUserInfo().split(":")[1];
