@@ -51,6 +51,17 @@ public class Database {
     private PreparedStatement mDropTable;
 
     /**
+     * A prepared statement to increment likes
+     */
+    private PreparedStatement mIncrementLikes;
+
+    /**
+     * A prepared statement to decrement likes
+     */
+    private PreparedStatement mDecrementLikes;
+
+
+    /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
      * represents the data we'd see in a row.
@@ -143,6 +154,9 @@ public class Database {
             db.mSelectAll = db.mConnection.prepareStatement("SELECT id FROM tblData");
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id=?");
             db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?");
+            db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?");
+            db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?");
+
         } catch (SQLException e) {
             System.err.println("Error creating prepared statement");
             e.printStackTrace();
@@ -295,6 +309,32 @@ public class Database {
         try {
             mDropTable.execute();
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Increments the like value of a row
+     * @param id: the id of the message
+     */
+    void incrementLikes(int id){
+        try {
+            mIncrementLikes.setInt(1, id);
+            mIncrementLikes.execute();
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Decrements the like value of a row
+     * @param id: the id of the message
+     */
+    void decrementLikes(int id){
+        try {
+            mDecrementLikes.setInt(1, id);
+            mDecrementLikes.execute();
+        } catch(SQLException e){
             e.printStackTrace();
         }
     }
