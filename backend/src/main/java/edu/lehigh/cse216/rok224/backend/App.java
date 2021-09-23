@@ -163,5 +163,29 @@ public class App {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
         });
+
+        // POST route for incrementing likes
+        Spark.post("/messages/:id/likes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call incrementLikes function from Database.java
+            dataBase.incrementLikes(idx);
+            return gson.toJson(new StructuredResponse("ok", null, null));
+        });
+
+        // POST route for decrementing likes
+        Spark.post("/messages/:id/dislikes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call decrementLikes function from Database.java
+            dataBase.decrementLikes(idx);
+            return gson.toJson(new StructuredResponse("ok", null, null));
+        });
     }
 }
