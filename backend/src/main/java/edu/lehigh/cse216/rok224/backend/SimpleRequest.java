@@ -9,11 +9,6 @@ package edu.lehigh.cse216.rok224.backend;
  */
 public class SimpleRequest {
     /**
-     * The title being provided by the client.
-     */
-    public String mTitle;
-
-    /**
      * The message being provided by the client.
      */
     public String mMessage;

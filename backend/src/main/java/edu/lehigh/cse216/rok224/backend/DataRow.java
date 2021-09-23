@@ -68,5 +68,6 @@ public class DataRow {
         mTitle = data.mTitle;
         mContent = data.mContent;
         mCreated = data.mCreated;
+        mLike = data.mLike;
     }
 }
