@@ -27,6 +27,8 @@ public class App {
         System.out.println("  [~] Update a row");
         System.out.println("  [q] Quit Program");
         System.out.println("  [?] Help (this message)");
+        System.out.println("  [i] Increment likes for a specific row");
+        System.out.println("  [d] Decrement likes for a specific row");
     }
 
     /**
@@ -38,7 +40,7 @@ public class App {
      */
     static char prompt(BufferedReader in) {
         // The valid actions:
-        String actions = "TD1*-+~q?";
+        String actions = "TD1*-+~q?id";
 
         // We repeat until a valid single-character option is selected        
         while (true) {
@@ -67,7 +69,7 @@ public class App {
      * 
      * @return The string that the user provided.  May be "".
      */
-    static String getString(BufferedReader in, String message) {
+    static String getString(BufferedReader in, String message){
         String s;
         try {
             System.out.print(message + " :> ");
@@ -87,14 +89,14 @@ public class App {
      * 
      * @return The integer that the user provided.  On error, it will be -1
      */
-    static int getInt(BufferedReader in, String message) {
+    static int getInt(BufferedReader in, String message){
         int i = -1;
         try {
             System.out.print(message + " :> ");
             i = Integer.parseInt(in.readLine());
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException e){
             e.printStackTrace();
         }
         return i;
@@ -106,13 +108,9 @@ public class App {
      * 
      * @param argv Command-line options.  Ignored by this program.
      */
-    public static void main(String[] argv) {
+    public static void main(String[] argv){
         // get the Postgres configuration from the environment
         Map<String, String> env = System.getenv();
-        // String ip = env.get("POSTGRES_IP");
-        // String port = env.get("POSTGRES_PORT");
-        // String user = env.get("POSTGRES_USER");
-        // String pass = env.get("POSTGRES_PASS");
 
         String db_url = env.get("DATABASE_URL");
         // Get a fully-configured connection to the database, or exit 
@@ -129,56 +127,74 @@ public class App {
             // NB: for better testability, each action should be a separate
             //     function call
             char action = prompt(in);
-            if (action == '?') {
+            if(action == '?'){
                 menu();
-            } else if (action == 'q') {
+            } else if (action == 'q'){
                 break;
-            } else if (action == 'T') {
+            } else if (action == 'T'){
                 db.createTable();
-            } else if (action == 'D') {
+            } else if (action == 'D'){
                 db.dropTable();
-            } else if (action == '1') {
+            } else if (action == '1'){
                 int id = getInt(in, "Enter the row ID");
-                if (id == -1)
+                if(id == -1){
                     continue;
+                }
                 Database.RowData res = db.selectOne(id);
-                if (res != null) {
+                if(res != null) {
                     System.out.println("  [" + res.mId + "] ");
                     System.out.println("  --> " + res.mMessage);
                     System.out.println("  --> " + res.mLikes);
                 }
-            } else if (action == '*') {
+            } else if(action == '*') {
                 ArrayList<Database.RowData> res = db.selectAll();
-                if (res == null)
+                if (res == null){
                     continue;
+                }
                 System.out.println("  Current Database Contents");
                 System.out.println("  -------------------------");
-                for (Database.RowData rd : res) {
+                for (Database.RowData rd : res){
                     System.out.println("  [" + rd.mId + "] ");
                     System.out.println("  --> " + rd.mMessage + "] ");
                     System.out.println("  --> " + rd.mLikes + "] ");
                 }
-            } else if (action == '-') {
+            } else if(action == '-') {
                 int id = getInt(in, "Enter the row ID");
-                if (id == -1)
+                if (id == -1){
                     continue;
+                }
                 int res = db.deleteRow(id);
-                if (res == -1)
+                if(res == -1){
                     continue;
+                }
                 System.out.println("  " + res + " rows deleted");
-            } else if (action == '+') {
+            } else if(action == '+'){
                 String message = getString(in, "Enter the message");
                 int res = db.insertRow(message, 0);
                 System.out.println(res + " rows added");
-            } else if (action == '~') {
+            } else if(action == '~'){
                 int id = getInt(in, "Enter the row ID :> ");
-                if (id == -1)
+                if (id == -1){
                     continue;
+                }
                 String newMessage = getString(in, "Enter the new message");
                 int res = db.updateOne(id, newMessage);
-                if (res == -1)
+                if (res == -1){
                     continue;
+                }
                 System.out.println("  " + res + " rows updated");
+            } else if(action == 'i'){ //If incrementing likes
+                int id = getInt(in, "Enter the row ID :> ");
+                if(id == -1){
+                    continue;
+                }
+                db.incrementLikes(id);
+            } else if(action == 'd'){ //Decrementing likes
+                int id = getInt(in, "Enter the row ID :> ");
+                if(id == -1){
+                    continue;
+                }
+                db.decrementLikes(id);
             }
         }
         // Always remember to disconnect from the database when the program 

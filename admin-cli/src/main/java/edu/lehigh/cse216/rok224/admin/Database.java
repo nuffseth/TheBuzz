@@ -166,7 +166,6 @@ public class Database {
             // Standard CRUD operations
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?");
             db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)");
-            //db.mSelectAll = db.mConnection.prepareStatement("SELECT id FROM tblData");
             db.mSelectAll = db.mConnection.prepareStatement("SELECT * from tblData");
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id = ?");
             db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?");
