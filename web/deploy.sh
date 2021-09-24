@@ -5,10 +5,10 @@
 # web deploy directory.
 
 # This is the resource folder where maven expects to find our files
-TARGETFOLDER=../backend/src/main/resources
+export TARGETFOLDER=../backend/src/main/resources
 
 # This is the folder that we used with the Spark.staticFileLocation command
-WEBFOLDERNAME=web
+export WEBFOLDERNAME=web
 
 # step 1: make sure we have someplace to put everything.  We will delete the
 #         old folder tree, and then make it from scratch
@@ -19,17 +19,23 @@ mkdir $TARGETFOLDER/$WEBFOLDERNAME
 # there are many more steps to be done.  For now, we will just copy an HTML file
 cp index.html $TARGETFOLDER/$WEBFOLDERNAME
 
-# step 2: update our npm dependencies
+# step 2: update our npm dependencies and install
 npm update
+npm install
 
 # step 3: copy javascript files
 cp node_modules/jquery/dist/jquery.min.js $TARGETFOLDER/$WEBFOLDERNAME
+cp node_modules/handlebars/dist/handlebars.min.js $TARGETFOLDER/$WEBFOLDERNAME
 
-# step 4: compile TypeScript files
-node_modules/typescript/bin/tsc app.ts --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/app.js
+# step 4: compile TypeScriptX files
+node_modules/.bin/cross-env NODE_ENV=production node_modules/.bin/webpack --config config/webpack.prod.js
+#node_modules/.bin/tsc app.tsx --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/app.js
 
 # step 5: copy css files
-cp app.css $TARGETFOLDER/$WEBFOLDERNAME
+cat app.css css/ElementList.css > $TARGETFOLDER/$WEBFOLDERNAME/app.css
+
+# step 6: compile handlebars templates to the deploy folder
+node_modules/handlebars/bin/handlebars hb/ElementList.hb >> $TARGETFOLDER/$WEBFOLDERNAME/templates.js
 
 # set up Jasmine
 node_modules/typescript/bin/tsc apptest.ts --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/apptest.js
