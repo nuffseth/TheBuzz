@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Web Front-End",
     "dependencies": {
+        "bootstrap": "^3.3.7",
         "jasmine-core": "^3.9.0",
         "jquery": "^3.6.0",
         "react": "^17.0.2",
