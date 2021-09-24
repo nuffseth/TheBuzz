@@ -19,18 +19,23 @@ mkdir $TARGETFOLDER/$WEBFOLDERNAME
 # there are many more steps to be done.  For now, we will just copy an HTML file
 cp index.html $TARGETFOLDER/$WEBFOLDERNAME
 
-# step 2: update our npm dependencies
+# step 2: update our npm dependencies and install
 npm update
+npm install
 
 # step 3: copy javascript files
 cp node_modules/jquery/dist/jquery.min.js $TARGETFOLDER/$WEBFOLDERNAME
+cp node_modules/handlebars/dist/handlebars.min.js $TARGETFOLDER/$WEBFOLDERNAME
 
-# step 4: compile TypeScript files
+# step 4: compile TypeScriptX files
 node_modules/.bin/cross-env NODE_ENV=production node_modules/.bin/webpack --config config/webpack.prod.js
 #node_modules/.bin/tsc app.tsx --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/app.js
 
 # step 5: copy css files
-cp app.css $TARGETFOLDER/$WEBFOLDERNAME
+cat app.css css/ElementList.css > $TARGETFOLDER/$WEBFOLDERNAME/app.css
+
+# step 6: compile handlebars templates to the deploy folder
+node_modules/handlebars/bin/handlebars hb/ElementList.hb >> $TARGETFOLDER/$WEBFOLDERNAME/templates.js
 
 # set up Jasmine
 node_modules/typescript/bin/tsc apptest.ts --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/apptest.js
