@@ -172,8 +172,12 @@ public class App {
             response.status(200);
             response.type("application/json");
             //call incrementLikes function from Database.java
-            dataBase.incrementLikes(idx);
-            return gson.toJson(new StructuredResponse("ok", null, null));
+            int result = dataBase.incrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
         });
 
         // POST route for decrementing likes
@@ -184,8 +188,12 @@ public class App {
             response.status(200);
             response.type("application/json");
             //call decrementLikes function from Database.java
-            dataBase.decrementLikes(idx);
-            return gson.toJson(new StructuredResponse("ok", null, null));
+            int result = dataBase.decrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
         });
     }
 }
