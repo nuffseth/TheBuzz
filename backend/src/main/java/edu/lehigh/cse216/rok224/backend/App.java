@@ -49,12 +49,9 @@ public class App {
         //final DataStore dataStore = new DataStore();
 
         Map<String, String> env = System.getenv();
-        String ip = env.get("POSTGRES_IP");
-        String port = env.get("POSTGRES_PORT");
-        String user = env.get("POSTGRES_USER");
-        String pass = env.get("POSTGRES_PASS");
+        String url = env.get("DATABASE_URL");
 
-        final Database dataBase = Database.getDatabase(ip, port, user, pass);
+        final Database dataBase = Database.getDatabase(url);
 
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
@@ -122,7 +119,7 @@ public class App {
             response.type("application/json");
             // NB: createEntry checks for null title and message
             //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
-            int newId = dataBase.insertRow(req.mTitle, req.mMessage);
+            int newId = dataBase.insertRow(req.mMessage, 0);
             if (newId == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -162,6 +159,38 @@ public class App {
             int result = dataBase.deleteRow(idx);
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        // POST route for incrementing likes
+        Spark.post("/messages/:id/likes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call incrementLikes function from Database.java
+            int result = dataBase.incrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to post like " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        // POST route for decrementing likes
+        Spark.post("/messages/:id/dislikes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call decrementLikes function from Database.java
+            int result = dataBase.decrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to post dislike " + idx, null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }

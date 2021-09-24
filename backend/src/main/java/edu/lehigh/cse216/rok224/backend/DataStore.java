@@ -24,12 +24,18 @@ public class DataStore {
     private int mCounter;
 
     /**
-     * Construct the DataStore by resetting its counter and creating the
+     * A counter for keeping track of the likes to assign to a new row
+     */
+    private int mLike;
+
+    /**
+     * Construct the DataStore by resetting its counter and likes and creating the
      * ArrayList for the rows of data.
      */
     DataStore() {
         mCounter = 0;
         mRows = new ArrayList<>();
+        mLike = 0;
     }
 
     /**
@@ -50,7 +56,7 @@ public class DataStore {
         // NB: we can safely assume that id is greater than the largest index in 
         //     mRows, and thus we can use the index-based add() method
         int id = mCounter++;
-        DataRow data = new DataRow(id, title, content);
+        DataRow data = new DataRow(id, title, content, mLike);
         mRows.add(id, data);
         return id;
     }
