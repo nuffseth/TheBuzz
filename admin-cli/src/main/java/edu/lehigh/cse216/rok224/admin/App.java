@@ -194,7 +194,11 @@ public class App {
                 if(id == -1){
                     continue;
                 }
-                db.decrementLikes(id);
+                int res = db.decrementLikes(id);
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Row has been updated");
             }
         }
         // Always remember to disconnect from the database when the program 

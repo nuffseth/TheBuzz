@@ -132,7 +132,6 @@ public class Database {
             String password = dbUri.getUserInfo().split(":")[1];
             String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
             Connection conn = DriverManager.getConnection(dbUrl, username, password);
-            //Connection conn = DriverManager.getConnection(url);
             if (conn == null) {
                 System.err.println("Error: DriverManager.getConnection() returned a null object");
                 return null;
@@ -332,12 +331,14 @@ public class Database {
      * Increments the like value of a row
      * @param id: the id of the message
      */
-    void incrementLikes(int id){
+    int incrementLikes(int id){
         try {
             mIncrementLikes.setInt(1, id);
             mIncrementLikes.execute();
+            return 1;
         } catch(SQLException e){
             e.printStackTrace();
+            return -1;
         }
     }
 
@@ -345,12 +346,14 @@ public class Database {
      * Decrements the like value of a row
      * @param id: the id of the message
      */
-    void decrementLikes(int id){
+    int decrementLikes(int id){
         try {
             mDecrementLikes.setInt(1, id);
             mDecrementLikes.execute();
+            return 1;
         } catch(SQLException e){
             e.printStackTrace();
+            return -1;
         }
     }
 }
