@@ -34,8 +34,8 @@ public class StructuredResponse {
      * @param object An object with additional data to send to the client
      */
     public StructuredResponse(String status, String message, Object data) {
-        mStatus = (status != null) ? status : "invalid";
-        mMessage = message;
-        mData = data;
+        this.mStatus = (status != null) ? status : "invalid";
+        this.mMessage = message;
+        this.mData = data;
     }
 }
