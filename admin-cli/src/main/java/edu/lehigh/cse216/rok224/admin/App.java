@@ -142,9 +142,9 @@ public class App {
                 }
                 Database.RowData res = db.selectOne(id);
                 if(res != null) {
-                    System.out.println("  [" + res.mId + "] ");
-                    System.out.println("  --> " + res.mMessage);
-                    System.out.println("  --> " + res.mLikes);
+                    System.out.println(" ID [" + res.mId + "] ");
+                    System.out.println(" Message --> " + res.mMessage);
+                    System.out.println(" Likes --> " + res.mLikes);
                 }
             } else if(action == '*') {
                 ArrayList<Database.RowData> res = db.selectAll();
@@ -154,9 +154,9 @@ public class App {
                 System.out.println("  Current Database Contents");
                 System.out.println("  -------------------------");
                 for (Database.RowData rd : res){
-                    System.out.println("  [" + rd.mId + "] ");
-                    System.out.println("  --> " + rd.mMessage + "] ");
-                    System.out.println("  --> " + rd.mLikes + "] ");
+                    System.out.println(" ID --> [" + rd.mId + "] ");
+                    System.out.println(" Message --> [" + rd.mMessage + "] ");
+                    System.out.println(" Likes --> [" + rd.mLikes + "] ");
                 }
             } else if(action == '-') {
                 int id = getInt(in, "Enter the row ID");
