@@ -333,12 +333,14 @@ public class Database {
      * Increments the like value of a row
      * @param id: the id of the message
      */
-    void incrementLikes(int id){
+    int incrementLikes(int id){
         try {
             mIncrementLikes.setInt(1, id);
             mIncrementLikes.execute();
+            return 1;
         } catch(SQLException e){
             e.printStackTrace();
+            return -1;
         }
     }
 
@@ -346,12 +348,14 @@ public class Database {
      * Decrements the like value of a row
      * @param id: the id of the message
      */
-    void decrementLikes(int id){
+    int decrementLikes(int id){
         try {
             mDecrementLikes.setInt(1, id);
             mDecrementLikes.execute();
+            return 1;
         } catch(SQLException e){
             e.printStackTrace();
+            return -1;
         }
     }
 }
