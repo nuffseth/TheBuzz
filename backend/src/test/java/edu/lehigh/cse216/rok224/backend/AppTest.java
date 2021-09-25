@@ -3,6 +3,7 @@ package edu.lehigh.cse216.rok224.backend;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import com.google.gson.*;
 
 /**
  * Unit test for simple App.
@@ -28,10 +29,10 @@ public class AppTest
         return new TestSuite( AppTest.class );
     }
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp(){
-        assertTrue( true );
+    // test that SimpleRequest deserializes json to gson
+    public void testSimpleRequest() {
+        Gson gson = new Gson();
+        SimpleRequest result = gson.fromJson("{\"test\":0}", SimpleRequest.class);
+        assertTrue(result instanceof SimpleRequest);
     }
 }
