@@ -1,8 +1,6 @@
 <html>
     <head>
         <script src="jquery.min.js"></script>
-        <script src="handlebars.min.js"></script>
-        <script src="templates.js"></script>
         <script src="app.js"></script>
         <link rel="stylesheet" href="app.css" />
         <link href="https://fonts.googleapis.com/css?family=Fresca" rel="stylesheet">
@@ -11,6 +9,8 @@
     <body>
         <div id="addElement">
             <h3>Add a New Entry</h3>
+            <label>Title</label>
+            <input type="text" id="newTitle" />
             <label>Message</label>
             <textarea id="newMessage"></textarea>
             <button id="addButton">Add</button>
@@ -18,6 +18,8 @@
         </div>
         <div id="editElement">
             <h3>Edit an Entry</h3>
+            <label>Title</label>
+            <input type="text" id="editTitle" />
             <label>Message</label>
             <textarea id="editMessage"></textarea>
             <span id="editCreated"></span>
@@ -30,6 +32,5 @@
             <button id="showFormButton">Add Message</button>
             <div id="messageList"></div>
         </div>
-        <div id= "app"></div>
     </body>
 </html>
