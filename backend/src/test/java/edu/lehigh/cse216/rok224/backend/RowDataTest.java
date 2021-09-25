@@ -28,6 +28,7 @@ public class RowDataTest extends TestCase {
      * Ensure that the constructor populates every field of the object it
      * creates
      */
+    /** Need to figure out how to connect backend folder with admin-cli so we can use Database.java */
     public void testConstructor() {
         String content = "Test Content";
         int id = 17;

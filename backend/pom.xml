@@ -17,7 +17,8 @@
     <dependency>
       <groupId>com.sparkjava</groupId>
       <artifactId>spark-core</artifactId>
-      <version>2.9.3</version>
+      <!-- note: adyn has version 2.6.0 -->
+      <version>2.9.3</version> 
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -29,6 +30,7 @@
       <artifactId>heroku-maven-plugin</artifactId>
       <version>3.0.4</version>
     </dependency>
+    <!-- do we need this postgresql dependency?? -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
@@ -78,7 +80,8 @@
       <plugin>
         <groupId>com.heroku.sdk</groupId>
         <artifactId>heroku-maven-plugin</artifactId>
-        <version>2.0.2</version>
+        <!-- Adyn has version 3.0.4 -->
+        <version>3.0.4</version>
         <configuration>
           <jdkVersion>1.8</jdkVersion>
           <appName>limitless-caverns-65131</appName>
