@@ -32,7 +32,14 @@ public class AppTest
     // test that SimpleRequest deserializes json to gson
     public void testSimpleRequest() {
         Gson gson = new Gson();
-        SimpleRequest result = gson.fromJson("{\"test\":0}", SimpleRequest.class);
-        assertTrue(result instanceof SimpleRequest);
+        SimpleRequest request = gson.fromJson("{\"test\":0}", SimpleRequest.class);
+        assertTrue(request instanceof SimpleRequest);
+    }
+
+    // test that StructuredResponse serializes 
+    public void testStructuredResponse() {
+        Gson gson = new Gson();
+        String response = gson.toJson(new StructuredResponse("ok", null, null));
+        assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
     }
 }
