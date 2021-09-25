@@ -62,7 +62,6 @@ public class Database {
      */
     private PreparedStatement mDecrementLikes;
 
-
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
@@ -159,17 +158,17 @@ public class Database {
 
             // Note: no "IF NOT EXISTS" or "IF EXISTS" checks on table 
             // creation/deletion, so multiple executions will cause an exception
-            db.mCreateTable = db.mConnection.prepareStatement("CREATE TABLE tblData (id SERIAL PRIMARY KEY, message VARCHAR(500) NOT NULL, likes INT)");
-            db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData");
+            db.mCreateTable = db.mConnection.prepareStatement("CREATE TABLE tblData (id SERIAL PRIMARY KEY, message VARCHAR(500) NOT NULL, likes INT)"); //Creates the table
+            db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
 
             // Standard CRUD operations
-            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?");
-            db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)");
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from tblData");
-            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id = ?");
-            db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?");
-            db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?");
-            db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?");
+            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?"); //Deletes a row
+            db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)"); //Inserts a row
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from tblData"); //Selects all the rows
+            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id = ?"); //Selects a specific row
+            db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?"); //Updates a row
+            db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?"); //Increments the likes column
+            db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?"); //Decrements the likes column
 
         } catch (SQLException e){
             System.err.println("Error creating prepared statement");
@@ -215,6 +214,9 @@ public class Database {
      */
     int insertRow(String message, int likes){
         int count = 0;
+        if(testMessage(message) == false){
+            return -1;
+        }
         try {
             mInsertOne.setString(1, message);
             mInsertOne.setInt(2, likes);
@@ -294,6 +296,10 @@ public class Database {
      */
     int updateOne(int id, String message){
         int res = -1;
+
+        if(testMessage(message) == false){
+            return res;
+        }
         try {
             mUpdateOne.setString(1, message);
             mUpdateOne.setInt(2, id);
@@ -307,11 +313,13 @@ public class Database {
     /**
      * Create tblData.  If it already exists, this will print an error
      */
-    void createTable(){
+    int createTable(){
         try {
             mCreateTable.execute();
+            return 1;
         } catch (SQLException e){
-            e.printStackTrace();
+            System.out.println(e.getMessage());
+            return -1;
         }
     }
 
@@ -319,11 +327,13 @@ public class Database {
      * Remove tblData from the database.  If it does not exist, this will print
      * an error.
      */
-    void dropTable(){
+    int dropTable(){
         try {
             mDropTable.execute();
+            return 1;
         } catch (SQLException e){
             e.printStackTrace();
+            return -1;
         }
     }
 
@@ -355,5 +365,33 @@ public class Database {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    /**
+     * Tests to see if a message is valid
+     * @param message: The message being checked
+     * @return: Returns true if valid and false if invalid
+     */
+    public boolean testMessage(String message){
+        try {
+            if(message.equals("") || message == null){
+                throw new InvalidMessageException();
+            }
+        } catch(InvalidMessageException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+}
+
+//Exception to see if invalid message is passed
+class InvalidMessageException extends Exception {
+    InvalidMessageException(){
+        super("Invalid Message");
+    }
+    
+    InvalidMessageException(String message){
+        super(message);
     }
 }

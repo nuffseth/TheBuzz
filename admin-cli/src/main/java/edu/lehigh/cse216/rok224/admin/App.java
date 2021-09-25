@@ -132,9 +132,17 @@ public class App {
             } else if (action == 'q'){
                 break;
             } else if (action == 'T'){
-                db.createTable();
+                int res = db.createTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Table has been created");
             } else if (action == 'D'){
-                db.dropTable();
+                int res = db.dropTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Table has been dropped");
             } else if (action == '1'){
                 int id = getInt(in, "Enter the row ID");
                 if(id == -1){
@@ -170,6 +178,10 @@ public class App {
                 System.out.println("  " + res + " rows deleted");
             } else if(action == '+'){
                 String message = getString(in, "Enter the message");
+                if(message == null){
+                    System.out.println("Can't make an empty message");
+                    continue;
+                }
                 int res = db.insertRow(message, 0);
                 System.out.println(res + " rows added");
             } else if(action == '~'){
