@@ -30,6 +30,7 @@ public class AppTest
     }
 
     // test that SimpleRequest deserializes json to gson
+    // by asserting that request is of type SimpleRequest, the JSON must have been deserialized to gson 
     public void testSimpleRequest() {
         Gson gson = new Gson();
         SimpleRequest request = gson.fromJson("{\"test\":0}", SimpleRequest.class);
@@ -37,9 +38,11 @@ public class AppTest
     }
 
     // test that StructuredResponse serializes 
+    // by asserting that the response string was in JSON format, the gson must have been serialized to JSON
     public void testStructuredResponse() {
         Gson gson = new Gson();
         String response = gson.toJson(new StructuredResponse("ok", null, null));
+        System.out.println(response);
         assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
     }
 }
