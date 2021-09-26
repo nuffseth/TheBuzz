@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class Database {
     /**
@@ -51,6 +53,16 @@ public class Database {
     private PreparedStatement mDropTable;
 
     /**
+     * A prepared statement to increment likes
+     */
+    private PreparedStatement mIncrementLikes;
+
+    /**
+     * A prepared statement to decrement likes
+     */
+    private PreparedStatement mDecrementLikes;
+
+    /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
      * represents the data we'd see in a row.
@@ -65,22 +77,27 @@ public class Database {
          * The ID of this row of the database
          */
         int mId;
-        /**
-         * The subject stored in this row
-         */
-        String mSubject;
+
         /**
          * The message stored in this row
          */
         String mMessage;
 
         /**
-         * Construct a RowData object by providing values for its fields
+         * The amount of likes for the message
          */
-        public RowData(int id, String subject, String message) {
+        int mLikes;
+
+        /**
+         * Constructor for RowData
+         * @param id: Id of post
+         * @param message: The message itself
+         * @param likes: The amount of likes it has
+         */
+        public RowData(int id, String message, int likes){
             mId = id;
-            mSubject = subject;
             mMessage = message;
+            mLikes = likes;    
         }
     }
 
@@ -102,13 +119,22 @@ public class Database {
      * 
      * @return A Database object, or null if we cannot connect properly
      */
+<<<<<<< HEAD
     public static Database getDatabase(String ip, String port, String user, String pass) {
+=======
+    static Database getDatabase(String url) {
+>>>>>>> admin
         // Create an un-configured Database object
         Database db = new Database();
 
         // Give the Database object a connection, fail if we cannot get one
         try {
-            Connection conn = DriverManager.getConnection("jdbc:postgresql://" + ip + ":" + port + "/", user, pass);
+            Class.forName("org.postgresql.Driver");
+            URI dbUri = new URI(url);
+            String username = dbUri.getUserInfo().split(":")[0];
+            String password = dbUri.getUserInfo().split(":")[1];
+            String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
+            Connection conn = DriverManager.getConnection(dbUrl, username, password);
             if (conn == null) {
                 System.err.println("Error: DriverManager.getConnection() returned a null object");
                 return null;
@@ -117,6 +143,12 @@ public class Database {
         } catch (SQLException e) {
             System.err.println("Error: DriverManager.getConnection() threw a SQLException");
             e.printStackTrace();
+            return null;
+        } catch (ClassNotFoundException cnfe) {
+            System.out.println("Unable to find postgresql driver");
+            return null;
+        } catch (URISyntaxException s) {
+            System.out.println("URI Syntax Error");
             return null;
         }
 
@@ -130,18 +162,19 @@ public class Database {
 
             // Note: no "IF NOT EXISTS" or "IF EXISTS" checks on table 
             // creation/deletion, so multiple executions will cause an exception
-            db.mCreateTable = db.mConnection.prepareStatement(
-                    "CREATE TABLE tblData (id SERIAL PRIMARY KEY, subject VARCHAR(50) "
-                    + "NOT NULL, message VARCHAR(500) NOT NULL)");
-            db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData");
+            db.mCreateTable = db.mConnection.prepareStatement("CREATE TABLE tblData (id SERIAL PRIMARY KEY, message VARCHAR(500) NOT NULL, likes INT)"); //Creates the table
+            db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
 
             // Standard CRUD operations
-            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?");
-            db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)");
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT id, subject FROM tblData");
-            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id=?");
-            db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?");
-        } catch (SQLException e) {
+            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?"); //Deletes a row
+            db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)"); //Inserts a row
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from tblData"); //Selects all the rows
+            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id = ?"); //Selects a specific row
+            db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?"); //Updates a row
+            db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?"); //Increments the likes column
+            db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?"); //Decrements the likes column
+
+        } catch (SQLException e){
             System.err.println("Error creating prepared statement");
             e.printStackTrace();
             db.disconnect();
@@ -158,14 +191,14 @@ public class Database {
      * 
      * @return True if the connection was cleanly closed, false otherwise
      */
-    boolean disconnect() {
-        if (mConnection == null) {
+    boolean disconnect(){
+        if (mConnection == null){
             System.err.println("Unable to close connection: Connection was null");
             return false;
         }
         try {
             mConnection.close();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             System.err.println("Error: Connection.close() threw a SQLException");
             e.printStackTrace();
             mConnection = null;
@@ -178,38 +211,41 @@ public class Database {
     /**
      * Insert a row into the database
      * 
-     * @param subject The subject for this new row
      * @param message The message body for this new row
+     * @param likes The amount of likes a message has
      * 
      * @return The number of rows that were inserted
      */
-    int insertRow(String subject, String message) {
+    int insertRow(String message, int likes){
         int count = 0;
+        if(testMessage(message) == false){
+            return -1;
+        }
         try {
-            mInsertOne.setString(1, subject);
-            mInsertOne.setString(2, message);
+            mInsertOne.setString(1, message);
+            mInsertOne.setInt(2, likes);
             count += mInsertOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return count;
     }
 
     /**
-     * Query the database for a list of all subjects and their IDs
+     * Query the database for a list of all their IDs
      * 
      * @return All rows, as an ArrayList
      */
-    ArrayList<RowData> selectAll() {
+    ArrayList<RowData> selectAll(){
         ArrayList<RowData> res = new ArrayList<RowData>();
         try {
             ResultSet rs = mSelectAll.executeQuery();
-            while (rs.next()) {
-                res.add(new RowData(rs.getInt("id"), rs.getString("subject"), null));
+            while (rs.next()){
+                res.add(new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes")));
             }
             rs.close();
             return res;
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
             return null;
         }
@@ -222,15 +258,15 @@ public class Database {
      * 
      * @return The data for the requested row, or null if the ID was invalid
      */
-    RowData selectOne(int id) {
+    RowData selectOne(int id){
         RowData res = null;
         try {
             mSelectOne.setInt(1, id);
             ResultSet rs = mSelectOne.executeQuery();
-            if (rs.next()) {
-                res = new RowData(rs.getInt("id"), rs.getString("subject"), rs.getString("message"));
+            if(rs.next()){
+                res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
             }
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -243,12 +279,12 @@ public class Database {
      * 
      * @return The number of rows that were deleted.  -1 indicates an error.
      */
-    int deleteRow(int id) {
+    int deleteRow(int id){
         int res = -1;
         try {
             mDeleteOne.setInt(1, id);
             res = mDeleteOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -262,13 +298,17 @@ public class Database {
      * 
      * @return The number of rows that were updated.  -1 indicates an error.
      */
-    int updateOne(int id, String message) {
+    int updateOne(int id, String message){
         int res = -1;
+
+        if(testMessage(message) == false){
+            return res;
+        }
         try {
             mUpdateOne.setString(1, message);
             mUpdateOne.setInt(2, id);
             res = mUpdateOne.executeUpdate();
-        } catch (SQLException e) {
+        } catch (SQLException e){
             e.printStackTrace();
         }
         return res;
@@ -277,11 +317,13 @@ public class Database {
     /**
      * Create tblData.  If it already exists, this will print an error
      */
-    void createTable() {
+    int createTable(){
         try {
             mCreateTable.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return 1;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return -1;
         }
     }
 
@@ -289,11 +331,71 @@ public class Database {
      * Remove tblData from the database.  If it does not exist, this will print
      * an error.
      */
-    void dropTable() {
+    int dropTable(){
         try {
             mDropTable.execute();
-        } catch (SQLException e) {
+            return 1;
+        } catch (SQLException e){
             e.printStackTrace();
+            return -1;
         }
+    }
+
+    /**
+     * Increments the like value of a row
+     * @param id: the id of the message
+     */
+    int incrementLikes(int id){
+        try {
+            mIncrementLikes.setInt(1, id);
+            mIncrementLikes.execute();
+            return 1;
+        } catch(SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    /**
+     * Decrements the like value of a row
+     * @param id: the id of the message
+     */
+    int decrementLikes(int id){
+        try {
+            mDecrementLikes.setInt(1, id);
+            mDecrementLikes.execute();
+            return 1;
+        } catch(SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    /**
+     * Tests to see if a message is valid
+     * @param message: The message being checked
+     * @return: Returns true if valid and false if invalid
+     */
+    public boolean testMessage(String message){
+        try {
+            if(message.equals("") || message == null){
+                throw new InvalidMessageException();
+            }
+        } catch(InvalidMessageException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+}
+
+//Exception to see if invalid message is passed
+class InvalidMessageException extends Exception {
+    InvalidMessageException(){
+        super("Invalid Message");
+    }
+    
+    InvalidMessageException(String message){
+        super(message);
     }
 }

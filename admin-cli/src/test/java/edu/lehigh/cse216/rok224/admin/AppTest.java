@@ -4,6 +4,11 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+//import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.sql.SQLException;
+
+import java.util.Map;
 /**
  * Unit test for simple App.
  */
@@ -25,9 +30,33 @@ public class AppTest extends TestCase {
     }
 
     /**
-     * Rigourous Test :-)
+     * Tests to see if the proper error will happen if you make a message with no characters
      */
-    public void testApp(){
-        assertTrue(true);
+    public void testInvalidMessage(){
+        try {
+            Map<String, String> env = System.getenv();
+            Database db = Database.getDatabase(env.get("DATABASE_URL"));
+            assertEquals(-1, db.insertRow("", 0));
+            assertEquals(-1, db.updateOne(0, ""));
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            assertFalse(true);
+        }
+       
+    }
+
+    /**
+     * Tests to see if only one table can be made
+     */
+    public void testTableCreation(){
+        try {
+            Map<String, String> env = System.getenv();
+            Database db = Database.getDatabase(env.get("DATABASE_URL"));
+            assertEquals(-1, db.createTable());
+
+        } catch(Exception e){
+            System.out.println(e.getMessage());
+            assertFalse(true);
+        }
     }
 }
