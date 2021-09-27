@@ -5,8 +5,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "cross-env NODE_ENV=development webpack serve --config config/webpack.dev.js --open",
-        "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.js"
-      },
+        "build": "cross-env NODE_ENV=production TARGETFOLDER='../backend/src/main/resources' WEBFOLDERNAME=web webpack --config config/webpack.prod.js"
+    },
     "dependencies": {
         "jasmine-core": "^3.9.0",
         "jquery": "^3.6.0",
@@ -15,6 +15,7 @@
         "react-router-dom": "^5.3.0"
     },
     "devDependencies": {
+        "@types/jquery": "^3.5.6",
         "@types/react": "^17.0.24",
         "@types/react-dom": "^17.0.9",
         "@types/react-router-dom": "^5.3.0",
