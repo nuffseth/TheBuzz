@@ -1,5 +1,4 @@
 import * as React from 'react'
-var $: any;
 
 /** App has two components: number of likes and id number */
 type LikeProps = {

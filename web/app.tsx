@@ -1,7 +1,6 @@
 // Prevent compiler errors when using jQuery.  "$" will be given a type of 
 // "any", so that we can use it anywhere, and assume it has any fields or
 // methods, without the compiler producing an error.
-var $: any;
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -219,7 +218,7 @@ class ElementList {
             
             // Show the table row:
             tr.appendChild(likes);
-            $("#messageList").appendChild(tr);
+            $("#messageList").append(tr);
         }
         $("#messageList").append("</table>");
         // Find all of the delete buttons, and set their behavior
@@ -264,6 +263,7 @@ class ElementList {
 
 // Run some configuration code when the web page loads
 $(document).ready(function () {
+    console.log('This is running');
     // Create the object that controls the "New Entry" form
     newEntryForm = new NewEntryForm();
     // Create the object for the main data list, and populate it with data from
