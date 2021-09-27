@@ -7,13 +7,13 @@ import junit.framework.TestSuite;
 /**
  * Unit test for simple App.
  */
-public class DataRowTest extends TestCase {
+public class RowDataTest extends TestCase {
     /**
      * Create the test case
      *
      * @param testName name of the test case
      */
-    public DataRowTest(String testName) {
+    public RowDataTest(String testName) {
         super(testName);
     }
 
@@ -21,7 +21,7 @@ public class DataRowTest extends TestCase {
      * @return the suite of tests being tested
      */
     public static Test suite() {
-        return new TestSuite(DataRowTest.class);
+        return new TestSuite(RowDataTest.class);
     }
 
     /**
@@ -29,29 +29,28 @@ public class DataRowTest extends TestCase {
      * creates
      */
     public void testConstructor() {
-        String title = "Test Title";
         String content = "Test Content";
         int id = 17;
-        DataRow d = new DataRow(id, title, content);
+        int likes = 2;
+        Database.RowData d = new Database.RowData(id, content, likes);
 
-        assertTrue(d.mTitle.equals(title));
-        assertTrue(d.mContent.equals(content));
+        assertTrue(d.mMessage.equals(content));
         assertTrue(d.mId == id);
-        assertFalse(d.mCreated == null);
+        assertTrue(d.mLikes == likes);
     }
 
     /**
      * Ensure that the copy constructor works correctly
      */
-    public void testCopyconstructor() {
+    /*public void testCopyconstructor() {
         String title = "Test Title For Copy";
         String content = "Test Content For Copy";
         int id = 177;
-        DataRow d = new DataRow(id, title, content);
-        DataRow d2 = new DataRow(d);
+        RowData d = new RowData(id, title, content);
+        RowData d2 = new RowData(d);
         assertTrue(d2.mTitle.equals(d.mTitle));
         assertTrue(d2.mContent.equals(d.mContent));
         assertTrue(d2.mId == d.mId);
         assertTrue(d2.mCreated.equals(d.mCreated));
-    }
+    }*/
 }
