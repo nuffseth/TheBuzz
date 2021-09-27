@@ -6,8 +6,6 @@ var $: any;
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Like } from "./like";
-// Prevent compiler errors when using Handlebars
-let Handlebars: any;
 
 // The 'this' keyword does not behave in JavaScript/TypeScript like it does in
 // Java.  Since there is only one NewEntryForm, we will save it to a global, so
@@ -228,8 +226,6 @@ class ElementList {
         $(".delbtn").click(mainList.clickDelete);
         // Find all of the Edit buttons, and set their behavior
         $(".editbtn").click(mainList.clickEdit);
-        $("#" + ElementList+ "-messageList").append(Handlebars.templates[ElementList + ".hb"]
-        ({text1: "Hello", arr1: [1, 2, 3]}));
     }
 
     /**

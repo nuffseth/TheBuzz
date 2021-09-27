@@ -2,8 +2,12 @@
     "name": "web",
     "version": "1.0.0",
     "description": "Web Front-End",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "cross-env NODE_ENV=development webpack serve --config config/webpack.dev.js --open",
+        "build": "cross-env NODE_ENV=production webpack --config config/webpack.prod.js"
+      },
     "dependencies": {
-        "bootstrap": "^3.3.7",
         "jasmine-core": "^3.9.0",
         "jquery": "^3.6.0",
         "react": "^17.0.2",

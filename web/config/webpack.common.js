@@ -7,7 +7,7 @@ module.exports = {
     entry: path.resolve(__dirname, "../", 'app.tsx'),
     target: "web",
     output: {
-        path: path.resolve(__dirname, '..', process.env['TARGETFOLDER'], process.env['WEBFOLDERNAME']),
+        path: path.resolve(__dirname, '../', process.env['TARGETFOLDER'], process.env['WEBFOLDERNAME']),
         filename: 'app.js'
     },
 
