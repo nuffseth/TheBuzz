@@ -1,4 +1,4 @@
-package edu.lehigh.cse216.rok224.admin;
+package edu.lehigh.cse216.rok224.backend;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
