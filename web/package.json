@@ -8,6 +8,7 @@
         "build": "cross-env NODE_ENV=production TARGETFOLDER='../backend/src/main/resources' WEBFOLDERNAME=web webpack --config config/webpack.prod.js"
     },
     "dependencies": {
+        "bootstrap": "^3.3.7",
         "jasmine-core": "^3.9.0",
         "jquery": "^3.6.0",
         "react": "^17.0.2",
