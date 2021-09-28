@@ -1,37 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/data_model.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+import 'buzz_post.dart';
+import 'data_model.dart';
 
+// void main() { runApp(const MyApp()); }
+void main() => runApp(MyApp());
+
+/* 
+*
+* 
+* 
+* 
+* 
+*/
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
+  // ultimate root of the app
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'The Buzz',
+      theme: ThemeData( primarySwatch: Colors.purple ),
+      // declares home screen of our app
+      // we can pass it in the "constructor" of another class so we can put its
+      // functionality in there
+      home: const Buzz(title: 'The Buzz Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
+/* 
+*
+* 
+* 
+* 
+* 
+*/
+// homepage widget that gets "passed in"/returned in the home argument in app.build
+class Buzz extends StatefulWidget {
+  const Buzz({Key? key, required this.title}) : super(key: key);
+/*
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
   // how it looks.
@@ -40,76 +50,134 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
+*/
   final String title;
 
+  // the call in app.build come here i think
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<Buzz> createState() => _BuzzPostsState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+/* 
+*
+* 
+* 
+* 
+* 
+*/
+class _BuzzPostsState extends State<Buzz> {
+  late Future<BuzzPost> jsonPosts;
 
+  // list of posts
+  final _posts = [];
+  final _liked = [];
+  
   @override
+  void initState(){
+    super.initState();
+
+    // this should still be a yucky list of json shit that we still wanna convert
+    jsonPosts = DataModel.model.fetchBuzzList();
+  }
+  
+
+
+  /* build function
+   *
+   * 
+   * 
+   * 
+   * 
+   */
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      appBar: AppBar (
+        backgroundColor: Colors.deepPurple,
+        title: const Text('Buzz Buzz Buzz'),
       ),
+      //body: _buildPosts(), 
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        child: FutureBuilder<BuzzPost> (
+          future: jsonPosts,
+          builder: (context, snapshot){ 
+            if (snapshot.hasData) {
+                return Text(snapshot.data!.msg);
+              } else if (snapshot.hasError){
+                return Text('uh oh there was a fucky wucky: ${snapshot.error}');
+              }
+              // default return is just a loading bouncy ball of death
+              return const CircularProgressIndicator();
+          },
+        )
+
+      )
     );
   }
+
+
+  /* buildPosts function
+   *
+   * 
+   * 
+   * 
+   * 
+   */
+  Widget _buildPosts() {
+    // we use listview.builder since we don't know how many items we'll have 
+    // in the list, and it could technically be infinite
+    // https://api.flutter.dev/flutter/widgets/ListView/ListView.builder.html
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      scrollDirection: Axis.vertical,
+      // will be called once per post - this is what actually creates the list items
+      itemBuilder: (context, i) {
+        final idx = i; // maybe/probably redundant but putting it here in case we wanna do funky pair stuff
+
+        // this is where the adding of posts to our list storing them takes place
+
+        // i think dave said this is wrong
+        _posts.add(DataModel.model.fetchBuzzList());
+
+        return _buildRow(_posts[idx]);
+      },
+      // how many items it should expect to build
+      itemCount: _posts.length,
+    );
+
+  }
+
+
+  /* buildRow function
+   *
+   * 
+   * 
+   * 
+   * 
+   */
+
+                          // v NOTE: STRING PLACEHOLDER
+  Widget _buildRow(String post) {
+    final alreadyLiked = _liked.contains(post);
+    
+    return ListTile (
+      title: Text(post),
+      trailing: Icon( // this is what puts the correct icon w/in the posts
+        // ============ handles placement of icon on screen
+        alreadyLiked ? Icons.favorite : Icons.favorite_border,
+        color: alreadyLiked ? Colors.orange : Colors.green,
+      ),
+      // ============ handles interactivity of icon
+      onTap: (){
+        setState(() {
+          if (alreadyLiked) {
+            _liked.remove(post);
+          } else {
+            _liked.add(post);
+          }
+        });
+      },
+    );
+  }
+
 }
