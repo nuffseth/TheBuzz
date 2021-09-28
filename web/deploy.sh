@@ -5,10 +5,10 @@
 # web deploy directory.
 
 # This is the resource folder where maven expects to find our files
-TARGETFOLDER=../backend/src/main/resources
+export TARGETFOLDER=../backend/src/main/resources
 
 # This is the folder that we used with the Spark.staticFileLocation command
-WEBFOLDERNAME=web
+export WEBFOLDERNAME=web
 
 # step 1: make sure we have someplace to put everything.  We will delete the
 #         old folder tree, and then make it from scratch
@@ -30,7 +30,7 @@ cp node_modules/bootstrap/dist/css/bootstrap.min.css $TARGETFOLDER/$WEBFOLDERNAM
 cp -R node_modules/bootstrap/dist/fonts $TARGETFOLDER/$WEBFOLDERNAME
 
 # step 4: compile TypeScriptX files
-node_modules/.bin/cross-env NODE_ENV=production node_modules/.bin/webpack --config config/webpack.prod.js
+node_modules/.bin/cross-env NODE_ENV=production TARGETFOLDER='../backend/src/main/resources' WEBFOLDERNAME=web node_modules/.bin/webpack --config config/webpack.prod.js
 # cp -R config $TARGETFOLDER/$WEBFOLDERNAME
 # node_modules/.bin/tsc app.tsx --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/app.js
 
