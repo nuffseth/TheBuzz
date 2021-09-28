@@ -12,21 +12,20 @@ export class Like extends React.Component<LikeProps> {
      * The default state constructor for Like.
      */
     state = {
-        mId: 0,
-        mLikes: 0
+        mId: this.props.mId,
+        mLikes: this.props.mLikes
     }
-
     /**
      * increment the number that is stored in the state
-     * then POST to /messages/id/like everytime the button is pressed
+     * then POST to /messages/id/likes everytime the button is pressed
      */
     increment = (_e: React.MouseEvent<HTMLButtonElement>) => {
         // NB: setState will patch the state by updating any fields that are
         //     defined in the object that it is given.
-        this.setState({ num: ++this.state.mLikes });
+        this.setState({ mLikes: ++this.state.mLikes });
         $.ajax({
             type: "POST",
-            url: "/messages/" + this.state.mId + '/like',
+            url: "/messages/" + this.props.mId + '/likes',
             //success: mainList.update
         });
     }
@@ -37,7 +36,7 @@ export class Like extends React.Component<LikeProps> {
     render() {
         return (
             <span>
-                <p>{this.state.mLikes}</p>
+                <p>{this.state.mLikes} {this.state.mId}</p>
                 <button onClick={this.increment}> Like</button>
             </span>
         );

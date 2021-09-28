@@ -213,9 +213,9 @@ class ElementList {
             // Inset all of the message data into the table row:
             tr.innerHTML = '<td>' + data.mData[i].mMessage + '</td><td>' + mainList.buttons(data.mData[i].mId) + '</td>';
             // Create a span element to bind the likes display:
+            // <td>'+ data.mData[i].mLikes+ '</td>'
             let likes = document.createElement('span');
             ReactDOM.render(<Like mId={data.mData[i].mId} mLikes={data.mData[i].mLikes} />, likes);
-            
             // Show the table row:
             tr.appendChild(likes);
             $("#messageList").append(tr);
