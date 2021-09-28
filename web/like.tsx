@@ -36,7 +36,7 @@ export class Like extends React.Component<LikeProps> {
     render() {
         return (
             <span>
-                <p>{this.state.mLikes} {this.state.mId}</p>
+                <p>{this.state.mLikes}</p>
                 <button onClick={this.increment}> Like</button>
             </span>
         );
