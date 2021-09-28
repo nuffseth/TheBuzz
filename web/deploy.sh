@@ -27,7 +27,7 @@ npm update
 cp node_modules/jquery/dist/jquery.min.js $TARGETFOLDER/$WEBFOLDERNAME
 
 # step 4: compile TypeScriptX files
-node_modules/.bin/cross-env NODE_ENV=production node_modules/.bin/webpack --config config/webpack.prod.js
+node_modules/.bin/cross-env NODE_ENV=production TARGETFOLDER='../backend/src/main/resources' WEBFOLDERNAME=web node_modules/.bin/webpack --config config/webpack.prod.js
 # cp -R config $TARGETFOLDER/$WEBFOLDERNAME
 # node_modules/.bin/tsc app.tsx --strict --outFile $TARGETFOLDER/$WEBFOLDERNAME/app.js
 
