@@ -1,7 +1,10 @@
 // Prevent compiler errors when using jQuery.  "$" will be given a type of 
 // "any", so that we can use it anywhere, and assume it has any fields or
 // methods, without the compiler producing an error.
-var $: any;
+
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { Like } from "./like";
 
 // The 'this' keyword does not behave in JavaScript/TypeScript like it does in
 // Java.  Since there is only one NewEntryForm, we will save it to a global, so
@@ -254,8 +257,89 @@ class EditEntryForm {
     }
 } // end class EditEntryForm
 
+// a global for the main ElementList of the program.  See newEntryForm for 
+// explanation
+var mainList: ElementList;
+
+/**
+ * ElementList provides a way of seeing all of the data stored on the server.
+ */
+class ElementList {
+    /**
+     * refresh is the public method for updating messageList
+     */
+    refresh() {
+        // Issue a GET, and then pass the result to update()
+        $.ajax({
+            type: "GET",
+            url: "/messages",
+            dataType: "json",
+            success: mainList.update
+        });
+    }
+
+    /**
+     * update is the private method used by refresh() to update messageList
+     */
+    private update(data: any) {
+        $("#messageList").html("<table>");
+        for (let i = 0; i < data.mData.length; ++i) {
+            // Create a new table row element:
+            let tr = document.createElement('tr');
+            // Inset all of the message data into the table row:
+            tr.innerHTML = '<td>' + data.mData[i].mMessage + '</td><td>' + mainList.buttons(data.mData[i].mId) + '</td>';
+            // Create a span element to bind the likes display:
+            // <td>'+ data.mData[i].mLikes+ '</td>'
+            let likes = document.createElement('span');
+            ReactDOM.render(<Like mId={data.mData[i].mId} mLikes={data.mData[i].mLikes} />, likes);
+            // Show the table row:
+            tr.appendChild(likes);
+            $("#messageList").append(tr);
+        }
+        $("#messageList").append("</table>");
+        // Find all of the delete buttons, and set their behavior
+        $(".delbtn").click(mainList.clickDelete);
+        // Find all of the Edit buttons, and set their behavior
+        $(".editbtn").click(mainList.clickEdit);
+    }
+
+    /**
+     * buttons() adds a 'edit','delete', and 'like button to the HTML for each row
+     */
+    private buttons(id: string): string {
+        return "<td><button class='editbtn' data-value='" + id + "'>Edit</button></td>" + "<td><button class='delbtn' data-value='" + id + "'>Delete</button></td>";
+    }
+
+    /**
+     * clickDelete is the code we run in response to a click of a delete button
+     */
+    private clickDelete() {
+        let id = $(this).data("value");
+        $.ajax({
+            type: "DELETE",
+            url: "/messages/" + id,
+            dataType: "json",
+            success: mainList.refresh
+        })
+    }
+    /**
+     * clickEdit is the code we run in response to a click of a edit button
+     */
+    private clickEdit() {
+        // as in clickDelete, we need the ID of the row
+        let id = $(this).data("value");
+        $.ajax({
+            type: "GET",
+            url: "/messages/" + id,
+            dataType: "json",
+            success: editEntryForm.init
+        })
+    }
+} // end class ElementList
+
 // Run some configuration code when the web page loads
 $(document).ready(function () {
+    console.log('This is running');
     // Create the object that controls the "New Entry" form
     newEntryForm = new NewEntryForm();
     // Create the object for the main data list, and populate it with data from
