@@ -1,3 +1,16 @@
+# CSE 216 Group 4 Phase 2
+
+## https://trello.com/invite/b/qx0dDNpf/ef397a1a88f32d93c6a4924f2cb10d01/phase2 
+
+## Contributors
+1. Rohan Kakkilaya (rok224) - Flutter  
+2. Adyn Gallagher (arg422) - Backend  
+3. Lindsey Seroka (lbs222) - PM  
+4. Allan Lee (all418) - Admin  
+5. Sebastian Chavarro (sec223) - Web
+
+---------------------------------------------------------
+
 # CSE 216 Group 4 Phase 1
 
 ## https://trello.com/b/dW4jXh1z/216-phase-1 
