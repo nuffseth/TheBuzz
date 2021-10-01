@@ -3,11 +3,11 @@
 ## https://trello.com/invite/b/qx0dDNpf/ef397a1a88f32d93c6a4924f2cb10d01/phase2 
 
 ## Contributors
-1. Rohan Kakkilaya (rok224) - Flutter  
+1. Rohan Kakkilaya (rok224) - Web  
 2. Adyn Gallagher (arg422) - Backend  
 3. Lindsey Seroka (lbs222) - PM  
-4. Allan Lee (all418) - Admin  
-5. Sebastian Chavarro (sec223) - Web
+4. Allan Lee (all418) - Flutter  
+5. Sebastian Chavarro (sec223) - Admin
 
 ---------------------------------------------------------
 
