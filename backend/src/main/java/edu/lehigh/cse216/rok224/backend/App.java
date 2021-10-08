@@ -5,8 +5,11 @@ package edu.lehigh.cse216.rok224.backend;
 import spark.Spark;
 import java.util.*;
 
-// Import Google's JSON library
+// Import Google's JSON library and Oauth
 import com.google.gson.*;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 
 /**
  * For now, our app creates an HTTP server that can only get and add data.
@@ -70,6 +73,57 @@ public class App {
         // Set up a route for serving the main page
         Spark.get("/", (req, res) -> {
             res.redirect("/index.html");
+            return "";
+        });
+
+        // POST to get the OAuth id token from the frontend
+        // id_token should be sent from the frontend as mMessage
+        Spark.post("/login", (request, response) -> {
+            // NB: if gson.Json fails, Spark will reply with status 500 Internal 
+            // Server Error
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // get id token from the frontend
+            String id_token_string = req.mMessage;
+            
+            // GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+            //     // Specify the CLIENT_ID of the app that accesses the backend:
+            //     .setAudience(Collections.singletonList(CLIENT_ID))
+            //     // Or, if multiple clients access the backend:
+            //     //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
+            //     .build();
+            
+            // // (Receive idTokenString by HTTPS POST)
+            
+            // GoogleIdToken idToken = verifier.verify(idTokenString);
+            // if (idToken != null) {
+            //   Payload payload = idToken.getPayload();
+            
+            //   // Print user identifier
+            //   String userId = payload.getSubject();
+            //   System.out.println("User ID: " + userId);
+            
+            //   // Get profile information from payload
+            //   String email = payload.getEmail();
+            //   boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+            //   String name = (String) payload.get("name");
+            //   String pictureUrl = (String) payload.get("picture");
+            //   String locale = (String) payload.get("locale");
+            //   String familyName = (String) payload.get("family_name");
+            //   String givenName = (String) payload.get("given_name");
+            
+            //   // Use or store profile information
+            //   // ...
+            
+            // } else {
+            //   System.out.println("Invalid ID token.");
+            // }
+
+
+            // // ensure status 200 OK, with a MIME type of JSON
+            // // NB: even on error, we return 200, but with a JSON object that
+            // //     describes the error.
+            // response.status(200);
+            // response.type("application/json");
             return "";
         });
 
