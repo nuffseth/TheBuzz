@@ -12,7 +12,7 @@ class DataModel {
   static DataModel model = new DataModel();
 
   // will hold our decoded messages
-  final List<BuzzPost> _messages = [];
+  final Future<BuzzPost> _messages = [];
 
   Future<BuzzPost> fetchBuzzList() async {
     // parses the json found on the heroku link
@@ -27,7 +27,7 @@ class DataModel {
       // need to go through each one of those yucky json things and decode it
       for(var e in _allPosts) {
         BuzzPost.fromJson(e);
-        _messages.add(e);
+        //_messages.add(e);
       }
 
       return _messages;
