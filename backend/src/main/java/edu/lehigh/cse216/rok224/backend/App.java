@@ -145,8 +145,7 @@ public class App {
         // | \  / | |__  | (___| (___   /  \ | |  __| |__  | (___  
         // | |\/| |  __|  \___ \\___ \ / /\ \| | |_ |  __|  \___ \ 
         // | |  | | |____ ____) |___) / ____ \ |__| | |____ ____) |
-        // |_|  |_|______|_____/_____/_/    \_\_____|______|_____/ 
-                                                                        
+        // |_|  |_|______|_____/_____/_/    \_\_____|______|_____/                                                       
 
         // GET route that returns a JSON of all messages.  
         Spark.get("/messages", (request, response) -> {
@@ -272,6 +271,121 @@ public class App {
             response.type("application/json");
             //call decrementLikes function from Database.java
             int result = dataBase.decrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+    
+        // PUT route for updating a like's status
+        Spark.put("/messages/:id/likes", (request, response) -> {
+            // NOTE: this currently does the same thing as the original implementation of POSTing a like
+            // THIS NEEDS UPDATED!!
+
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call incrementLikes function from Database.java
+            int result = dataBase.incrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+    //     _____ ____  __  __ __  __ ______ _   _ _______ _____ 
+    //     / ____/ __ \|  \/  |  \/  |  ____| \ | |__   __/ ____|
+    //    | |   | |  | | \  / | \  / | |__  |  \| |  | | | (___  
+    //    | |   | |  | | |\/| | |\/| |  __| | . ` |  | |  \___ \ 
+    //    | |___| |__| | |  | | |  | | |____| |\  |  | |  ____) |
+    //     \_____\____/|_|  |_|_|  |_|______|_| \_|  |_| |_____/ 
+
+        // GET route that returns all comments for a message with given message id.
+        Spark.get("/messages/:id/comments", (request, response) -> {
+            // The ":id" suffix in the first parameter to get() becomes 
+            // request.params("id"), so that we can get the requested row ID.  If 
+            // ":id" isn't a number, Spark will reply with a status 500 Internal
+            // Server Error.  Otherwise, we have an integer, and the only possible 
+            // error is that it doesn't correspond to a row with data.         
+
+            int idx = Integer.parseInt(request.params("id"));
+            Database.RowData data = dataBase.selectOne(idx);
+
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+
+            // currently, this code does the same thing as GET '/messages', need to modify
+            if (data == null) {
+                return gson.toJson(new StructuredResponse("error", idx + " not found", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, data));
+            }
+
+
+        });
+        
+        // POST route for adding a new comment to a message
+        Spark.post("/messages/:id/comments", (request, response) -> {
+            // NB: if gson.Json fails, Spark will reply with status 500 Internal Server Error
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            // NOTE: currently, this just does the same thing as POST '/messages', need to modify
+
+            // ensure status 200 OK, with a MIME type of JSON
+            // NB: even on error, we return 200, but with a JSON object that
+            //     describes the error.
+            response.status(200);
+            response.type("application/json");
+            // NB: createEntry checks for null title and message
+            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
+            int newId = dataBase.insertRow(req.mMessage, 0);
+            if (newId == -1) {
+                return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", "" + newId, null));
+            }
+        });
+    
+        // PUT route for updating a comment on a message
+        Spark.put("/messages/:id/comments'comment_id", (request, response) -> {
+            // NB: if gson.Json fails, Spark will reply with status 500 Internal Server Error
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            // NOTE: currently, this just does the same thing as POST '/messages', need to modify
+
+            // ensure status 200 OK, with a MIME type of JSON
+            // NB: even on error, we return 200, but with a JSON object that
+            //     describes the error.
+            response.status(200);
+            response.type("application/json");
+            // NB: createEntry checks for null title and message
+            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
+            int newId = dataBase.insertRow(req.mMessage, 0);
+            if (newId == -1) {
+                return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", "" + newId, null));
+            }
+        });
+
+        // DELETE route for removing a comment from the database.
+        Spark.delete("/messages/:id/comments/:comment_id", (request, response) -> {
+            // NOTE: need to update this!!! currently just copied from DELETE '/message/:id'
+
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            // NB: we won't concern ourselves too much with the quality of the 
+            //     message sent on a successful delete
+            //boolean result = dataStore.deleteOne(idx);
+            int result = dataBase.deleteRow(idx);
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
             } else {
