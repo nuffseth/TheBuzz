@@ -62,6 +62,12 @@ public class Database {
      */
     private PreparedStatement mDecrementLikes;
 
+    // TABLES
+    private PreparedStatement mUserTable;
+    private PreparedStatement mMessageTable;
+    private PreparedStatement mLikesTable;
+    private PreparedStatement mCommentTable;
+    
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
@@ -160,6 +166,12 @@ public class Database {
             // creation/deletion, so multiple executions will cause an exception
             db.mCreateTable = db.mConnection.prepareStatement("CREATE TABLE tblData (id SERIAL PRIMARY KEY, message VARCHAR(500) NOT NULL, likes INT)"); //Creates the table
             db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
+
+            // table management 
+            db.mUserTable = db.mConnection.prepareStatement("CREATE TABLE userTable (username VARCHAR(500) NOT NULL, bio VARCHAR(500))");
+            db.mCommentTable = db.mConnection.prepareStatement("CREATE TABLE commentTable (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT, msgID INT)");
+            db.mLikesTable = db.mConnection.prepareStatement("CREATE TABLE likesTable (status INT, userID INT, msgID INT)");
+            db.mMessageTable = db.mConnection.prepareStatement("CREATE TABLE messageTable (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT)");
 
             // Standard CRUD operations
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?"); //Deletes a row
@@ -316,6 +328,46 @@ public class Database {
     int createTable(){
         try {
             mCreateTable.execute();
+            return 1;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return -1;
+        }
+    }
+
+    int createMsgTable() {
+        try {
+            mMessageTable.execute();
+            return 1;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return -1;
+        }
+    }
+
+    int createLikesTable() {
+        try {
+            mLikesTable.execute();
+            return 1;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return -1;
+        }
+    }
+
+    int createCommentsTable() {
+        try {
+            mCommentTable.execute();
+            return 1;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return -1;
+        }
+    }
+
+    int createUserTable() {
+        try {
+            mUserTable.execute();
             return 1;
         } catch (SQLException e){
             System.out.println(e.getMessage());

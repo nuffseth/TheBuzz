@@ -29,6 +29,11 @@ public class App {
         System.out.println("  [?] Help (this message)");
         System.out.println("  [i] Increment likes for a specific row");
         System.out.println("  [d] Decrement likes for a specific row");
+
+        System.out.println("  [L] Create likes table");
+        System.out.println("  [M] Create messages table");
+        System.out.println("  [C] Create comments table");
+        System.out.println("  [U] Create user table");
     }
 
     /**
@@ -195,13 +200,13 @@ public class App {
                     continue;
                 }
                 System.out.println("  " + res + " rows updated");
-            } else if(action == 'i'){ //If incrementing likes
+            } else if (action == 'i'){ //If incrementing likes
                 int id = getInt(in, "Enter the row ID :> ");
                 if(id == -1){
                     continue;
                 }
                 db.incrementLikes(id);
-            } else if(action == 'd'){ //Decrementing likes
+            } else if (action == 'd'){ //Decrementing likes
                 int id = getInt(in, "Enter the row ID :> ");
                 if(id == -1){
                     continue;
@@ -211,6 +216,30 @@ public class App {
                     continue;
                 }
                 System.out.println("Row has been updated");
+            } else if (action == 'L') {
+                int res = db.createLikesTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Likes table has been created");
+            } else if (action == 'M') {
+                int res = db.createMsgTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Message table has been created");
+            } else if (action == 'C') {
+                int res = db.createCommentsTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("Comments table has been created");
+            } else if (action == 'U') {
+                int res = db.createUserTable();
+                if(res == -1){
+                    continue;
+                }
+                System.out.println("User table has been created");
             }
         }
         // Always remember to disconnect from the database when the program 
