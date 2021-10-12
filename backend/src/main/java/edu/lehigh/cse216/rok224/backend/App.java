@@ -4,20 +4,25 @@ package edu.lehigh.cse216.rok224.backend;
 // create an HTTP GET route
 import spark.Spark;
 import java.util.*;
+import java.security.SecureRandom;
 
 // Import Google's JSON library and Oauth
 import com.google.gson.*;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-
-// stuff to get transpot and JSON factory for token verification??
-import java.security.PublicKey;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 /**
  * For now, our app creates an HTTP server that can only get and add data.
  */
 public class App {
+
+    private static final JsonFactory jsonFactory = new GsonFactory();
+    private static final HttpTransport transport = new NetHttpTransport();
 
     /**
      * Get an integer environment varible if it exists, and otherwise return the
@@ -33,6 +38,7 @@ public class App {
         }
         return defaultVal;
     }
+
     public static void main(String[] args) {
 
         // gson provides us with a way to turn JSON into objects, and objects into JSON.
@@ -46,6 +52,9 @@ public class App {
 
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
+
+        // create local hash table for storing temporary session keys
+        HashMap<String, SecureRandom> hash_map = new HashMap<String, SecureRandom>();
 
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
@@ -82,10 +91,6 @@ public class App {
             // get request
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
             String idTokenString = req.mMessage; // get id token from the frontend
-            
-            // need to set up transport -- what is this??
-
-            // need to set up jsonFactory -- what is this??
 
             // set up the verifier (from Google OAuth API) to use to verify the id token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
@@ -104,35 +109,42 @@ public class App {
             } 
             // NOTE: might be able to get rid of all of these else if statements, 
             // might be done automatically with verifier.verify ^^^
-            else if ( false ) { 
-                // verify token signature using Google's publickeys
-            } else if ( true ) {
-                // make sure token's aud matches our client id
-            } else if ( true ) {
-                // make sure the iss of the token is equal to accounts.google.com or https://accounts.google.com
-            } else if ( true ) {
-                // make sure id token has not yet expired (check exp)
-            } else if ( true ) {
-                // make sure hd claim matches @lehigh.edu
-            } else {
-              Payload payload = idToken.getPayload(); 
+            // else if ( false ) { 
+            //     // verify token signature using Google's publickeys
+            // } else if ( false ) {
+            //     // make sure token's aud matches our client id
+            // } else if ( false ) {
+            //     // make sure the iss of the token is equal to accounts.google.com or https://accounts.google.com
+            // } else if ( false ) {
+            //     // make sure id token has not yet expired (check exp)
+            // } else if ( false ) {
+            //     // make sure hd claim matches @lehigh.edu
+            // } 
             
-              // Print user identifier
-              String userId = payload.getSubject();
-              System.out.println("User ID: " + userId);
+            Payload payload = idToken.getPayload(); 
+            
+            // Print user identifier
+            String userId = payload.getSubject();
+            System.out.println("User ID: " + userId);
 
-              // NOTE: we don't need all of this stuff, need to sort through and figure out what we DO need
+            // NOTE: we don't need all of this stuff, need to sort through and figure out what we DO need
+        
+            // Get profile information from payload
+            String email = payload.getEmail();
+            boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+            String name = (String) payload.get("name");
+            String pictureUrl = (String) payload.get("picture");
+            String locale = (String) payload.get("locale");
+            String familyName = (String) payload.get("family_name");
+            String givenName = (String) payload.get("given_name");
             
-              // Get profile information from payload
-              String email = payload.getEmail();
-              boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-              String name = (String) payload.get("name");
-              String pictureUrl = (String) payload.get("picture");
-              String locale = (String) payload.get("locale");
-              String familyName = (String) payload.get("family_name");
-              String givenName = (String) payload.get("given_name");
-            
-            } 
+            // save email and session key in local hash table
+            SecureRandom session_key = new SecureRandom();
+            hash_map.put(payload.getEmail(), session_key);
+
+            // check if user is already in Database
+
+            // 
 
             // // ensure status 200 OK, with a MIME type of JSON
             // response.status(200);
