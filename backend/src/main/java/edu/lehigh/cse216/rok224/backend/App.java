@@ -416,14 +416,15 @@ public class App {
 
         // GET route that returns all comments for a message with given message id.
         Spark.get("/messages/:id/comments", (request, response) -> {
-            // The ":id" suffix in the first parameter to get() becomes 
-            // request.params("id"), so that we can get the requested row ID.  If 
-            // ":id" isn't a number, Spark will reply with a status 500 Internal
-            // Server Error.  Otherwise, we have an integer, and the only possible 
-            // error is that it doesn't correspond to a row with data.         
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");        
 
-            int idx = Integer.parseInt(request.params("id"));
-            Database.RowData data = dataBase.selectOne(idx);
+            // collect all comments with the given message id
+            ArrayList<Database.RowData> data = dataBase.commentTable.selectAll(idx);
 
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
@@ -435,25 +436,27 @@ public class App {
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
-
-
         });
         
         // POST route for adding a new comment to a message
         Spark.post("/messages/:id/comments", (request, response) -> {
-            // NB: if gson.Json fails, Spark will reply with status 500 Internal Server Error
-            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
-
-            // NOTE: currently, this just does the same thing as POST '/messages', need to modify
-
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
-            // NB: even on error, we return 200, but with a JSON object that
-            //     describes the error.
             response.status(200);
-            response.type("application/json");
-            // NB: createEntry checks for null title and message
-            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
-            int newId = dataBase.insertRow(req.mMessage, 0);
+            response.type("application/json"); 
+            
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // add a new comment to the current message with provided content and current user
+            int newId = commentTable.insertRow(req.mMessage, current_user, msg_idx); 
+
             if (newId == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -462,21 +465,35 @@ public class App {
         });
     
         // PUT route for updating a comment on a message
-        Spark.put("/messages/:id/comments'comment_id", (request, response) -> {
-            // NB: if gson.Json fails, Spark will reply with status 500 Internal Server Error
-            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
-
-            // NOTE: currently, this just does the same thing as POST '/messages', need to modify
-
+        Spark.put("/messages/:id/comments/comment_id", (request, response) -> {
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            int comment_idx = Integer.parseInt(request.params("comment_id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
-            // NB: even on error, we return 200, but with a JSON object that
-            //     describes the error.
             response.status(200);
-            response.type("application/json");
-            // NB: createEntry checks for null title and message
-            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
-            int newId = dataBase.insertRow(req.mMessage, 0);
-            if (newId == -1) {
+            response.type("application/json"); 
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // make sure comment exists
+            if ( dataBase.commentTable.selectOne(comment_idx) == null ) {
+                return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
+            }
+            // make sure current user matches the one who created the comment
+            if (dataBase.commentTable.selectOne(comment_idx).mUser != current_user) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
+            }
+
+            // update the comment according to the input message
+            Database.RowData result = dataBase.commentTable.selectOne(dataBase.commentTable.updateOne(comment_idx, req.mMessage));
+
+            if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", "" + newId, null));
@@ -485,21 +502,33 @@ public class App {
 
         // DELETE route for removing a comment from the database.
         Spark.delete("/messages/:id/comments/:comment_id", (request, response) -> {
-            // NOTE: need to update this!!! currently just copied from DELETE '/message/:id'
-
-            // If we can't get an ID, Spark will send a status 500
-            int idx = Integer.parseInt(request.params("id"));
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            int comment_idx = Integer.parseInt(request.params("comment_id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
-            response.type("application/json");
-            // NB: we won't concern ourselves too much with the quality of the 
-            //     message sent on a successful delete
-            //boolean result = dataStore.deleteOne(idx);
-            int result = dataBase.deleteRow(idx);
+            response.type("application/json"); 
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // make sure current user matches the one who created the comment
+            if (dataBase.commentTable.selectOne(comment_idx).mUser != current_user) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
+            }
+
+            // update the comment according to the input message
+            int result = dataBase.commentTable.deleteRow(comment_idx);
+
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+                return gson.toJson(new StructuredResponse("error", "error deleting comment " + comment_idx, null));
             } else {
-                return gson.toJson(new StructuredResponse("ok", null, null));
+                return gson.toJson(new StructuredResponse("ok", "", null));
             }
         });
     }
