@@ -131,25 +131,28 @@ public class App {
         
             // Get profile information from payload
             String email = payload.getEmail();
-            boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-            String name = (String) payload.get("name");
-            String pictureUrl = (String) payload.get("picture");
-            String locale = (String) payload.get("locale");
-            String familyName = (String) payload.get("family_name");
-            String givenName = (String) payload.get("given_name");
+            // boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+            // String name = (String) payload.get("name");
+            // String pictureUrl = (String) payload.get("picture");
+            // String locale = (String) payload.get("locale");
+            // String familyName = (String) payload.get("family_name");
+            // String givenName = (String) payload.get("given_name");
             
             // save email and session key in local hash table
             SecureRandom session_key = new SecureRandom();
-            hash_map.put(payload.getEmail(), session_key);
+            hash_map.put(email, session_key);
 
             // check if user is already in Database
+            Database.RowData user_data = userTable.selectOne(email);
+            if (!user_data) { // if user not found in database
+                int new_user = userTable.insertRow(email, ""); // add user to database w/ empty bio
+            }
 
-            // 
-
-            // // ensure status 200 OK, with a MIME type of JSON
-            // response.status(200);
-            // response.type("application/json");
-            return "";
+            // send the session key back to the frontend
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            return gson.toJson(new StructuredResponse("ok", null, session_key));
         });
 
         // __  __ ______  _____ _____         _____ ______  _____ 
