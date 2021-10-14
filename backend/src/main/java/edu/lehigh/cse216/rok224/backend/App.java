@@ -53,8 +53,8 @@ public class App {
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
 
-        // create local hash table for storing temporary session keys
-        HashMap<String, SecureRandom> hash_map = new HashMap<String, SecureRandom>();
+        // create local hash table for storing temporary session keys and corresponding user email
+        HashMap<SecureRandom, String> hash_map = new HashMap<SecureRandom, String>();
 
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
@@ -140,7 +140,7 @@ public class App {
             
             // save email and session key in local hash table
             SecureRandom session_key = new SecureRandom();
-            hash_map.put(email, session_key);
+            hash_map.put(session_key, email);
 
             // check if user is already in Database
             Database.RowData user_data = userTable.selectOne(email);
@@ -174,20 +174,15 @@ public class App {
         });
 
         // GET route that returns everything for a single message.
-        Spark.get("/messages/:id", (request, response) -> {
-            // The ":id" suffix in the first parameter to get() becomes 
-            // request.params("id"), so that we can get the requested row ID.  If 
-            // ":id" isn't a number, Spark will reply with a status 500 Internal
-            // Server Error.  Otherwise, we have an integer, and the only possible 
-            // error is that it doesn't correspond to a row with data.         
+        Spark.get("/messages/:id", (request, response) -> {        
+            // get id from URL and find in database
+            int idx = Integer.parseInt(request.params("id")); // if id not an int, 500 error
+            Database.RowData data = dataBase.selectOne(idx);
 
-            int idx = Integer.parseInt(request.params("id"));
-            // ensure status 200 OK, with a MIME type of JSON
+            // ensure status 200 OK, with a MIME type of JSON, and return
             response.status(200);
             response.type("application/json");
-            //DataRow data = dataStore.readOne(idx);
-            Database.RowData data = dataBase.selectOne(idx);
-            if (data == null) {
+            if (data == null) { // return an error if id not found
                 return gson.toJson(new StructuredResponse("error", idx + " not found", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
@@ -200,17 +195,21 @@ public class App {
             // SimpleRequest object, extract the title and message, insert them, and return the 
             // ID of the newly created row.
         
-            // NB: if gson.Json fails, Spark will reply with status 500 Internal 
-            // Server Error
-            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
-            // NB: even on error, we return 200, but with a JSON object that
-            //     describes the error.
             response.status(200);
             response.type("application/json");
-            // NB: createEntry checks for null title and message
-            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
-            int newId = dataBase.insertRow(req.mMessage, 0);
+            
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // add input message and current user to messages table
+            int newId = messageTable.insertRow(req.mMessage, current_user); 
+
             if (newId == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -220,14 +219,26 @@ public class App {
 
         // PUT route for updating a message. 
         Spark.put("/messages/:id", (request, response) -> {
-            // If we can't get an ID or can't parse the JSON, Spark will send
-            // a status 500
-            int idx = Integer.parseInt(request.params("id"));
-            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            //DataRow result = dataStore.updateOne(idx, req.mTitle, req.mMessage);
+            
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // make sure current user matches the one who created the message
+            if (dataBase.selectOne(idx).mUser != current_user) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
+            }
+
+            // if users match, update the message
             Database.RowData result = dataBase.selectOne(dataBase.updateOne(idx, req.mMessage));
             if (result == null) {
                 return gson.toJson(new StructuredResponse("error", "unable to update row " + idx, null));
@@ -238,14 +249,26 @@ public class App {
 
         // DELETE route for removing a message from the database.
         Spark.delete("/messages/:id", (request, response) -> {
-            // If we can't get an ID, Spark will send a status 500
-            int idx = Integer.parseInt(request.params("id"));
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            // NB: we won't concern ourselves too much with the quality of the 
-            //     message sent on a successful delete
-            //boolean result = dataStore.deleteOne(idx);
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // make sure current user matches the one who created the message
+            if (dataBase.selectOne(idx).mUser != current_user) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
+            }
+
+            // if user matches, delete the message
             int result = dataBase.deleteRow(idx);
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
@@ -263,13 +286,28 @@ public class App {
 
         // POST route for liking a message
         Spark.post("/messages/:id/likes", (request, response) -> {
-            // If we can't get an ID, Spark will send a status 500
-            int idx = Integer.parseInt(request.params("id"));
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            //call incrementLikes function from Database.java
-            int result = dataBase.incrementLikes(idx);
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // check if like for this user and message already exists 
+            if ( dataBase.likesTable.getLike( current_user, idx )) {
+                // since this is a POST, we aren't updating the data, so return an error
+                return gson.toJson(new StructuredResponse("error", "message " + idx + " already has like status, try put", null));
+            }
+
+            // create a new like with status 1 for the given message and current user in Likes table
+            int result = dataBase.likesTable.newLike( current_user, idx, 1 ));
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
             } else {
@@ -279,13 +317,28 @@ public class App {
 
         // POST route for disliking a message
         Spark.post("/messages/:id/dislikes", (request, response) -> {
-            // If we can't get an ID, Spark will send a status 500
-            int idx = Integer.parseInt(request.params("id"));
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            //call decrementLikes function from Database.java
-            int result = dataBase.decrementLikes(idx);
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // check if like for this user and message already exists 
+            if ( dataBase.likesTable.getLike( current_user, idx )) {
+                // since this is a POST, we aren't updating the data, so return an error
+                return gson.toJson(new StructuredResponse("error", "message " + idx + " already has like status, try put", null));
+            }
+
+            // create a new like with status -1 for the given message and current user in Likes table
+            int result = dataBase.likesTable.newLike( current_user, idx, -1 ));
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
             } else {
@@ -295,18 +348,60 @@ public class App {
     
         // PUT route for updating a like's status
         Spark.put("/messages/:id/likes", (request, response) -> {
-            // NOTE: this currently does the same thing as the original implementation of POSTing a like
-            // THIS NEEDS UPDATED!!
-
-            // If we can't get an ID, Spark will send a status 500
-            int idx = Integer.parseInt(request.params("id"));
+            // get all info from request
+            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            //call incrementLikes function from Database.java
-            int result = dataBase.incrementLikes(idx);
+
+            // user verification using the session key and hash table
+            SecureRandom session_key = req.mSessionKey;
+            String current_user = hash_map.get(session_key);
+            if (current_user == null) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            }
+
+            // did the user click the 'like' or the 'dislike' button?
+            String button = req.mMessage; // button should now be "like" or "dislike" to indicate which button pressed
+            int status = 0;
+            if (button == "like") {
+                status = 1;
+            } else if (button == "dislike") {
+                status = -1;
+            } else { // what did you send me in mMessage lol it doesn't make sense
+                return gson.toJson(new StructuredResponse("error", "invalid like status sent", null));
+            }
+
+            int result;
+            // check if like for this user and message doesn't exist yet 
+            if ( !dataBase.likesTable.getLike( current_user, idx )) {
+                // if the like doesn't already exist, create it with appropriate status and return
+                result = dataBase.likesTable.newLike( current_user, idx, status ));
+            } else {
+                // if like already does exist, update it
+                int old_status = dataBase.likesTable.getLike(current_user, idx, status).status;
+                int new_status = 0;
+                if (status == 1) { // if like button was clicked
+                    if (old_status >= 0) { // if previous status was neutral or like, should result in a like
+                        new_status = 1;
+                    } else { // if previous status was a dislike, should result in a neutral status
+                        new_status = 0;
+                    }
+                } else { // if dislike button was clicked
+                    if (old_status <= 0) { // if previous status was neutral or dislike, should result in a dislike
+                        new_status = -1;
+                    } else { // if previous status was a like, should result in a neutral status
+                        new_status = 0;
+                    }
+                }
+                // update the like row accordingly
+                int result = dataBase.likesTable.getLike(current_user, idx).updateLike(new_status));
+            }
+
+            // send result
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+                return gson.toJson(new StructuredResponse("error", "unable to update like", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
