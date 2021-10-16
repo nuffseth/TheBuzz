@@ -5,6 +5,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Like } from "./like";
+import { Login } from "./login";
+import GoogleLogin from 'react-google-login';
 
 // The 'this' keyword does not behave in JavaScript/TypeScript like it does in
 // Java.  Since there is only one NewEntryForm, we will save it to a global, so
@@ -181,6 +183,42 @@ class EditEntryForm {
     }
 } // end class EditEntryForm
 
+var loginEntryForm: LoginEntryForm
+
+class LoginEntryForm {
+
+    constructor(){
+        $("#loginFormButton").click(this.submitForm);
+    }
+
+    clearForm(){
+
+    }
+
+    submitForm(){
+        const responseGoogle = (response: any) => {
+            console.log(response);
+        }
+        console.log("Login");
+        let logins = document.createElement('div');
+        ReactDOM.render(<Login />, logins);
+        // ReactDOM.render(
+        //     <div>
+
+        //     </div>
+        //     <GoogleLogin
+        //       clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
+        //       buttonText="Login"
+        //       onSuccess={responseGoogle}
+        //       onFailure={responseGoogle}
+        //       cookiePolicy={'single_host_origin'}
+        //     />,
+        //     document.getElementById('googleButton')
+        //   );
+    }
+    
+}
+
 // a global for the main ElementList of the program.  See newEntryForm for 
 // explanation
 var mainList: ElementList;
@@ -261,6 +299,8 @@ class ElementList {
     }
 } // end class ElementList
 
+
+
 // Run some configuration code when the web page loads
 $(document).ready(function () {
     console.log('This is running');
@@ -274,9 +314,12 @@ $(document).ready(function () {
     // Create the object that controls the "Edit Entry" form
     editEntryForm = new EditEntryForm();
 
+    loginEntryForm = new LoginEntryForm();
+
     // set up initial UI state
     $("#editElement").hide();
     $("#addElement").hide();
+    $("#loginElement").hide();
     $("#showElements").show();
     
 

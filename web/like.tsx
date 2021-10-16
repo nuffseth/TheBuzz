@@ -35,7 +35,7 @@ export class Like extends React.Component<LikeProps> {
         this.setState({mLikes: --this.state.mLikes});
         $.ajax({
             type: "POST",
-            url: "/messages/" + this.props.mId + "/likes",
+            url: "/messages/" + this.props.mId + "/dislikes",
         })
     }
 
