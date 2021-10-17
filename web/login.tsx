@@ -2,29 +2,23 @@ import * as React from "react";
 import GoogleLogin from "react-google-login";
 import * as ReactDOM from "react-dom";
 
-var GoogleAuth; // Google Auth object.
-
 export class Login extends React.Component {
-
-
-    // initClient() {
-    //     gapi.client.init({
-    //         clientId: '517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com',
-    //         scope: 'profile email',
-    //         response_type: 'id_token'
-    //     }).then(function () {
-    //         GoogleAuth = gapi.auth2.getAuthInstance();
-    
-    //         // Listen for sign-in state changes.
-    //         GoogleAuth.isSignedIn.listen(updateSigninStatus);
-    //     });
-    // }
 
     responseGoogle = (response: any) => {
         console.log(response);
         console.log(response.profileObj);
-        console.log(response.getAuthResponse().id_token);
-        
+        const email = response.profileObj.email;
+        //response.getAuthResponse().id_token)
+        $.ajax({
+            type: "POST",
+            url: "/login",
+            dataType: "json",
+            data: JSON.stringify({mMessage: response.getAuthResponse().id_token}),
+            success: function(result) {
+                result.body
+                //TODO: Figure out how to get session key.
+            }
+        });
       }
 
     render(){
@@ -37,7 +31,6 @@ export class Login extends React.Component {
             onSuccess = {this.responseGoogle}
             onFailure = {this.responseGoogle}
             cookiePolicy =  {'single_host_origin'}
-            
             />
           </div>
         );
