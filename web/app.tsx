@@ -201,20 +201,32 @@ class LoginEntryForm {
         }
         console.log("Login");
         let logins = document.createElement('div');
+        logins.id = "unique-string";
         ReactDOM.render(<Login />, logins);
+        document.body.appendChild(logins);
         // ReactDOM.render(
-        //     <div>
+        //     // <div>
 
-        //     </div>
-        //     <GoogleLogin
-        //       clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
-        //       buttonText="Login"
-        //       onSuccess={responseGoogle}
-        //       onFailure={responseGoogle}
-        //       cookiePolicy={'single_host_origin'}
-        //     />,
-        //     document.getElementById('googleButton')
-        //   );
+        //     // </div>
+        //     // <GoogleLogin
+        //     //   clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
+        //     //   buttonText="Login"
+        //     //   onSuccess={responseGoogle}
+        //     //   onFailure={responseGoogle}
+        //     //   cookiePolicy={'single_host_origin'}
+        //     // />,
+        //     // document.getElementById('googleButton')
+                
+        //         <GoogleLogin
+        //             clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
+        //             buttonText="Login"
+        //             onSuccess={responseGoogle}
+        //             onFailure={responseGoogle}
+        //             cookiePolicy={'single_host_origin'}
+        //         />,
+        //         document.getElementById('googleButton')
+        //     )
+          //);
     }
     
 }
@@ -269,7 +281,7 @@ class ElementList {
      * buttons() adds a 'edit','delete', and 'like button to the HTML for each row
      */
     private buttons(id: string): string {
-        return "<td><button class='editbtn' data-value='" + id + "'>Edit</button></td>" + "<td><button class='delbtn' data-value='" + id + "'>Delete</button></td>";
+        return "<td><button class='editbtn' data-value='" + id + "'>Edit</button></td>" + "<td><button class='delbtn' data-value='" + id + "'>Delete</button></td>" + "<td><button class='commentbtn' data-value='" + id + "'>Comment</button></button></td>";
     }
 
     /**

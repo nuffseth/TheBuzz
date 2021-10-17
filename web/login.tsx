@@ -23,11 +23,12 @@ export class Login extends React.Component {
     responseGoogle = (response: any) => {
         console.log(response);
         console.log(response.profileObj);
-        
+        console.log(response.getAuthResponse().id_token);
         
       }
 
     render(){
+        console.log("Hello");
         return (
             <div>
             <GoogleLogin
