@@ -196,37 +196,9 @@ class LoginEntryForm {
     }
 
     submitForm(){
-        const responseGoogle = (response: any) => {
-            console.log(response);
-        }
-        console.log("Login");
         let logins = document.createElement('div');
-        logins.id = "unique-string";
         ReactDOM.render(<Login />, logins);
         document.body.appendChild(logins);
-        // ReactDOM.render(
-        //     // <div>
-
-        //     // </div>
-        //     // <GoogleLogin
-        //     //   clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
-        //     //   buttonText="Login"
-        //     //   onSuccess={responseGoogle}
-        //     //   onFailure={responseGoogle}
-        //     //   cookiePolicy={'single_host_origin'}
-        //     // />,
-        //     // document.getElementById('googleButton')
-                
-        //         <GoogleLogin
-        //             clientId="517754603516-8p8sh7b18oa9o62raoi6chiolj5hd5o6.apps.googleusercontent.com"
-        //             buttonText="Login"
-        //             onSuccess={responseGoogle}
-        //             onFailure={responseGoogle}
-        //             cookiePolicy={'single_host_origin'}
-        //         />,
-        //         document.getElementById('googleButton')
-        //     )
-          //);
     }
     
 }
@@ -314,7 +286,7 @@ class ElementList {
 
 
 // Run some configuration code when the web page loads
-$(document).ready(function () {
+$(window).on("load", function () {
     console.log('This is running');
     // Create the object that controls the "New Entry" form
     newEntryForm = new NewEntryForm();

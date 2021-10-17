@@ -44,10 +44,3 @@ export class Login extends React.Component {
     }
 
 }
-
-$(document).ready(function() {
-//    initClient();
-    $("#loginButton").click(function () {
-        console.log("Login")
-    });
-})
