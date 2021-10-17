@@ -132,23 +132,24 @@ public class App {
             // NB: for better testability, each action should be a separate
             //     function call
             char action = prompt(in);
+            // help menu
             if(action == '?'){
                 menu();
-            } else if (action == 'q'){
+            } else if (action == 'q'){          // quit --------------------------------------
                 break;
-            } else if (action == 'T'){
+            } else if (action == 'T'){          // create table --------------------------------------
                 int res = db.createTable();
                 if(res == -1){
                     continue;
                 }
                 System.out.println("Table has been created");
-            } else if (action == 'D'){
+            } else if (action == 'D'){          // drop table --------------------------------------
                 int res = db.dropTable();
                 if(res == -1){
                     continue;
                 }
                 System.out.println("Table has been dropped");
-            } else if (action == '1'){
+            } else if (action == '1'){          // query specific row --------------------------------------
                 int id = getInt(in, "Enter the row ID");
                 if(id == -1){
                     continue;
@@ -159,7 +160,7 @@ public class App {
                     System.out.println(" Message --> " + res.mMessage);
                     System.out.println(" Likes --> " + res.mLikes);
                 }
-            } else if(action == '*') {
+            } else if(action == '*') {          // query for all rows --------------------------------------
                 ArrayList<Database.RowData> res = db.selectAll();
                 if (res == null){
                     continue;
@@ -171,17 +172,22 @@ public class App {
                     System.out.println(" Message --> [" + rd.mMessage + "] ");
                     System.out.println(" Likes --> [" + rd.mLikes + "] ");
                 }
-            } else if(action == '-') {
+            } else if(action == '-') {          // delete a row --------------------------------------
                 int id = getInt(in, "Enter the row ID");
                 if (id == -1){
                     continue;
                 }
-                int res = db.deleteRow(id);
+                String table = getString(in, "Enter table name");
+                if ( !(table.equals("user") || table.equals("comment") || table.equals("likes") || table.equals("message") )) {
+                    continue;
+                }
+
+                int res = db.deleteRow(id, table);
                 if(res == -1){
                     continue;
                 }
                 System.out.println("  " + res + " rows deleted");
-            } else if(action == '+'){
+            } else if(action == '+'){           // insert a row --------------------------------------
                 String message = getString(in, "Enter the message");
                 if(message == null){
                     System.out.println("Can't make an empty message");
@@ -189,7 +195,7 @@ public class App {
                 }
                 int res = db.insertRow(message, 0);
                 System.out.println(res + " rows added");
-            } else if(action == '~'){
+            } else if(action == '~'){           // update a row --------------------------------------
                 int id = getInt(in, "Enter the row ID :> ");
                 if (id == -1){
                     continue;
@@ -200,13 +206,13 @@ public class App {
                     continue;
                 }
                 System.out.println("  " + res + " rows updated");
-            } else if (action == 'i'){ //If incrementing likes
+            } else if (action == 'i'){          // increment likes for a specific row --------------------------------------
                 int id = getInt(in, "Enter the row ID :> ");
                 if(id == -1){
                     continue;
                 }
                 db.incrementLikes(id);
-            } else if (action == 'd'){ //Decrementing likes
+            } else if (action == 'd'){          // decrement likes for a specific row --------------------------------------
                 int id = getInt(in, "Enter the row ID :> ");
                 if(id == -1){
                     continue;
@@ -216,25 +222,25 @@ public class App {
                     continue;
                 }
                 System.out.println("Row has been updated");
-            } else if (action == 'L') {
+            } else if (action == 'L') {         // create likes table --------------------------------------
                 int res = db.createLikesTable();
                 if(res == -1){
                     continue;
                 }
                 System.out.println("Likes table has been created");
-            } else if (action == 'M') {
+            } else if (action == 'M') {         // create message table --------------------------------------
                 int res = db.createMsgTable();
                 if(res == -1){
                     continue;
                 }
                 System.out.println("Message table has been created");
-            } else if (action == 'C') {
+            } else if (action == 'C') {         // create comments table
                 int res = db.createCommentsTable();
                 if(res == -1){
                     continue;
                 }
                 System.out.println("Comments table has been created");
-            } else if (action == 'U') {
+            } else if (action == 'U') {         // create user table
                 int res = db.createUserTable();
                 if(res == -1){
                     continue;

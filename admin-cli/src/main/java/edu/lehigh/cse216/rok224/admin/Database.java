@@ -67,6 +67,30 @@ public class Database {
     private PreparedStatement mMessageTable;
     private PreparedStatement mLikesTable;
     private PreparedStatement mCommentTable;
+
+
+    // UPDATE TABLES 
+    private PreparedStatement mUserTableUpdateName;
+    private PreparedStatement mUserTableUpdateBio;
+    //-----------------------=
+    private PreparedStatement mCommentTableUpdateContent;
+    private PreparedStatement mCommentTableUpdateUserID;
+    private PreparedStatement mCommentTableUpdateMsgID;
+    //-----------------------=
+    private PreparedStatement mLikesTableUpdateStatus;
+    private PreparedStatement mLikesTableUpdateUserID;
+    private PreparedStatement mLikesTableUpdateMsgID;
+    //-----------------------=
+    private PreparedStatement mMessageTableUpdateContent;
+    private PreparedStatement mMessageTableUpdateUserID;
+
+
+    private PreparedStatement mInsertOneUser;
+    private PreparedStatement mInsertOneComment;
+    private PreparedStatement mInsertOneLike;
+    private PreparedStatement mInsertOneMsg;
+    
+    
     
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
@@ -168,19 +192,36 @@ public class Database {
             db.mDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
 
             // table management 
-            db.mUserTable = db.mConnection.prepareStatement("CREATE TABLE userTable (username VARCHAR(500) NOT NULL, bio VARCHAR(500))");
-            db.mCommentTable = db.mConnection.prepareStatement("CREATE TABLE commentTable (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT, msgID INT)");
-            db.mLikesTable = db.mConnection.prepareStatement("CREATE TABLE likesTable (status INT, userID INT, msgID INT)");
-            db.mMessageTable = db.mConnection.prepareStatement("CREATE TABLE messageTable (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT)");
+            db.mUserTable = db.mConnection.prepareStatement("CREATE TABLE user (username VARCHAR(500) NOT NULL, bio VARCHAR(500))");
+                db.mUserTableUpdateName = db.mConnection.prepareStatement("UPDATE user SET username ?");    // this makes sense yes
+                db.mUsertableUpdateBio = db.mConnection.prepareStatement("UPDATE user SET bio = ? WHERE user = ?");
+            db.mCommentTable = db.mConnection.prepareStatement("CREATE TABLE comment (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT, msgID INT)");
+                db.mCommentTableUpdateContent = db.mConnection.prepareStatement("UPDATE comment SET content = ? WHERE id = ?");
+                db.mCommentTableUpdateMsgID = db.mConnection.prepareStatement("UPDATE comment SET msgID = ? WHERE id = ?");
+                db.mCommentTableUpdateUserID = db.mConnection.prepareStatement("UPDATE comment SET userID = ? WHERE id = ?");
+            db.mLikesTable = db.mConnection.prepareStatement("CREATE TABLE likes (id SERIAL PRIMARY KEY, status INT, userID INT, msgID INT)");
+                db.mLikesTableUpdateMsgID = db.mConnection.prepareStatement("UPDATE likes SET msgID WHERE id = ?");
+                db.mLikesTableUpdateUserID = db.mConnection.prepareStatement("UPDATE likes SET usrID WHERE id = ?");
+                db.mLikesTableUpdateStatus = db.mConnection.prepareStatement("UPDATE likes SET status WHERE id = ?");
+            db.mMessageTable = db.mConnection.prepareStatement("CREATE TABLE message (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT)");
+                db.mMessageTableUpdateContent = db.mConnection.prepareStatement("UPDATE message SET content = ? WHERE id = ?");
+                db.mMessageTableUpdateUserID = db.mConnection.prepareStatement("UPDATE message SET userID = ? WHERE id = ?");
 
             // Standard CRUD operations
-            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM tblData WHERE id = ?"); //Deletes a row
-            db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO tblData VALUES (default, ?, ?)"); //Inserts a row
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from tblData"); //Selects all the rows
-            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from tblData WHERE id = ?"); //Selects a specific row
-            db.mUpdateOne = db.mConnection.prepareStatement("UPDATE tblData SET message = ? WHERE id = ?"); //Updates a row
-            db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes + 1 WHERE id = ?"); //Increments the likes column
-            db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE tblData SET likes = likes - 1 WHERE id = ?"); //Decrements the likes column
+            db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM ? WHERE id = ?");                          //Deletes a row
+            // db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO ? VALUES (default, ?, ?)");                //Inserts a row
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from ?");                                     //Selects all the rows
+            db.mSelectOne = db.mConnection.prepareStatement("SELECT * from ? WHERE id = ?");                        //Selects a specific row
+                                                                                                                    
+                                                                                                                    // insertOne but for specific tables
+            // ? gets filled in with java later
+            db.mInsertOneUser = db.mConnection.prepareStatement("INSERT INTO user VALUES (?, ?)");                  
+            db.mInsertOneComment = db.mConnection.prepareStatement("INSERT INTO comment VALUES (default, ?, ?, ?");
+            db.mInsertOneLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (default, ?, ?, ?)");
+            db.mInsertOneMsg = db.mConnection.prepareStatement("INSERT INTO message VALUES (default, ?, ?");
+            // db.mUpdateOne = db.mConnection.prepareStatement("UPDATE ? SET message = ? WHERE id = ?");               //Updates a row
+            // db.mIncrementLikes = db.mConnection.prepareStatement("UPDATE ? SET likes = likes + 1 WHERE id = ?");    //Increments the likes column
+            // db.mDecrementLikes = db.mConnection.prepareStatement("UPDATE ? SET likes = likes - 1 WHERE id = ?");    //Decrements the likes column
 
         } catch (SQLException e){
             System.err.println("Error creating prepared statement");
@@ -216,27 +257,69 @@ public class Database {
         return true;
     }
 
-    /**
-     * Insert a row into the database
-     * 
-     * @param message The message body for this new row
-     * @param likes The amount of likes a message has
-     * 
-     * @return The number of rows that were inserted
-     */
-    int insertRow(String message, int likes){
-        int count = 0;
-        if(testMessage(message) == false){
-            return -1;
-        }
+    // /**
+    //  * Insert a row into the database
+    //  * 
+    //  * @param message The message body for this new row
+    //  * @param likes The amount of likes a message has
+    //  * 
+    //  * @return The number of rows that were inserted
+    //  */
+    // int insertRow(String message, int likes){
+    //     int count = 0;
+    //     if(testMessage(message) == false){
+    //         return -1;
+    //     }
+    //     try {
+    //         mInsertOne.setString(1, message);
+    //         mInsertOne.setInt(2, likes);
+    //         count += mInsertOne.executeUpdate();
+    //     } catch (SQLException e){
+    //         e.printStackTrace();
+    //     }
+    //     return count;
+    // }
+
+    void insertRowUser (String user, String bio) {
         try {
-            mInsertOne.setString(1, message);
-            mInsertOne.setInt(2, likes);
-            count += mInsertOne.executeUpdate();
-        } catch (SQLException e){
+            mInsertOneUser.setString(1, user);  // first param is being set as user
+            mInsertOneUser.setString(2, bio);   // second param is being set as bio
+            mInsertOne.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        return count;
+    }
+
+    void insertRowComment (String content, int userID, int msgID) {
+        try {
+            mInsertOneComment.setString(1, content);
+            mInsertOneComment.setInt(2, userID);
+            mInsertOneComment.setInt(3, msgID);
+            mInsertOne.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void insertRowLikes (int status, int userID, int msgID) {
+        try {
+            mInsertOneLikes.setInt(1, status);
+            mInsertOneLikes.setInt(2, userID);
+            mInsertOneLikes.setInt(3, msgID);
+            mInsertOne.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void insertRowMessage (String content, int userID) {
+        try {
+            mInsertOneMessage.setString(1, content);
+            mInsertOneMessage.setInt(2, userID);
+            mInsertOne.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -266,10 +349,11 @@ public class Database {
      * 
      * @return The data for the requested row, or null if the ID was invalid
      */
-    RowData selectOne(int id){
+    RowData selectOne(int id, String table){
         RowData res = null;
         try {
-            mSelectOne.setInt(1, id);
+            mSelectOne.setInt(2, id);
+            mSelectOne.setString(1, table);
             ResultSet rs = mSelectOne.executeQuery();
             if(rs.next()){
                 res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
@@ -287,10 +371,12 @@ public class Database {
      * 
      * @return The number of rows that were deleted.  -1 indicates an error.
      */
-    int deleteRow(int id){
+    int deleteRow(int id, String table){
         int res = -1;
         try {
-            mDeleteOne.setInt(1, id);
+            mDeleteOne.setInt(2, id);
+            mDeleteOne.setString(1, table);
+
             res = mDeleteOne.executeUpdate();
         } catch (SQLException e){
             e.printStackTrace();
@@ -298,29 +384,29 @@ public class Database {
         return res;
     }
 
-    /**
-     * Update the message for a row in the database
-     * 
-     * @param id The id of the row to update
-     * @param message The new message contents
-     * 
-     * @return The number of rows that were updated.  -1 indicates an error.
-     */
-    int updateOne(int id, String message){
-        int res = -1;
+    // /**
+    //  * Update the message for a row in the database
+    //  * 
+    //  * @param id The id of the row to update
+    //  * @param message The new message contents
+    //  * 
+    //  * @return The number of rows that were updated.  -1 indicates an error.
+    //  */
+    // int updateOne(int id, String message){
+    //     int res = -1;
 
-        if(testMessage(message) == false){
-            return res;
-        }
-        try {
-            mUpdateOne.setString(1, message);
-            mUpdateOne.setInt(2, id);
-            res = mUpdateOne.executeUpdate();
-        } catch (SQLException e){
-            e.printStackTrace();
-        }
-        return res;
-    }
+    //     if(testMessage(message) == false){
+    //         return res;
+    //     }
+    //     try {
+    //         mUpdateOne.setString(1, message);
+    //         mUpdateOne.setInt(2, id);
+    //         res = mUpdateOne.executeUpdate();
+    //     } catch (SQLException e){
+    //         e.printStackTrace();
+    //     }
+    //     return res;
+    // }
 
     /**
      * Create tblData.  If it already exists, this will print an error
