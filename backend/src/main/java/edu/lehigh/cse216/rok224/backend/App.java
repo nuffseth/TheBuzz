@@ -96,7 +96,7 @@ public class App {
         Spark.port(getIntFromEnv("PORT", 4567));
 
         //
-        /// GENERAL ROUTES
+        //// GENERAL ROUTES
         //
 
         // Set up a route for serving the main page
@@ -150,7 +150,7 @@ public class App {
         });
 
         //
-        /// MESSAGE ROUTES
+        //// MESSAGE ROUTES
         //
 
         // GET route that returns a JSON of all messages. 
@@ -201,7 +201,7 @@ public class App {
 
             // add input message and current user to messages table
             // TO DO: MAKE SURE ADMIN'S INSERTROWMESSAGE MATCHES
-            dataBase.insertRowMessage(req.mMessage, req.mEmail); // Database.java handles error checking
+            dataBase.insertRowMessages(req.mMessage, req.mEmail); // Database.java handles error checking
 
             return gson.toJson(new StructuredResponse("ok", "", null));  
         });
@@ -268,7 +268,7 @@ public class App {
         });
 
         //
-        /// LIKES ROUTES
+        //// LIKES ROUTES
         //
 
         // POST route for liking a message
@@ -321,7 +321,7 @@ public class App {
             // check if like for this user and message already exists 
             if ( dataBase.selectOneLike( req.mEmail, msg_idx )) {
                 // since this is a POST, we aren't updating the data, so return an error
-                return gson.toJson(new StructuredResponse("error", "message " + idx + " already has like status, try put", null));
+                return gson.toJson(new StructuredResponse("error", "message " + msg_idx + " already has like status, try put", null));
             }
 
             // create a new like with status -1 for the given message and current user in Likes table
@@ -334,9 +334,12 @@ public class App {
         });
     
         // PUT route for updating a like's status
+        // TO DO: make sure web and flutter know what to send in the JSON about which button was pressed
+        // TO DO: need some way to get the status of a particular like, maybe a selectOne update would do it? (admin)
+        // TO DO: make sure updateStatusLikesTable works (should return an int) (admin)
         Spark.put("/messages/:id/likes", (request, response) -> {
             // get all info from request
-            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
@@ -358,13 +361,14 @@ public class App {
             }
 
             int result;
+            int like_id = getLikeId( req.mEmail, msg_idx );
             // check if like for this user and message doesn't exist yet 
-            if ( !dataBase.likesTable.getLike( current_user, idx )) {
-                // if the like doesn't already exist, create it with appropriate status and return
-                result = dataBase.likesTable.newLike( current_user, idx, status ));
+            if ( dataBase.selectOne( like_id, "likes" ) == null) {
+                // if the like doesn't already exist, create it with appropriate status
+                result = dataBase.insertRowLikes( status, req.mEmail, msg_idx ));
             } else {
                 // if like already does exist, update it
-                int old_status = dataBase.likesTable.getLike(current_user, idx, status).status;
+                int old_status = dataBase.getLikeStaus(like_id);
                 int new_status = 0;
                 if (status == 1) { // if like button was clicked
                     if (old_status >= 0) { // if previous status was neutral or like, should result in a like
@@ -380,7 +384,7 @@ public class App {
                     }
                 }
                 // update the like row accordingly
-                int result = dataBase.likesTable.getLike(current_user, idx).updateLike(new_status));
+                result = dataBase.updateStatusLikesTable(status, like_id);
             }
 
             // send result
@@ -391,24 +395,22 @@ public class App {
             }
         });
 
-    //     _____ ____  __  __ __  __ ______ _   _ _______ _____ 
-    //     / ____/ __ \|  \/  |  \/  |  ____| \ | |__   __/ ____|
-    //    | |   | |  | | \  / | \  / | |__  |  \| |  | | | (___  
-    //    | |   | |  | | |\/| | |\/| |  __| | . ` |  | |  \___ \ 
-    //    | |___| |__| | |  | | |  | | |____| |\  |  | |  ____) |
-    //     \_____\____/|_|  |_|_|  |_|______|_| \_|  |_| |_____/ 
+    //
+    //// COMMENTS ROUTES
+    //
 
         // GET route that returns all comments for a message with given message id.
+        // TO DO: need a way to select all comments with the same message id (admin)
         Spark.get("/messages/:id/comments", (request, response) -> {
             // get all info from request
-            int idx = Integer.parseInt(request.params("id")); // 500 error if fails
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");        
 
             // collect all comments with the given message id
-            ArrayList<Database.RowData> data = dataBase.commentTable.selectAll(idx);
+            ArrayList<Database.RowData> data = dataBase.selectAllComments(msg_idx);
 
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
@@ -423,6 +425,7 @@ public class App {
         });
         
         // POST route for adding a new comment to a message
+        // TO DO: make sure dataBase.insertRowComments works (should return an int) (admin)
         Spark.post("/messages/:id/comments", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
@@ -431,15 +434,12 @@ public class App {
             response.status(200);
             response.type("application/json"); 
             
-            // user verification using the session key and hash table
-            SecureRandom session_key = req.mSessionKey;
-            String current_user = hash_map.get(session_key);
-            if (current_user == null) { // error if session key not found (not logged in)
-                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
             // add a new comment to the current message with provided content and current user
-            int newId = commentTable.insertRow(req.mMessage, current_user, msg_idx); 
+            int newId = dataBase.insertRowComments(req.mMessage, req.mEmail, msg_idx); 
 
             if (newId == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
@@ -449,6 +449,8 @@ public class App {
         });
     
         // PUT route for updating a comment on a message
+        // TO DO: make sure selectOne works for comments (admin)
+        // TO DO: need a way to get the email of user who posted a comment (maybe an update to selectOne) ?
         Spark.put("/messages/:id/comments/comment_id", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
@@ -458,19 +460,16 @@ public class App {
             response.status(200);
             response.type("application/json"); 
 
-            // user verification using the session key and hash table
-            SecureRandom session_key = req.mSessionKey;
-            String current_user = hash_map.get(session_key);
-            if (current_user == null) { // error if session key not found (not logged in)
-                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
             // make sure comment exists
-            if ( dataBase.commentTable.selectOne(comment_idx) == null ) {
+            if ( dataBase.selectOne(comment_idx, "comments") == null ) {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.commentTable.selectOne(comment_idx).mUser != current_user) {
+            if (dataBase.selectOne(comment_idx, "comments").mEmail != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
