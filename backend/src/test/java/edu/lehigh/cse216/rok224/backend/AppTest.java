@@ -45,4 +45,8 @@ public class AppTest
         System.out.println(response);
         assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
     }
+
+    // isolate hash table checking and check for errors in that function
+
+    // isolate oauth token validation, make sure feeding in bogus token results in error
 }

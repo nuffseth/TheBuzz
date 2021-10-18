@@ -4,7 +4,7 @@ package edu.lehigh.cse216.rok224.backend;
 // create an HTTP GET route
 import spark.Spark;
 import java.util.*;
-import java.security.SecureRandom;
+import java.util.UUID;
 
 // Import Google's JSON library and Oauth
 import com.google.gson.*;
@@ -24,6 +24,9 @@ public class App {
     private static final JsonFactory jsonFactory = new GsonFactory();
     private static final HttpTransport transport = new NetHttpTransport();
 
+    // create local hash table for storing temporary session keys and corresponding user email
+    private static HashMap<String, String> hash_map = new HashMap<String, String>();
+
     /**
      * Get an integer environment varible if it exists, and otherwise return the
      * default value.
@@ -37,6 +40,24 @@ public class App {
             return Integer.parseInt(processBuilder.environment().get(envar));
         }
         return defaultVal;
+    }
+
+    /**
+     * Searches the hash map to see if the provided session key mathes a user that has been added
+     * to the hash map. If the user is found, return the user email, if not, return null.
+     * @param email         String user email to search for in the provided hash map
+     * @param session_key   String key to search for in the provided hash map
+     * @param map           Hash map that maps session key to user email
+     * @return              user email, returns null if user not found in map
+     */
+    private static boolean authenticate(String email, String session_key) {
+        // search the provided hash map for the session_key and make sure it matches the email
+        String map_value = hash_map.get(email);
+        // make sure the session key sent matches the value on the hash map
+        if ( map_value.equals(session_key)) {
+            return true; // if user/session_key combo is valid, return true
+        }
+        return false; // email/session_key pair not found in hash map
     }
 
     public static void main(String[] args) {
@@ -53,8 +74,13 @@ public class App {
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
 
-        // create local hash table for storing temporary session keys and corresponding user email
-        HashMap<SecureRandom, String> hash_map = new HashMap<SecureRandom, String>();
+        // set up the verifier (from Google OAuth API) to use to verify the id token
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+            // Specify the CLIENT_ID of the app that accesses the backend:
+            .setAudience(Collections.singletonList(client_id)) //client_id from env
+            // Or, if multiple clients access the backend:
+            //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
+            .build();
 
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
@@ -92,66 +118,37 @@ public class App {
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
             String idTokenString = req.mMessage; // get id token from the frontend
 
-            // set up the verifier (from Google OAuth API) to use to verify the id token
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
-                // Specify the CLIENT_ID of the app that accesses the backend:
-                .setAudience(Collections.singletonList(client_id)) //client_id from env
-                // Or, if multiple clients access the backend:
-                //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
-                .build();
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
             
             // verify the id token sent to us from the frontend
             GoogleIdToken idToken = verifier.verify(idTokenString);
             if (idToken == null) { 
-                // check if id token is null
-                System.out.println("Invalid ID token.");
-                // return an error
+                // check if id token not verified, give error
+                return gson.toJson(new StructuredResponse("error", null, null));
             } 
-            // NOTE: might be able to get rid of all of these else if statements, 
-            // might be done automatically with verifier.verify ^^^
-            // else if ( false ) { 
-            //     // verify token signature using Google's publickeys
-            // } else if ( false ) {
-            //     // make sure token's aud matches our client id
-            // } else if ( false ) {
-            //     // make sure the iss of the token is equal to accounts.google.com or https://accounts.google.com
-            // } else if ( false ) {
-            //     // make sure id token has not yet expired (check exp)
-            // } else if ( false ) {
-            //     // make sure hd claim matches @lehigh.edu
-            // } 
             
             Payload payload = idToken.getPayload(); 
-            
-            // Print user identifier
-            String userId = payload.getSubject();
-            System.out.println("User ID: " + userId);
-
-            // NOTE: we don't need all of this stuff, need to sort through and figure out what we DO need
-        
-            // Get profile information from payload
             String email = payload.getEmail();
-            // boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
-            // String name = (String) payload.get("name");
-            // String pictureUrl = (String) payload.get("picture");
-            // String locale = (String) payload.get("locale");
-            // String familyName = (String) payload.get("family_name");
-            // String givenName = (String) payload.get("given_name");
+
+            // check that email ends in @lehigh.edu
+
             
             // save email and session key in local hash table
-            SecureRandom session_key = new SecureRandom();
+            String session_key = UUID.randomUUID().toString();
+
+            // make a random string (maybe like 256 characters??)
             hash_map.put(session_key, email);
 
             // check if user is already in Database
-            Database.RowData user_data = userTable.selectOne(email);
+            // maybe a try/catch ?? 
+            Database.RowData user_data = dataBase.selectOne(email, "message");
             if (!user_data) { // if user not found in database
-                int new_user = userTable.insertRow(email, ""); // add user to database w/ empty bio
+                dataBase.insertRowUser(email, ""); // add user to database w/ empty bio
             }
 
             // send the session key back to the frontend
-            // ensure status 200 OK, with a MIME type of JSON
-            response.status(200);
-            response.type("application/json");
             return gson.toJson(new StructuredResponse("ok", null, session_key));
         });
 
@@ -177,7 +174,7 @@ public class App {
         Spark.get("/messages/:id", (request, response) -> {        
             // get id from URL and find in database
             int idx = Integer.parseInt(request.params("id")); // if id not an int, 500 error
-            Database.RowData data = dataBase.selectOne(idx);
+            Database.messageRowData data = dataBase.selectOne(idx, "message");
 
             // ensure status 200 OK, with a MIME type of JSON, and return
             response.status(200);
@@ -200,21 +197,14 @@ public class App {
             response.status(200);
             response.type("application/json");
             
-            // user verification using the session key and hash table
-            SecureRandom session_key = req.mSessionKey;
-            String current_user = hash_map.get(session_key);
-            if (current_user == null) { // error if session key not found (not logged in)
-                return gson.toJson(new StructuredResponse("error", "invalid session key", null));
+            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
             // add input message and current user to messages table
-            int newId = messageTable.insertRow(req.mMessage, current_user); 
+            dataBase.insertRowMessage(req.mMessage, req.mEmail); // Database.java handles error checking
 
-            if (newId == -1) {
-                return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
-            } else {
-                return gson.toJson(new StructuredResponse("ok", "" + newId, null));
-            }
+            return gson.toJson(new StructuredResponse("ok", "", null));  
         });
 
         // PUT route for updating a message. 
@@ -227,7 +217,7 @@ public class App {
             response.type("application/json");
             
             // user verification using the session key and hash table
-            SecureRandom session_key = req.mSessionKey;
+            String session_key = req.mSessionKey;
             String current_user = hash_map.get(session_key);
             if (current_user == null) { // error if session key not found (not logged in)
                 return gson.toJson(new StructuredResponse("error", "invalid session key", null));
@@ -257,7 +247,7 @@ public class App {
             response.type("application/json");
 
             // user verification using the session key and hash table
-            SecureRandom session_key = req.mSessionKey;
+            String session_key = req.mSessionKey;
             String current_user = hash_map.get(session_key);
             if (current_user == null) { // error if session key not found (not logged in)
                 return gson.toJson(new StructuredResponse("error", "invalid session key", null));

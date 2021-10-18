@@ -14,5 +14,6 @@ public class SimpleRequest {
      * The message being provided by the client.
      */
     public String mMessage;
-    public SecureRandom mSessionKey;
+    public String mSessionKey; // maybe refactor to use an HTTP header??
+    public String mEmail;
 }
