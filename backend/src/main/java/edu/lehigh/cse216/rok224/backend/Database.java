@@ -121,6 +121,9 @@ public class Database {
          */
         int mLikes;
 
+
+        // TODO: MODIFY ROWDATA
+
         /**
          * Constructor for RowData
          * @param id: Id of post
@@ -198,17 +201,17 @@ public class Database {
             db.mUserTable = db.mConnection.prepareStatement("CREATE TABLE user (username VARCHAR(500) NOT NULL, bio VARCHAR(500))");
                 db.mUserTableUpdateName = db.mConnection.prepareStatement("UPDATE user SET username ?");    // this makes sense yes
                 db.mUserTableUpdateBio = db.mConnection.prepareStatement("UPDATE user SET bio = ? WHERE user = ?");
-            db.mCommentTable = db.mConnection.prepareStatement("CREATE TABLE comment (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT, msgID INT)");
+            db.mCommentTable = db.mConnection.prepareStatement("CREATE TABLE comment (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID VARCHAR(500), msgID INT)");
                 db.mCommentTableUpdateContent = db.mConnection.prepareStatement("UPDATE comment SET content = ? WHERE id = ?");
                 db.mCommentTableUpdateMsgID = db.mConnection.prepareStatement("UPDATE comment SET msgID = ? WHERE id = ?");
                 db.mCommentTableUpdateUserID = db.mConnection.prepareStatement("UPDATE comment SET userID = ? WHERE id = ?");
-            db.mLikesTable = db.mConnection.prepareStatement("CREATE TABLE likes (id SERIAL PRIMARY KEY, status INT, userID INT, msgID INT)");
+            db.mLikesTable = db.mConnection.prepareStatement("CREATE TABLE likes (id SERIAL PRIMARY KEY, status INT, userID INT, msgID VARCHAR(500))");
                 db.mLikesTableUpdateMsgID = db.mConnection.prepareStatement("UPDATE likes SET msgID = ? WHERE id = ?");
-                db.mLikesTableUpdateUserID = db.mConnection.prepareStatement("UPDATE likes SET usrID = ? WHERE id = ?");
+                db.mLikesTableUpdateUserID = db.mConnection.prepareStatement("UPDATE likes SET userID = ? WHERE id = ?");
                 db.mLikesTableUpdateStatus = db.mConnection.prepareStatement("UPDATE likes SET status = ? WHERE id = ?");
             // USERS needs a way to, given the name, get the bio
             // expecting to send in the email string and get the user id, but we might just make a user id, but we might not need that
-            db.mMessageTable = db.mConnection.prepareStatement("CREATE TABLE message (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID INT)");
+            db.mMessageTable = db.mConnection.prepareStatement("CREATE TABLE message (id SERIAL PRIMARY KEY, content VARCHAR(500) NOT NULL, userID VARCHAR(500))");
                 db.mMessageTableUpdateContent = db.mConnection.prepareStatement("UPDATE message SET content = ? WHERE id = ?");
                 db.mMessageTableUpdateUserID = db.mConnection.prepareStatement("UPDATE message SET userID = ? WHERE id = ?");
 
@@ -286,7 +289,12 @@ public class Database {
     //     return count;
     // }
 
+    // TODO: RETURN -1/NULL INSTEAD OF 
     void insertRowUser (String user, String bio) {
+        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
+        
+
+
         try {
             mInsertOneUser.setString(1, user);  // first param is being set as user
             mInsertOneUser.setString(2, bio);   // second param is being set as bio
@@ -296,10 +304,10 @@ public class Database {
         }
     }
 
-    void insertRowComments (String content, int userID, int msgID) {
+    void insertRowComments (String content, String userID, int msgID) {
         try {
             mInsertOneComment.setString(1, content);
-            mInsertOneComment.setInt(2, userID);
+            mInsertOneComment.setString(2, userID);
             mInsertOneComment.setInt(3, msgID);
             mInsertOneComment.executeUpdate();
         } catch (SQLException e) {
@@ -307,10 +315,10 @@ public class Database {
         }
     }
 
-    void insertRowLikes (int status, int userID, int msgID) {
+    void insertRowLikes (int status, String userID, int msgID) {
         try {
             mInsertOneLike.setInt(1, status);
-            mInsertOneLike.setInt(2, userID);
+            mInsertOneLike.setString(2, userID);
             mInsertOneLike.setInt(3, msgID);
             mInsertOneLike.executeUpdate();
         } catch (SQLException e) {
@@ -432,10 +440,10 @@ public class Database {
         }
     }
     //======================================================================  
-    void updateContentCommentsTable(String content, int userID) {
+    void updateContentCommentsTable(String content, String userID) {
         try {
             mCommentTableUpdateContent.setString(1, content);
-            mCommentTableUpdateContent.setInt(2, userID);
+            mCommentTableUpdateContent.setString(2, userID);
         } catch(SQLException e) {
             e.printStackTrace();
         }
@@ -450,9 +458,9 @@ public class Database {
         }
     }
 
-    void updateUserIDCommentsTable(int userID, int id) {
+    void updateUserIDCommentsTable(String userID, int id) {
         try {
-            mCommentTableUpdateUserID.setInt(1, userID);
+            mCommentTableUpdateUserID.setString(1, userID);
             mCommentTableUpdateUserID.setInt(2, id);
         } catch(SQLException e) {
             e.printStackTrace();
@@ -469,9 +477,9 @@ public class Database {
         }
     }
 
-    void updateUserIDLikesTable(int userID, int id) {
+    void updateUserIDLikesTable(String userID, int id) {
         try {
-            mLikesTableUpdateUserID.setInt(1, userID);
+            mLikesTableUpdateUserID.setString(1, userID);
             mLikesTableUpdateUserID.setInt(2, id);
         } catch(SQLException e) {
             e.printStackTrace();
@@ -498,9 +506,9 @@ public class Database {
     }
 
 
-    void updateUserIDMessageTable(int userID, int id){ 
+    void updateUserIDMessageTable(String userID, int id){ 
         try {
-            mMessageTableUpdateUserID.setInt(1, userID);
+            mMessageTableUpdateUserID.setString(1, userID);
             mMessageTableUpdateUserID.setInt(2, id);
         } catch(SQLException e) {
             e.printStackTrace();
