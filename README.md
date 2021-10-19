@@ -1,6 +1,12 @@
 # CSE 216 Group 4 Phase 2
 
+## Trello for Phase 2:
 ## https://trello.com/invite/b/qx0dDNpf/ef397a1a88f32d93c6a4924f2cb10d01/phase2 
+
+## Documentation for Phase 2:
+https://docs.google.com/document/d/1dhGwPmtd1KgUvqD6buJGG29jkggM9uZtNRD2k_axUEc/edit?usp=sharing
+## PM Design Thinking Template: 
+https://drive.google.com/file/d/1o24ie225GN_rDSuF-ls9HQaeWHoS3Fpf/view?usp=sharing
 
 ## Contributors
 1. Rohan Kakkilaya (rok224) - Web  
