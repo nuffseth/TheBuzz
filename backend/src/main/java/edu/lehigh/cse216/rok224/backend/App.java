@@ -3,6 +3,9 @@ package edu.lehigh.cse216.rok224.backend;
 // Import the Spark package, so that we can make use of the "get" function to 
 // create an HTTP GET route
 import spark.Spark;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.UUID;
 
@@ -21,10 +24,11 @@ import com.google.api.client.json.gson.GsonFactory;
  */
 public class App {
 
-    private static final JsonFactory jsonFactory = new GsonFactory();
-    private static final HttpTransport transport = new NetHttpTransport();
+    protected static final JsonFactory jsonFactory = new GsonFactory(); // protected so able to use in AppTest
+    protected static final HttpTransport transport = new NetHttpTransport(); // protected so able to use in AppTest
 
     // create local hash table for storing temporary session keys and corresponding user email
+    // map user email to session key
     protected static HashMap<String, String> hash_map = new HashMap<String, String>();
 
     /**
@@ -54,10 +58,33 @@ public class App {
         // search the provided hash map for the session_key and make sure it matches the email
         String map_value = hash_map.get(email);
         // make sure the session key sent matches the value on the hash map
-        if ( map_value.equals(session_key)) {
-            return true; // if user/session_key combo is valid, return true
+        if ( map_value == null ) { // if email not found, return false
+            return false;
+        }
+        if ( map_value.equals(session_key)) { // if user/session_key combo is valid, return true
+            return true; 
         }
         return false; // email/session_key pair not found in hash map
+    }
+
+    protected static String verifyIdToken(GoogleIdTokenVerifier verifier, String idTokenString) {
+        // verify the id token sent to us from the frontend
+        GoogleIdToken idToken;
+        try {
+            idToken = verifier.verify(idTokenString);
+            if (idToken == null) { // check if id token not verified, give error
+                return null;
+            } 
+            Payload payload = idToken.getPayload(); 
+            String email = payload.getEmail();
+ 
+            System.out.println("email: " + email);
+            return email;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } 
     }
 
     public static void main(String[] args) {
@@ -124,21 +151,10 @@ public class App {
             response.type("application/json");
             
             // verify the id token sent to us from the frontend
-            GoogleIdToken idToken = verifier.verify(idTokenString);
-            if (idToken == null) { // check if id token not verified, give error
-                return gson.toJson(new StructuredResponse("error", null, null));
-            } 
-            
-            Payload payload = idToken.getPayload(); 
-            String email = payload.getEmail();
-
-            System.out.println("payload: ");
-            System.out.println(payload);
+            String email = verifyIdToken(verifier, idTokenString);
 
             // check that email ends in @lehigh.edu
             String[] values = email.split("@", 0); 
-            System.out.println("values[0]: " + values[0]);
-            System.out.println("values[1]: " + values[1]);
 
             // values[0] should be username (ex: arg422), values[1] should be "lehigh.edu"
             if ( values.length != 2 || !values[1].equals("lehigh.edu") ) {
@@ -152,7 +168,7 @@ public class App {
             // save user and session key in local hash table
             String session_key = UUID.randomUUID().toString(); // make a random string
             System.out.println("random session key: " + session_key);
-            hash_map.put(session_key, username);
+            hash_map.put(username, session_key);
 
             // add user to user table, Database.java won't add duplicates
             System.out.println("inserting user into database...");
