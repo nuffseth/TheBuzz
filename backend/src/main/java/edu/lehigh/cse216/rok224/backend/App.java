@@ -109,6 +109,7 @@ public class App {
         // TO DO: check OAuth verification now that we have OAuth on the frontend
         // TO DO: make sure dataBase.insertRowUser works (admin)
         Spark.post("/login", (request, response) -> {
+            System.out.println("entered /login request");
             // This route is where all OAuth authentication occurs. The user's id_token should be sent
             // to this route as a part of the request object, which is a JSON. The field that holds the
             // id token is mMessage. This route then takes that id token, verifies it, and authenticates the user.
