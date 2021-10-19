@@ -5,7 +5,6 @@ package edu.lehigh.cse216.rok224.backend;
 import spark.Spark;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.UUID;
 
