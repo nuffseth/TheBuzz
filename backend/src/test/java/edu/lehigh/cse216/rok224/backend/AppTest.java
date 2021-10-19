@@ -4,6 +4,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import com.google.gson.*;
+import java.util.UUID;
 
 /**
  * Unit test for simple App.
@@ -47,6 +48,22 @@ public class AppTest
     }
 
     // isolate hash table checking and check for errors in that function
+    public void testHashTable() {
+        String valid_user = "valid123";
+        String valid_key = UUID.randomUUID().toString();
+        String invalid_user = "invalid456";
+        String invalid_key = UUID.randomUUID().toString();
+
+        // add valid user and valid key to the hash table
+        App.hash_map.put(valid_key, valid_user);
+
+        // try to authenticate invalid user and key combination
+        boolean result = App.authenticate(invalid_key, invalid_user);
+        assertTrue(result == false); // invalid key/user combo should return false
+
+        result = App.authenticate(valid_key, valid_user);
+        assertTrue(result == true); // valid key/user combo should return true
+    }
 
     // isolate oauth token validation, make sure feeding in bogus token results in error
 }

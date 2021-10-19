@@ -25,7 +25,7 @@ public class App {
     private static final HttpTransport transport = new NetHttpTransport();
 
     // create local hash table for storing temporary session keys and corresponding user email
-    private static HashMap<String, String> hash_map = new HashMap<String, String>();
+    protected static HashMap<String, String> hash_map = new HashMap<String, String>();
 
     /**
      * Get an integer environment varible if it exists, and otherwise return the
@@ -48,9 +48,9 @@ public class App {
      * @param email         String user email to search for in the provided hash map
      * @param session_key   String key to search for in the provided hash map
      * @param map           Hash map that maps session key to user email
-     * @return              user email, returns null if user not found in map
+     * @return              true if user/key combo is found in hash map, false otherwise
      */
-    private static boolean authenticate(String email, String session_key) {
+    protected static boolean authenticate(String email, String session_key) {
         // search the provided hash map for the session_key and make sure it matches the email
         String map_value = hash_map.get(email);
         // make sure the session key sent matches the value on the hash map
