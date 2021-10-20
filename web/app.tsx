@@ -183,6 +183,8 @@ class EditEntryForm {
     }
 } // end class EditEntryForm
 
+
+//Login entry form
 var loginEntryForm: LoginEntryForm
 
 class LoginEntryForm {
@@ -210,6 +212,38 @@ class LoginEntryForm {
         $("#showElements").show();
     }
 
+}
+
+var profileEntryForm: ProfileEntryForm
+
+class ProfileEntryForm {
+    
+    constructor(){
+        $("#profileButton").click(this.goToProfile);
+        $("#profileCancel").click(this.goBack);
+    }
+
+    goToProfile(){
+        $("#showElements").hide();
+        $("#profileElement").show();
+    }
+
+    goBack(){
+        $("#showElements").show();
+        $("#profileElement").hide();
+    }
+}
+
+var commentEntryForm: CommentEntryForm
+
+class CommentEntryForm {
+    constructor(){
+
+    }
+
+    init(){
+
+    }
 }
 
 // a global for the main ElementList of the program.  See newEntryForm for 
@@ -256,6 +290,7 @@ class ElementList {
         $(".delbtn").click(mainList.clickDelete);
         // Find all of the Edit buttons, and set their behavior
         $(".editbtn").click(mainList.clickEdit);
+        $(".commentBtn").click(mainList.clickComment);
     }
 
     /**
@@ -290,6 +325,16 @@ class ElementList {
             success: editEntryForm.init
         })
     }
+
+    private clickComment(){
+        let id = $(this).data("value");
+        $.ajax({
+            type: "GET",
+            url: "/messages/" + id + "/comments/",
+            dataType: "json",
+            success: commentEntryForm.init
+        })
+    }
 } // end class ElementList
 
 
@@ -309,13 +354,17 @@ $(window).on("load", function () {
 
     loginEntryForm = new LoginEntryForm();
 
+    profileEntryForm = new ProfileEntryForm();
+
+    commentEntryForm = new CommentEntryForm();
+
     // set up initial UI state
     $("#editElement").hide();
     $("#addElement").hide();
     $("#loginElement").hide();
     $("#showElements").show();
-    $("#loginElement").show();
-    
+    $("#loginElement").hide();
+    $("#profileElement").hide();
 
     // set up the "Add Message" button
     $("#showFormButton").click(function () {
