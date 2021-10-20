@@ -106,35 +106,87 @@ public class Database {
      * Database are tightly coupled: if one changes, the other should too.
      */
     public static class RowData {
-        /**
-         * The ID of this row of the database
-         */
-        int mId;
+        // The ID of this row of the database
+         
+        // TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
+            // selectAll and selectOne break big time
+        
+        // int mId;
 
-        /**
-         * The message stored in this row
-         */
-        String mMessage;
+        // // The message stored in this row
+        // String mMessage;
 
-        /**
-         * The amount of likes for the message
-         */
-        int mLikes;
+        // // The amount of likes for the message
+        // int mLikes;
 
 
-        // TODO: MODIFY ROWDATA
+        // // TODO: MODIFY ROWDATA
 
-        /**
-         * Constructor for RowData
-         * @param id: Id of post
-         * @param message: The message itself
-         * @param likes: The amount of likes it has
-         */
-        public RowData(int id, String message, int likes){
-            mId = id;
-            mMessage = message;
-            mLikes = likes;    
+        // /**
+        //  * Constructor for RowData
+        //  * @param id: Id of post
+        //  * @param message: The message itself
+        //  * @param likes: The amount of likes it has
+        //  */
+        // public RowData(int id, String message, int likes){
+        //     mId = id;
+        //     mMessage = message;
+        //     mLikes = likes;    
+        // }
+
+        // four separate constructors for rowData that each pertain to the different tables
+        
+        String mUserID; // needed for all constructors
+        int mMessageID; // needed for all except user table
+
+        String mContent;// comments or messages can have content
+        
+        // user table unique thing
+        String mBio;     // only the user table needs a bio
+
+
+        // comment table unqiue thing
+        int mCommentID; // only comment table needs a commentID
+
+        // likes table unique stuff
+        int mLikeID;    // only the likes table needs a likeID
+        int mStatus;  
+        
+        // messages table unique stuff
+        int mMsgID;
+        int mNumLikes;
+
+        // user table construct 
+        public RowData(String userID, String bio) {
+            mUserID = userID;
+            mBio = bio;
         }
+
+        // comments table constructor 
+        public RowData(int commentID, String userID, int msgID, String content) {
+            mCommentID = commentID;
+            mUserID = userID;
+            mMsgID = msgID;
+            mContent = content;
+        }
+
+        // likes table constructor
+        public RowData(int likeID, String userID, int msgID, int status) {
+            mLikeID = likeID;
+            mUserID = userID;
+            mMsgID = msgID;
+            mStatus = status;
+        }
+
+        // message table constructor
+        public RowData(int msgID, String userID, String content, int numLikes /* TODO: ARRAY OF COMMENTS */) {
+            mMsgID = msgID;
+            mUserID = userID;
+            mContent = content;
+            mNumLikes = numLikes;
+        }
+        
+        
     }
 
     /**
@@ -289,7 +341,6 @@ public class Database {
     //     return count;
     // }
 
-    // TODO: RETURN -1/NULL INSTEAD OF NOTHING AT ALL
     int insertRowUser (String user, String bio) {
         // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
         // i need to both check the overall validity of the strings getting passed in,
