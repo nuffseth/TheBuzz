@@ -16,13 +16,13 @@ export class Login extends React.Component {
             data: JSON.stringify({mMessage: response.getAuthResponse().id_token}),
             success: function(result) {
                 result.body
+                console.log(response);
                 //TODO: Figure out how to get session key.
             }
         });
       }
 
     render(){
-        console.log("Hello");
         return (
             <div>
             <GoogleLogin

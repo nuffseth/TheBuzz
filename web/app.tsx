@@ -189,18 +189,27 @@ class LoginEntryForm {
 
     constructor(){
         $("#loginFormButton").click(this.submitForm);
-    }
-
-    clearForm(){
-
+        $("#loginButton").click(this.login);
+        $("#loginCancel").click(this.goBack);
     }
 
     submitForm(){
+        $("#loginElement").show();
+        $("#showElements").hide();
+    }
+
+    login(){
         let logins = document.createElement('div');
         ReactDOM.render(<Login />, logins);
         document.body.appendChild(logins);
     }
     
+    goBack(){
+        $("#addElement").hide();
+        $("#loginElement").hide();
+        $("#showElements").show();
+    }
+
 }
 
 // a global for the main ElementList of the program.  See newEntryForm for 
@@ -305,6 +314,7 @@ $(window).on("load", function () {
     $("#addElement").hide();
     $("#loginElement").hide();
     $("#showElements").show();
+    $("#loginElement").show();
     
 
     // set up the "Add Message" button
