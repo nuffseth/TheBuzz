@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(Duration(seconds: 2));
     if (isSignedIn) {
       print("user signed in");
-      Navigator.pushReplacementNamed(context, '/home')
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }
