@@ -7,6 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+
+import javax.swing.plaf.metal.MetalComboBoxButton;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -95,6 +98,8 @@ public class Database {
     private PreparedStatement mSelectOneBio;
     
     
+    
+
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
@@ -105,88 +110,88 @@ public class Database {
      * abstract representation of a row of the database.  RowData and the 
      * Database are tightly coupled: if one changes, the other should too.
      */
-    public static class RowData {
-        // The ID of this row of the database
+    // public static class RowData {
+    //     // The ID of this row of the database
          
-        // TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
-            // selectAll and selectOne break big time
+    //     //TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
+    //       //  selectAll and selectOne break big time
         
-        // int mId;
+    //     int mId;
 
-        // // The message stored in this row
-        // String mMessage;
+    //     // The message stored in this row
+    //     String mMessage;
 
-        // // The amount of likes for the message
-        // int mLikes;
+    //     // The amount of likes for the message
+    //     int mLikes;
 
 
-        // // TODO: MODIFY ROWDATA
+    //     // TODO: MODIFY ROWDATA
 
-        // /**
-        //  * Constructor for RowData
-        //  * @param id: Id of post
-        //  * @param message: The message itself
-        //  * @param likes: The amount of likes it has
-        //  */
-        // public RowData(int id, String message, int likes){
-        //     mId = id;
-        //     mMessage = message;
-        //     mLikes = likes;    
-        // }
-
-        // four separate constructors for rowData that each pertain to the different tables
+    //     /**
+    //      * Constructor for RowData
+    //      * @param id: Id of post
+    //      * @param message: The message itself
+    //      * @param likes: The amount of likes it has
+    //      */
+    //     public RowData(int id, String message, int likes){
+    //         mId = id;
+    //         mMessage = message;
+    //         mLikes = likes;    
+    //     }        
         
-        String mUserID; // needed for all constructors
-        int mMessageID; // needed for all except user table
+    // }
 
-        String mContent;// comments or messages can have content
-        
-        // user table unique thing
-        String mBio;     // only the user table needs a bio
+    public static class RowDataUser {
+        String mUserID;
+        String mBio;
 
-
-        // comment table unqiue thing
-        int mCommentID; // only comment table needs a commentID
-
-        // likes table unique stuff
-        int mLikeID;    // only the likes table needs a likeID
-        int mStatus;  
-        
-        // messages table unique stuff
-        int mMsgID;
-        int mNumLikes;
-
-        // user table construct 
-        public RowData(String userID, String bio) {
+        public RowDataUser(String userID, String bio) {
             mUserID = userID;
             mBio = bio;
         }
+    }
+    public static class RowDataComments {
+        String mUserID;
+        int mCommentID;
+        int mMsgID;
+        String mContent;
 
-        // comments table constructor 
-        public RowData(int commentID, String userID, int msgID, String content) {
-            mCommentID = commentID;
+        public RowDataComments(String userID, int commentID, int msgID, String content) {
             mUserID = userID;
+            mCommentID = commentID;
             mMsgID = msgID;
             mContent = content;
         }
+    }
+    public static class RowDataLikes {
+        String mUserID;
+        int mLikeID;
+        int mMsgID;
+        int mStatus;
 
-        // likes table constructor
-        public RowData(int likeID, String userID, int msgID, int status) {
-            mLikeID = likeID;
+
+        public RowDataLikes(String userID, int likeID, int msgID, int status) {
             mUserID = userID;
+            mLikeID = likeID;
             mMsgID = msgID;
             mStatus = status;
         }
+    }
+    public static class RowDataMessages {
+        String mUserID;
+        int mMsgID;
+        String mContent;
+        int mNumLikes;
+        ArrayList<RowDataComments> mComments;
 
-        // message table constructor
-        public RowData(int msgID, String userID, String content, int numLikes /* TODO: ARRAY OF COMMENTS */) {
-            mMsgID = msgID;
+
+        public RowDataMessages(String userID, int msgID, String content, int numLikes, ArrayList<RowDataComments> comments) {
             mUserID = userID;
+            mMsgID = msgID;
             mContent = content;
             mNumLikes = numLikes;
+            mComments = comments; // this is maybe probably wrong b/c arraylists :D
         }
-        
-        
     }
 
     /**
@@ -271,6 +276,9 @@ public class Database {
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM ? WHERE id = ?");                          //Deletes a row
             // db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO ? VALUES (default, ?, ?)");                //Inserts a row
             db.mSelectAll = db.mConnection.prepareStatement("SELECT * from ?");                                     //Selects all the rows
+            
+            // TODO: UPDATE SQL HERE SINCE WE NOW HAVE MUTIPLE ROWDATA'S FOR EACH TABLE
+            
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from ? WHERE id = ?");                        //Selects a specific row
             db.mSelectOneBio = db.mConnection.prepareStatement("SELECT * from ? WHERE username = ?");                        //Selects a specific row
                                                                                                                     
@@ -292,6 +300,19 @@ public class Database {
         }
         return db;
     }
+
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+
 
     /**
      * Close the current connection to the database, if one exists.
@@ -342,6 +363,7 @@ public class Database {
     // }
 
     int insertRowUser (String user, String bio) {
+        
         // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
         // i need to both check the overall validity of the strings getting passed in,
         // as well as, in the case that we do get a valid string, if it already exists
@@ -364,7 +386,6 @@ public class Database {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return ret;
     }
 
@@ -424,6 +445,10 @@ public class Database {
         return ret;
     }
 
+
+
+
+
     /**
      * Query the database for a list of all their IDs
      * 
@@ -443,6 +468,24 @@ public class Database {
             return null;
         }
     }
+
+    // with old rowData, it just queried 
+    
+    ArrayList<RowDataComments> selectAllComments() {
+
+    }
+
+    ArrayList<RowDataUser> selectAllUser() {
+
+    }
+
+    ArrayList<RowDataMessages> selectAllMessages() {
+
+    }
+    
+    // maybe also for likes?
+
+
 
     /**
      * Get all data for a specific row, by ID
@@ -465,6 +508,22 @@ public class Database {
         }
         return res;
     }
+
+
+    RowDataUser selectOneUser(String userID) {
+
+    }
+
+    RowDataComments selectOneComment(int msgID) {
+
+    }
+
+    RowDataLikes selectOneLike(String userID, int msgID) {
+
+    }
+
+
+
 
     /**
      * Delete a row by ID
@@ -545,16 +604,16 @@ public class Database {
         return ret;
     }
     //======================================================================  
-    int updateContentCommentsTable(String content, String userID) {
+    int updateContentCommentsTable(String content, String msgID) {
         int ret = 0;
         
-        if (testString(content) == false || testString(userID) == false) {
+        if (testString(content) == false || testString(msgID) == false) {
             return -1;
         }
 
         try {
             mCommentTableUpdateContent.setString(1, content);
-            mCommentTableUpdateContent.setString(2, userID);
+            mCommentTableUpdateContent.setString(2, msgID);
             ret += mCommentTableUpdateContent.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
@@ -635,7 +694,7 @@ public class Database {
     int updateStatusLikesTable(int status, int id) {
         int ret = 0;
         
-        // TODO: WOULD THIS STILL NEED A IF BLOCK TO CHECK RETURN
+        // TODO: WOULD THIS STILL NEED An IF BLOCK TO CHECK RETURN
 
         try {
             mLikesTableUpdateStatus.setInt(1, status);
