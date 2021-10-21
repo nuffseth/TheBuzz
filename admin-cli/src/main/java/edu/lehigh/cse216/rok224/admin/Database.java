@@ -543,7 +543,7 @@ public class Database {
     }
 
     RowDataMessages selectOneMessage(int msgID) {
-        
+
     }
 
     RowDataComments selectOneComment(int msgID) {
@@ -636,7 +636,7 @@ public class Database {
         return ret;
     }
     //======================================================================  
-    int updateContentCommentsTable(String content, String msgID) {
+    int updateContentCommentsTable(String content, int msgID) {
         int ret = 0;
         
         if (testString(content) == false || testString(msgID) == false) {
