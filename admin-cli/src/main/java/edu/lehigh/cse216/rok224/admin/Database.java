@@ -510,7 +510,6 @@ public class Database {
 
         return ret;
     }
-
     
     // maybe also for likes/USERS??
 
@@ -539,8 +538,12 @@ public class Database {
     }
 
 
-    RowDataUser selectOneUser(String userID) {
+    RowDataUsers selectOneUser(String userID) {
 
+    }
+
+    RowDataMessages selectOneMessage(int msgID) {
+        
     }
 
     RowDataComments selectOneComment(int msgID) {
