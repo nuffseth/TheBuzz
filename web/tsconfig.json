@@ -2,6 +2,7 @@
     "compilerOptions": {
         "jsx": "react",
         "module": "es2015",
+        "moduleResolution": "node",
         "noImplicitAny": true,
         "outDir": "./build/",
         "preserveConstEnums": true,

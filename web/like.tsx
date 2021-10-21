@@ -30,6 +30,15 @@ export class Like extends React.Component<LikeProps> {
         });
     }
 
+    decrement = (_e: React.MouseEvent<HTMLButtonElement>) => {
+        
+        this.setState({mLikes: --this.state.mLikes});
+        $.ajax({
+            type: "POST",
+            url: "/messages/" + this.props.mId + "/dislikes",
+        })
+    }
+
     /**
      * Render the component.
      */
@@ -38,6 +47,7 @@ export class Like extends React.Component<LikeProps> {
             <span>
                 <p>{this.state.mLikes}</p>
                 <button onClick={this.increment}> Like</button>
+                <button onClick={this.decrement}> Dislike</button>
             </span>
         );
     }

@@ -5,6 +5,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Like } from "./like";
+import { Login } from "./login";
+import GoogleLogin from 'react-google-login';
 
 // The 'this' keyword does not behave in JavaScript/TypeScript like it does in
 // Java.  Since there is only one NewEntryForm, we will save it to a global, so
@@ -181,6 +183,81 @@ class EditEntryForm {
     }
 } // end class EditEntryForm
 
+
+//Login entry form
+var loginEntryForm: LoginEntryForm
+
+class LoginEntryForm {
+
+    constructor(){ //Login buttons
+        $("#loginFormButton").click(this.submitForm);
+        $("#loginButton").click(this.login);
+        $("#loginCancel").click(this.goBack);
+    }
+
+    submitForm(){ //When the initial button is clicked
+        $("#loginElement").show();
+        $("#showElements").hide();
+    }
+
+    login(){ //When the login button is clicked
+        let logins = document.createElement('div');
+        ReactDOM.render(<Login />, logins);
+        document.body.appendChild(logins);
+    }
+    
+    goBack(){ //When the cancel button is clicked
+        $("#addElement").hide();
+        $("#loginElement").hide();
+        $("#showElements").show();
+    }
+
+}
+
+var profileEntryForm: ProfileEntryForm //The profile form
+
+class ProfileEntryForm { //The profile page
+    
+    constructor(){ //Profile buttons
+        $("#profileButton").click(this.goToProfile);
+        $("#profileCancel").click(this.goBack);
+    }
+
+    goToProfile(){ //When profile button is clicked
+        $("#showElements").hide();
+        $("#profileElement").show();
+    }
+
+    goBack(){ //When profile cancel button is clicked
+        $("#showElements").show();
+        $("#profileElement").hide();
+    }
+}
+
+var commentEntryForm: CommentEntryForm //The comment form
+
+class CommentEntryForm { //Comment forms
+    
+    constructor(){ //Initializes all the buttons
+        $("#commentsButton").click(this.submitForm);
+        $("#commentCancel").click(this.goBack);
+    }
+
+    submitForm(){ //When comment page is diplayed
+        $("#commentElement").show();
+        $("showElements").hide();
+    }
+
+    init(){
+
+    }
+
+    goBack(){ //When comment cancel button is clicked
+        $("#showElements").show();
+        $("#commentElement").hide();
+    }
+}
+
 // a global for the main ElementList of the program.  See newEntryForm for 
 // explanation
 var mainList: ElementList;
@@ -225,13 +302,14 @@ class ElementList {
         $(".delbtn").click(mainList.clickDelete);
         // Find all of the Edit buttons, and set their behavior
         $(".editbtn").click(mainList.clickEdit);
+        $(".commentBtn").click(mainList.clickComment);
     }
 
     /**
      * buttons() adds a 'edit','delete', and 'like button to the HTML for each row
      */
     private buttons(id: string): string {
-        return "<td><button class='editbtn' data-value='" + id + "'>Edit</button></td>" + "<td><button class='delbtn' data-value='" + id + "'>Delete</button></td>";
+        return "<td><button class='editbtn' data-value='" + id + "'>Edit</button></td>" + "<td><button class='delbtn' data-value='" + id + "'>Delete</button></td>" + "<td><button class='commentbtn' data-value='" + id + "'>Comment</button></button></td>";
     }
 
     /**
@@ -259,10 +337,22 @@ class ElementList {
             success: editEntryForm.init
         })
     }
+
+    private clickComment(){
+        let id = $(this).data("value");
+        $.ajax({
+            type: "GET",
+            url: "/messages/" + id + "/comments/",
+            dataType: "json",
+            success: commentEntryForm.init
+        })
+    }
 } // end class ElementList
 
+
+
 // Run some configuration code when the web page loads
-$(document).ready(function () {
+$(window).on("load", function () {
     console.log('This is running');
     // Create the object that controls the "New Entry" form
     newEntryForm = new NewEntryForm();
@@ -274,11 +364,20 @@ $(document).ready(function () {
     // Create the object that controls the "Edit Entry" form
     editEntryForm = new EditEntryForm();
 
+    loginEntryForm = new LoginEntryForm();
+
+    profileEntryForm = new ProfileEntryForm();
+
+    commentEntryForm = new CommentEntryForm();
+
     // set up initial UI state
     $("#editElement").hide();
     $("#addElement").hide();
+    $("#loginElement").hide();
     $("#showElements").show();
-    
+    $("#loginElement").hide();
+    $("#profileElement").hide();
+    $("#commentElement").hide();
 
     // set up the "Add Message" button
     $("#showFormButton").click(function () {

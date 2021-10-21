@@ -1,7 +1,7 @@
 <html>
     <head>
         <script src="jquery.min.js"></script>
-        <script src="app.js"></script>
+        <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
         <link rel="stylesheet" href="app.css" />
         <link href="https://fonts.googleapis.com/css?family=Fresca" rel="stylesheet">
         <meta charset="utf-8" />
@@ -11,8 +11,6 @@
         <meta name="author" content="Name of author (usually an organization) of this web front-end" />
         <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
         <title>Title of Web Front-End</title>
-        <script src="path-to-bootstrap.js"></script>
-        <link href="path-to-bootstrap.css" rel="stylesheet">
     </head>
     <body role="document">
         <div id="addElement">
@@ -27,14 +25,45 @@
             <label>Message</label>
             <textarea id="editMessage"></textarea>
             <span id="editCreated"></span>
-            <input type="hidden" id="editId" />
+            <input type="hidden" id="editId"/>
             <button id="editButton">Update</button>
             <button id="editCancel">Cancel</button>
         </div>
         <div id="showElements">
             <h3>All Messages</h3>
             <button id="showFormButton">Add Message</button>
+            <button id="loginFormButton">Login</button>
+            <button id="profileButton">Profile</button>
+            <button id="commentsButton">Comments</button>
             <div id="messageList"></div>
+        </div>
+        <div id="loginElement">
+            <h3>Login Here</h3>
+            <button id="loginButton">Login</button>
+            <button id="loginCancel">Go Back</button>
+        </div>
+        <div id="profileElement">
+            <button id="profileCancel">Main Menu</button>
+            <h3> Your Profile Page</h3>
+            <div id="username">
+                <label>Your Username:</label>
+            </div>
+            <div id="userEmail">
+                <label>Your email:</label>
+            </div>
+            <div id="bio">
+                <label>Your Bio:</label>
+            </div>
+        </div>
+        <div id="commentElement">
+            <h3>Comment on an Entry</h3>
+            <label>Comment:</label>
+            <textarea id="commentMessage"></textarea>
+            <span id="commentCreated"></span>
+            <input type="hidden" id="editId"/>
+            <button id="commentButton">comment</button>
+            <button id="commentCancel">Cancel</button>
+            <div id="createdComments"></div>
         </div>
     </body>
 </html>
