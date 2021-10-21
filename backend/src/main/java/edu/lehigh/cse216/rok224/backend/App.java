@@ -95,7 +95,14 @@ public class App {
         // connect to the Heroku database using environment variables
         Map<String, String> env = System.getenv();
         String url = env.get("DATABASE_URL");
-        final Database dataBase = Database.getDatabase(url);
+
+        // NOTE: admin's Database.java was incomplete, so I added to it to create MyDatabase.java
+        // MyDatabase.java is the same as admin's Database.java, but with additional empty functions that 
+        // needed to be implemented. I created them as empty functions so the backend code compiles.
+        final MyDatabase dataBase = MyDatabase.getDatabase(url);
+
+        // uncomment this and delete MyDatabase.java once Database.java is implemented
+        // final Database dataBase = Database.getDatabase(url);
 
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
@@ -199,7 +206,7 @@ public class App {
             // get id from URL and find in database
             int idx = Integer.parseInt(request.params("id")); // if id not an int, 500 error
 
-            Database.RowData data = dataBase.selectOne(idx, "message"); // get one message object
+            MyDatabase.RowDataMessages data = dataBase.selectOneMessage(idx); // get one message object
 
             // ensure status 200 OK, with a MIME type of JSON, and return
             response.status(200);
@@ -228,9 +235,13 @@ public class App {
             }
 
             // add input message and current user to messages table
-            dataBase.insertRowMessages(req.mMessage, req.mEmail); // Database.java handles error checking
+            int result = dataBase.insertRowMessages(req.mMessage, req.mEmail); 
 
-            return gson.toJson(new StructuredResponse("ok", "", null));  
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to add message to database", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
         });
 
         // PUT route for updating a message. 
@@ -250,7 +261,7 @@ public class App {
             }
 
             // // make sure current user matches the one who created the message
-            if (dataBase.selectOne(idx, "message").userEmail != req.mEmail) {
+            if (dataBase.selectOneMessage(idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
             }
 
@@ -279,7 +290,7 @@ public class App {
             }
 
             // // make sure current user matches the one who created the message
-            if (dataBase.selectOne(idx, "message").userEmail != req.mEmail) {
+            if (dataBase.selectOneMessage(idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
             }
 
@@ -389,14 +400,13 @@ public class App {
             }
 
             int result = 0;
-            int like_id = getLikeId( req.mEmail, msg_idx );
             // check if like for this user and message doesn't exist yet 
-            if ( dataBase.selectOne( like_id, "likes" ) == null) {
+            if ( dataBase.selectOneLike( req.mEmail, msg_idx ) == null) {
                 // if the like doesn't already exist, create it with appropriate status
-                result = dataBase.insertRowLikes( status, req.mEmail, msg_idx ));
+                result = dataBase.insertRowLikes( status, req.mEmail, msg_idx );
             } else {
                 // if like already does exist, update it
-                int old_status = dataBase.getLikeStaus(like_id);
+                int old_status = dataBase.selectOneLike( req.mEmail, msg_idx ).mStatus;
                 int new_status = 0;
                 if (status == 1) { // if like button was clicked
                     if (old_status >= 0) { // if previous status was neutral or like, should result in a like
@@ -412,7 +422,7 @@ public class App {
                     }
                 }
                 // update the like row accordingly
-                result = dataBase.updateStatusLikesTable(status, like_id);
+                result = dataBase.updateStatusLikesTable(status, req.mEmail, msg_idx);
             }
 
             // send result
@@ -438,11 +448,10 @@ public class App {
             response.type("application/json");        
 
             // // collect all comments with the given message id
-            // ArrayList<Database.RowData> data = dataBase.selectAllComments(msg_idx);
-            Object data = null;
+            ArrayList<MyDatabase.RowDataComments> data = dataBase.selectAllComments(msg_idx);
 
             if (data == null) {
-                return gson.toJson(new StructuredResponse("error", msg_idx + " not found", null));
+                return gson.toJson(new StructuredResponse("error", "unable to find all comments for message " + msg_idx, null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
@@ -490,18 +499,17 @@ public class App {
             }
 
             // // make sure comment exists
-            if ( dataBase.selectOne(comment_idx, "comments") == null ) {
+            if ( dataBase.selectOneComment(comment_idx) == null ) {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.selectOne(comment_idx, "comments").mEmail != req.mEmail) {
+            if (dataBase.selectOneComment(comment_idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
             // // update the comment according to the input message
             int result = dataBase.updateContentCommentsTable(req.mMessage, comment_idx);
 
-            int result = -1;
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -527,11 +535,11 @@ public class App {
             }
 
             // // make sure comment exists
-            if ( dataBase.selectOne(comment_idx, "comments") == null ) {
+            if ( dataBase.selectOneComment(comment_idx) == null ) {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.selectOne(comment_idx, "comments").mEmail != req.mEmail) {
+            if (dataBase.selectOneComment(comment_idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
@@ -569,7 +577,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
             }
             // // TO DO: UPDATE ONCE IMPLEMENTED BY ADMIN
-            Database.RowData data = dataBase.selectOneUser(username); // get the user object
+            MyDatabase.RowDataUsers data = dataBase.selectOneUser(username); // get the user object
 
             if (data == null) { // return an error if id not found
                 return gson.toJson(new StructuredResponse("error", username + " not found", null));

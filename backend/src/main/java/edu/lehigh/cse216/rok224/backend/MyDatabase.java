@@ -14,7 +14,7 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class Database {
+public class MyDatabase {
     /**
      * The connection to the database.  When there is no connection, it should
      * be null.  Otherwise, there is a valid open connection
@@ -197,7 +197,7 @@ public class Database {
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
      */
-    private Database() {
+    private MyDatabase() {
     }
 
     /**
@@ -213,7 +213,7 @@ public class Database {
      */
     static Database getDatabase(String url) {
         // Create an un-configured Database object
-        Database db = new Database();
+        Database db = new MyDatabase();
 
         // Give the Database object a connection, fail if we cannot get one
         try {
@@ -539,7 +539,7 @@ public class Database {
     }
 
 
-    RowDataUser selectOneUser(String userID) {
+    RowDataUsers selectOneUser(String userID) {
 
     }
 
@@ -634,16 +634,16 @@ public class Database {
         return ret;
     }
     //======================================================================  
-    int updateContentCommentsTable(String content, String msgID) {
+    int updateContentCommentsTable(String content, int msgID) {
         int ret = 0;
         
-        if (testString(content) == false || testString(msgID) == false) {
+        if (testString(content) == false) {
             return -1;
         }
 
         try {
             mCommentTableUpdateContent.setString(1, content);
-            mCommentTableUpdateContent.setString(2, msgID);
+            mCommentTableUpdateContent.setInt(2, msgID);
             ret += mCommentTableUpdateContent.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
@@ -889,6 +889,22 @@ public class Database {
         }
         return true;
     }
+
+    //
+    //// EMPTY FUNCTIONS ADDED BY ADYN SO BACKEND CODE COPMILES
+    //
+
+    RowDataMessages selectOneMessage(int idx) {
+        return new RowDataMessages("", 0, "", 0, null);
+    }
+
+    int updateStatusLikesTable( int status, String userID, int msg_idx) {
+        return -1;
+    }
+
+    ArrayList<RowDataComments> selectAllComments(int msg_idx) {
+        return null;
+    }
 }
 
 //Exception to see if invalid message is passed
@@ -901,3 +917,4 @@ class InvalidMessageException extends Exception {
         super(message);
     }
 }
+
