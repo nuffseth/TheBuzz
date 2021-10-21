@@ -1,21 +1,19 @@
-// ignore_for_file: file_names
-
 class BuzzPost {
-    final int msgID;
-    final String msg;
-    final int numLikes;
+  int mId;
+  String mMessage;
+  int mLikes;
 
   BuzzPost({
-    required this.msgID,
-    required this.msg,
-    required this.numLikes,
+    required this.mId,
+    required this.mMessage,
+    required this.mLikes,
   });
 
   factory BuzzPost.fromJson(Map<String, dynamic> json) {
     return BuzzPost(
-      msgID: json['msgID'],
-      msg: json['msg'],
-      numLikes: json['numlikes'],
+      mId: json['mId'] as int,
+      mMessage: json['mMessage'] as String,
+      mLikes: json['mLikes'] as int,
     );
   }
 }

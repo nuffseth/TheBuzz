@@ -35,6 +35,11 @@ public class DataRow {
     public final Date mCreated;
 
     /**
+     * The like for this row of data
+     */
+    public int mLike;
+
+    /**
      * Create a new DataRow with the provided id and title/content, and a 
      * creation date based on the system clock at the time the constructor was
      * called
@@ -46,11 +51,12 @@ public class DataRow {
      * 
      * @param content The content string for this row of data
      */
-    DataRow(int id, String title, String content) {
+    DataRow(int id, String title, String content, int like) {
         mId = id;
         mTitle = title;
         mContent = content;
         mCreated = new Date();
+        mLike = like;
     }
 
     /**
@@ -62,5 +68,6 @@ public class DataRow {
         mTitle = data.mTitle;
         mContent = data.mContent;
         mCreated = data.mCreated;
+        mLike = data.mLike;
     }
 }
