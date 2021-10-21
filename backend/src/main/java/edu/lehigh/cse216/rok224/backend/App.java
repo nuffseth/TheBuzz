@@ -3,6 +3,7 @@ package edu.lehigh.cse216.rok224.backend;
 // Import the Spark package, so that we can make use of the "get" function to 
 // create an HTTP GET route
 import spark.Spark;
+import java.util.*;
 
 // Import Google's JSON library
 import com.google.gson.*;
@@ -11,6 +12,23 @@ import com.google.gson.*;
  * For now, our app creates an HTTP server that can only get and add data.
  */
 public class App {
+
+    /**
+     * Get an integer environment varible if it exists, and otherwise return the
+     * default value.
+     * 
+     * @envar      The name of the environment variable to get.
+     * @defaultVal The integer value to use as the default if envar isn't found
+     * 
+     * @returns The best answer we could come up with for a value for envar
+     */
+    static int getIntFromEnv(String envar, int defaultVal) {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        if (processBuilder.environment().get(envar) != null) {
+            return Integer.parseInt(processBuilder.environment().get(envar));
+        }
+        return defaultVal;
+    }
     public static void main(String[] args) {
 
         // gson provides us with a way to turn JSON into objects, and objects
@@ -28,7 +46,12 @@ public class App {
         // NB: every time we shut down the server, we will lose all data, and 
         //     every time we start the server, we'll have an empty dataStore,
         //     with IDs starting over from 0.
-        final DataStore dataStore = new DataStore();
+        //final DataStore dataStore = new DataStore();
+
+        Map<String, String> env = System.getenv();
+        String url = env.get("DATABASE_URL");
+
+        final Database dataBase = Database.getDatabase(url);
 
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
@@ -39,6 +62,10 @@ public class App {
         } else {
             Spark.staticFiles.externalLocation(static_location_override);
         }
+
+        
+        // Get the port on which to listen for requests
+        Spark.port(getIntFromEnv("PORT", 4567));
 
         // Set up a route for serving the main page
         Spark.get("/", (req, res) -> {
@@ -54,7 +81,7 @@ public class App {
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            return gson.toJson(new StructuredResponse("ok", null, dataStore.readAll()));
+            return gson.toJson(new StructuredResponse("ok", null, dataBase.selectAll()));
         });
 
         // GET route that returns everything for a single row in the DataStore.
@@ -68,7 +95,8 @@ public class App {
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            DataRow data = dataStore.readOne(idx);
+            //DataRow data = dataStore.readOne(idx);
+            Database.RowData data = dataBase.selectOne(idx);
             if (data == null) {
                 return gson.toJson(new StructuredResponse("error", idx + " not found", null));
             } else {
@@ -90,7 +118,8 @@ public class App {
             response.status(200);
             response.type("application/json");
             // NB: createEntry checks for null title and message
-            int newId = dataStore.createEntry(req.mTitle, req.mMessage);
+            //int newId = dataStore.createEntry(req.mTitle, req.mMessage);
+            int newId = dataBase.insertRow(req.mMessage, 0);
             if (newId == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -108,7 +137,8 @@ public class App {
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            DataRow result = dataStore.updateOne(idx, req.mTitle, req.mMessage);
+            //DataRow result = dataStore.updateOne(idx, req.mTitle, req.mMessage);
+            Database.RowData result = dataBase.selectOne(dataBase.updateOne(idx, req.mMessage));
             if (result == null) {
                 return gson.toJson(new StructuredResponse("error", "unable to update row " + idx, null));
             } else {
@@ -125,9 +155,42 @@ public class App {
             response.type("application/json");
             // NB: we won't concern ourselves too much with the quality of the 
             //     message sent on a successful delete
-            boolean result = dataStore.deleteOne(idx);
-            if (!result) {
+            //boolean result = dataStore.deleteOne(idx);
+            int result = dataBase.deleteRow(idx);
+            if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        // POST route for incrementing likes
+        Spark.post("/messages/:id/likes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call incrementLikes function from Database.java
+            int result = dataBase.incrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to post like " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        // POST route for decrementing likes
+        Spark.post("/messages/:id/dislikes", (request, response) -> {
+            // If we can't get an ID, Spark will send a status 500
+            int idx = Integer.parseInt(request.params("id"));
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            //call decrementLikes function from Database.java
+            int result = dataBase.decrementLikes(idx);
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to post dislike " + idx, null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }

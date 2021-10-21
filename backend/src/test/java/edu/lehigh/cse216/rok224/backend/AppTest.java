@@ -3,6 +3,7 @@ package edu.lehigh.cse216.rok224.backend;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import com.google.gson.*;
 
 /**
  * Unit test for simple App.
@@ -28,10 +29,20 @@ public class AppTest
         return new TestSuite( AppTest.class );
     }
 
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp(){
-        assertTrue( true );
+    // test that SimpleRequest deserializes json to gson
+    // by asserting that request is of type SimpleRequest, the JSON must have been deserialized to gson 
+    public void testSimpleRequest() {
+        Gson gson = new Gson();
+        SimpleRequest request = gson.fromJson("{\"test\":0}", SimpleRequest.class);
+        assertTrue(request instanceof SimpleRequest);
+    }
+
+    // test that StructuredResponse serializes 
+    // by asserting that the response string was in JSON format, the gson must have been serialized to JSON
+    public void testStructuredResponse() {
+        Gson gson = new Gson();
+        String response = gson.toJson(new StructuredResponse("ok", null, null));
+        System.out.println(response);
+        assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
     }
 }
