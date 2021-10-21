@@ -110,35 +110,35 @@ public class MyDatabase {
      * abstract representation of a row of the database.  RowData and the 
      * Database are tightly coupled: if one changes, the other should too.
      */
-    // public static class RowData {
-    //     // The ID of this row of the database
+    public static class RowData { // THIS WAS COMMENTED OUT BY ADMIN, UNCOMMENTED BY ADYN SO ROWDATATEST.JAVA WORKS
+        // The ID of this row of the database
          
-    //     //TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
-    //       //  selectAll and selectOne break big time
+        //TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
+          //  selectAll and selectOne break big time
         
-    //     int mId;
+        int mId;
 
-    //     // The message stored in this row
-    //     String mMessage;
+        // The message stored in this row
+        String mMessage;
 
-    //     // The amount of likes for the message
-    //     int mLikes;
+        // The amount of likes for the message
+        int mLikes;
 
 
 
-    //     /**
-    //      * Constructor for RowData
-    //      * @param id: Id of post
-    //      * @param message: The message itself
-    //      * @param likes: The amount of likes it has
-    //      */
-    //     public RowData(int id, String message, int likes){
-    //         mId = id;
-    //         mMessage = message;
-    //         mLikes = likes;    
-    //     }        
+        /**
+         * Constructor for RowData
+         * @param id: Id of post
+         * @param message: The message itself
+         * @param likes: The amount of likes it has
+         */
+        public RowData(int id, String message, int likes){
+            mId = id;
+            mMessage = message;
+            mLikes = likes;    
+        }        
         
-    // }
+    }
 
     public static class RowDataUsers {
         String mUserID;
@@ -211,9 +211,9 @@ public class MyDatabase {
      * 
      * @return A Database object, or null if we cannot connect properly
      */
-    static Database getDatabase(String url) {
+    static MyDatabase getDatabase(String url) {
         // Create an un-configured Database object
-        Database db = new MyDatabase();
+        MyDatabase db = new MyDatabase();
 
         // Give the Database object a connection, fail if we cannot get one
         try {
@@ -457,20 +457,21 @@ public class MyDatabase {
      * 
      * @return All rows, as an ArrayList
      */
-    ArrayList<RowData> selectAll(){
-        ArrayList<RowData> res = new ArrayList<RowData>();
-        try {
-            ResultSet rs = mSelectAll.executeQuery();
-            while (rs.next()){
-                res.add(new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes")));
-            }
-            rs.close();
-            return res;
-        } catch (SQLException e){
-            e.printStackTrace();
-            return null;
-        }
-    }
+    // commented out by Adyn, unused and creates errors
+    // ArrayList<RowData> selectAll(){
+    //     ArrayList<RowData> res = new ArrayList<RowData>();
+    //     try {
+    //         ResultSet rs = mSelectAll.executeQuery();
+    //         while (rs.next()){
+    //             res.add(new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes")));
+    //         }
+    //         rs.close();
+    //         return res;
+    //     } catch (SQLException e){
+    //         e.printStackTrace();
+    //         return null;
+    //     }
+    // }
 
     // with old rowData, it just queried the singular lame table
     
@@ -523,32 +524,37 @@ public class MyDatabase {
      * 
      * @return The data for the requested row, or null if the ID was invalid
      */
-    RowData selectOne(int id, String table){
-        RowData res = null;
-        try {
-            mSelectOne.setInt(2, id);
-            mSelectOne.setString(1, table);
-            ResultSet rs = mSelectOne.executeQuery();
-            if(rs.next()){
-                res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
-            }
-        } catch (SQLException e){
-            e.printStackTrace();
-        }
-        return res;
-    }
+    // commented out by Adyn, unused and was giving errors
+    // RowData selectOne(int id, String table){
+    //     RowData res = null;
+    //     try {
+    //         mSelectOne.setInt(2, id);
+    //         mSelectOne.setString(1, table);
+    //         ResultSet rs = mSelectOne.executeQuery();
+    //         if(rs.next()){
+    //             res = new RowData(rs.getInt("id"), rs.getString("message"), rs.getInt("likes"));
+    //         }
+    //     } catch (SQLException e){
+    //         e.printStackTrace();
+    //     }
+    //     return res;
+    // }
 
 
     RowDataUsers selectOneUser(String userID) {
+        return null;
+    }
 
+    RowDataMessages selectOneMessage(int msgID) {
+        return null;
     }
 
     RowDataComments selectOneComment(int msgID) {
-
+        return null;
     }
 
     RowDataLikes selectOneLike(String userID, int msgID) {
-
+        return null;
     }
 
 
@@ -610,7 +616,7 @@ public class MyDatabase {
             ret += mUserTableUpdateName.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
-            return;
+            return -1;
         }
 
         return ret;
@@ -894,10 +900,6 @@ public class MyDatabase {
     //// EMPTY FUNCTIONS ADDED BY ADYN SO BACKEND CODE COPMILES
     //
 
-    RowDataMessages selectOneMessage(int idx) {
-        return new RowDataMessages("", 0, "", 0, null);
-    }
-
     int updateStatusLikesTable( int status, String userID, int msg_idx) {
         return -1;
     }
@@ -905,16 +907,21 @@ public class MyDatabase {
     ArrayList<RowDataComments> selectAllComments(int msg_idx) {
         return null;
     }
+
+    RowDataComments selectOneComment ( int msg_idx, int comment_idx ) {
+        return null;
+    }
+
+    //Exception to see if invalid message is passed
+    class InvalidMessageException extends Exception {
+        InvalidMessageException(){
+            super("Invalid Message");
+        }
+        
+        InvalidMessageException(String message){
+            super(message);
+        }
+    }
 }
 
-//Exception to see if invalid message is passed
-class InvalidMessageException extends Exception {
-    InvalidMessageException(){
-        super("Invalid Message");
-    }
-    
-    InvalidMessageException(String message){
-        super(message);
-    }
-}
 
