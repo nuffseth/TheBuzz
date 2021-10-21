@@ -189,24 +189,24 @@ var loginEntryForm: LoginEntryForm
 
 class LoginEntryForm {
 
-    constructor(){
+    constructor(){ //Login buttons
         $("#loginFormButton").click(this.submitForm);
         $("#loginButton").click(this.login);
         $("#loginCancel").click(this.goBack);
     }
 
-    submitForm(){
+    submitForm(){ //When the initial button is clicked
         $("#loginElement").show();
         $("#showElements").hide();
     }
 
-    login(){
+    login(){ //When the login button is clicked
         let logins = document.createElement('div');
         ReactDOM.render(<Login />, logins);
         document.body.appendChild(logins);
     }
     
-    goBack(){
+    goBack(){ //When the cancel button is clicked
         $("#addElement").hide();
         $("#loginElement").hide();
         $("#showElements").show();
@@ -214,35 +214,47 @@ class LoginEntryForm {
 
 }
 
-var profileEntryForm: ProfileEntryForm
+var profileEntryForm: ProfileEntryForm //The profile form
 
-class ProfileEntryForm {
+class ProfileEntryForm { //The profile page
     
-    constructor(){
+    constructor(){ //Profile buttons
         $("#profileButton").click(this.goToProfile);
         $("#profileCancel").click(this.goBack);
     }
 
-    goToProfile(){
+    goToProfile(){ //When profile button is clicked
         $("#showElements").hide();
         $("#profileElement").show();
     }
 
-    goBack(){
+    goBack(){ //When profile cancel button is clicked
         $("#showElements").show();
         $("#profileElement").hide();
     }
 }
 
-var commentEntryForm: CommentEntryForm
+var commentEntryForm: CommentEntryForm //The comment form
 
-class CommentEntryForm {
-    constructor(){
+class CommentEntryForm { //Comment forms
+    
+    constructor(){ //Initializes all the buttons
+        $("#commentsButton").click(this.submitForm);
+        $("#commentCancel").click(this.goBack);
+    }
 
+    submitForm(){ //When comment page is diplayed
+        $("#commentElement").show();
+        $("showElements").hide();
     }
 
     init(){
 
+    }
+
+    goBack(){ //When comment cancel button is clicked
+        $("#showElements").show();
+        $("#commentElement").hide();
     }
 }
 
@@ -365,6 +377,7 @@ $(window).on("load", function () {
     $("#showElements").show();
     $("#loginElement").hide();
     $("#profileElement").hide();
+    $("#commentElement").hide();
 
     // set up the "Add Message" button
     $("#showFormButton").click(function () {
