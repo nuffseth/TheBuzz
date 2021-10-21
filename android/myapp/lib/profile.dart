@@ -30,19 +30,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: Text(" Your Profile "),
               centerTitle: true,
               actions: [
-                IconButton(icon: Icon(Icons.exit_to_app), 
-                onPressed: () async {
-                  await googleSignIn.signOut();
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-                })
+                IconButton(
+                    icon: Icon(Icons.exit_to_app),
+                    onPressed: () async {
+                      await googleSignIn.signOut();
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/', (route) => false);
+                    })
               ],
             ),
-            body: Column(children: [
-              Image.network(account.photoUrl, height: 150),
-            ]
-            Text(account.displayName),
-            Text(account.email),
-            Text(auth.idToken),
+            body: Column(
+              children: [
+                Image.network(account.photoUrl, height: 150),
+                Text(account.displayName),
+                Text(account.email),
+                Text(auth.idToken),
+              ],
             ),
           )
         : LinearProgressIndicator();
