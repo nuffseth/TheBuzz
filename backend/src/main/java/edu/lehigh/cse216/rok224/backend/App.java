@@ -4,8 +4,8 @@ package edu.lehigh.cse216.rok224.backend;
 // create an HTTP GET route
 import spark.Spark;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+// commented out IOException import, was unused
+// import java.io.IOException;
 import java.util.*;
 import java.util.UUID;
 
@@ -96,7 +96,14 @@ public class App {
         // connect to the Heroku database using environment variables
         Map<String, String> env = System.getenv();
         String url = env.get("DATABASE_URL");
-        final Database dataBase = Database.getDatabase(url);
+
+        // NOTE: admin's Database.java was incomplete, so I added to it to create MyDatabase.java
+        // MyDatabase.java is the same as admin's Database.java, but with additional empty functions that 
+        // needed to be implemented. I created them as empty functions so the backend code compiles.
+        final MyDatabase dataBase = MyDatabase.getDatabase(url);
+
+        // uncomment this and delete MyDatabase.java once Database.java is implemented
+        // final Database dataBase = Database.getDatabase(url);
 
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
@@ -170,12 +177,16 @@ public class App {
             System.out.println("random session key: " + session_key);
             hash_map.put(username, session_key);
 
-            // add user to user table, Database.java won't add duplicates
+            // add user to user table, Database.java shouldn't add duplicates
             System.out.println("inserting user into database...");
-            dataBase.insertRowUser(username, "");
+            int result = dataBase.insertRowUser(username, "");
 
             // send the session key back to the frontend
-            return gson.toJson(new StructuredResponse("ok", null, session_key));
+            if (result == -1) { // return an error if unable to add user
+                return gson.toJson(new StructuredResponse("error", "authenticated, unable to add to database", session_key));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, session_key));
+            }
         });
 
         //
@@ -191,7 +202,14 @@ public class App {
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            return gson.toJson(new StructuredResponse("ok", null, dataBase.selectAll()));
+
+            ArrayList<MyDatabase.RowDataMessages> data = dataBase.selectAllMessages();
+
+            if (data == null) { // return an error if id not found
+                return gson.toJson(new StructuredResponse("error", "unable to select all messeges from database", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, data));
+            }
         });
 
         // GET route that returns everything for a single message.
@@ -199,8 +217,8 @@ public class App {
         Spark.get("/messages/:id", (request, response) -> {        
             // get id from URL and find in database
             int idx = Integer.parseInt(request.params("id")); // if id not an int, 500 error
-            // TODO: UPDATE SELECTONE ONCE IMPLEMENTED BY ADMIN
-            Database.RowData data = dataBase.selectOne(idx, "message"); // get one message object
+
+            MyDatabase.RowDataMessages data = dataBase.selectOneMessage(idx); // get one message object
 
             // ensure status 200 OK, with a MIME type of JSON, and return
             response.status(200);
@@ -229,10 +247,13 @@ public class App {
             }
 
             // add input message and current user to messages table
-            // TO DO: MAKE SURE ADMIN'S INSERTROWMESSAGE MATCHES
-            // dataBase.insertRowMessages(req.mMessage, req.mEmail); // Database.java handles error checking
+            int result = dataBase.insertRowMessages(req.mMessage, req.mEmail); 
 
-            return gson.toJson(new StructuredResponse("ok", "", null));  
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to add message to database", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
         });
 
         // PUT route for updating a message. 
@@ -252,19 +273,17 @@ public class App {
             }
 
             // // make sure current user matches the one who created the message
-            // if (dataBase.selectOne(idx, "message").userEmail != req.mEmail) {
-            //     return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
-            // }
+            if (dataBase.selectOneMessage(idx).mUserID != req.mEmail) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
+            }
 
-            // if users match, update the message
-            // try {
-            //     dataBase.updateContentMessageTable(req.mMessage, idx);
-            // }
-            // catch (Error e) {
-            //     return gson.toJson(new StructuredResponse("error", "unable to update row " + idx, null));
-            // }
-            
-            return gson.toJson(new StructuredResponse("ok", null, null));
+            int result = dataBase.updateContentMessageTable(req.mMessage, idx);
+
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to update row " + idx, null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
         });
 
         // DELETE route for removing a message from the database.
@@ -282,14 +301,18 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
-            // // make sure current user matches the one who created the message
-            // if (dataBase.selectOne(idx, "message").userEmail != req.mEmail) {
-            //     return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
-            // }
+            // make sure message exists
+            if (dataBase.selectOneMessage(idx) == null) {
+                return gson.toJson(new StructuredResponse("error", "unable to select message " + idx, null));
+            }
+            // make sure current user matches the one who created the message
+            if (dataBase.selectOneMessage(idx).mUserID != req.mEmail) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
+            }
 
-            // // if user matches, delete the message
-            // int result = dataBase.deleteRow(idx, "message");
-            int result = -1;
+            // if user matches, delete the message
+            int result = dataBase.deleteRow(idx, "message");
+
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
             } else {
@@ -318,16 +341,16 @@ public class App {
             }
 
             // // check if like for this user and message already exists 
-            // if ( dataBase.selectOneLike( req.mEmail, msg_idx )) {
-            //     // since this is a POST, we aren't updating the data, so return an error
-            //     return gson.toJson(new StructuredResponse("error", "message " + msg_idx + " already has like status, try put", null));
-            // }
+            if ( dataBase.selectOneLike( req.mEmail, msg_idx ) != null) {
+                // since this is a POST, we aren't updating the data, so return an error
+                return gson.toJson(new StructuredResponse("error", "message " + msg_idx + " already has like status, try put", null));
+            }
 
-            // // create a new like with status 1 for the given message and current user in Likes table
-            // int result = dataBase.insertRowLikes( 1, req.mEmail, msg_idx ));
-            int result = -1;
+            // create a new like with status 1 for the given message and current user in Likes table
+            int result = dataBase.insertRowLikes( 1, req.mEmail, msg_idx );
+
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to delete row " + msg_idx, null));
+                return gson.toJson(new StructuredResponse("error", "unable to add like", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
@@ -350,16 +373,16 @@ public class App {
             }
 
             // // check if like for this user and message already exists 
-            // if ( dataBase.selectOneLike( req.mEmail, msg_idx )) {
-            //     // since this is a POST, we aren't updating the data, so return an error
-            //     return gson.toJson(new StructuredResponse("error", "message " + msg_idx + " already has like status, try put", null));
-            // }
+            if ( dataBase.selectOneLike( req.mEmail, msg_idx ) != null) {
+                // since this is a POST, we aren't updating the data, so return an error
+                return gson.toJson(new StructuredResponse("error", "message " + msg_idx + " already has like status, try put", null));
+            }
 
-            // // create a new like with status -1 for the given message and current user in Likes table
-            // int result = dataBase.insertRowLikes( -1, req.mEmail, msg_idx ));
-            int result = -1;
+            // create a new like with status -1 for the given message and current user in Likes table
+            int result = dataBase.insertRowLikes( -1, req.mEmail, msg_idx );
+
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to delete row " + msg_idx, null));
+                return gson.toJson(new StructuredResponse("error", "unable to add dislike", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
@@ -392,36 +415,35 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "invalid like status sent", null));
             }
 
-            int result = -1;
-            // int like_id = getLikeId( req.mEmail, msg_idx );
-            // // check if like for this user and message doesn't exist yet 
-            // if ( dataBase.selectOne( like_id, "likes" ) == null) {
-            //     // if the like doesn't already exist, create it with appropriate status
-            //     result = dataBase.insertRowLikes( status, req.mEmail, msg_idx ));
-            // } else {
-            //     // if like already does exist, update it
-            //     int old_status = dataBase.getLikeStaus(like_id);
-            //     int new_status = 0;
-            //     if (status == 1) { // if like button was clicked
-            //         if (old_status >= 0) { // if previous status was neutral or like, should result in a like
-            //             new_status = 1;
-            //         } else { // if previous status was a dislike, should result in a neutral status
-            //             new_status = 0;
-            //         }
-            //     } else { // if dislike button was clicked
-            //         if (old_status <= 0) { // if previous status was neutral or dislike, should result in a dislike
-            //             new_status = -1;
-            //         } else { // if previous status was a like, should result in a neutral status
-            //             new_status = 0;
-            //         }
-            //     }
-            //     // update the like row accordingly
-            //     result = dataBase.updateStatusLikesTable(status, like_id);
-            // }
+            int result = 0;
+            // check if like for this user and message doesn't exist yet 
+            if ( dataBase.selectOneLike( req.mEmail, msg_idx ) == null) {
+                // if the like doesn't already exist, create it with appropriate status
+                result = dataBase.insertRowLikes( status, req.mEmail, msg_idx );
+            } else {
+                // if like already does exist, update it
+                int old_status = dataBase.selectOneLike( req.mEmail, msg_idx ).mStatus;
+                int new_status = 0;
+                if (status == 1) { // if like button was clicked
+                    if (old_status >= 0) { // if previous status was neutral or like, should result in a like
+                        new_status = 1;
+                    } else { // if previous status was a dislike, should result in a neutral status
+                        new_status = 0;
+                    }
+                } else { // if dislike button was clicked
+                    if (old_status <= 0) { // if previous status was neutral or dislike, should result in a dislike
+                        new_status = -1;
+                    } else { // if previous status was a like, should result in a neutral status
+                        new_status = 0;
+                    }
+                }
+                // update the like row accordingly
+                result = dataBase.updateStatusLikesTable(new_status, req.mEmail, msg_idx);
+            }
 
             // send result
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to update like", null));
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update like", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
@@ -436,17 +458,15 @@ public class App {
         Spark.get("/messages/:id/comments", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
-            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class); // 500 error if fails
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");        
 
             // // collect all comments with the given message id
-            // ArrayList<Database.RowData> data = dataBase.selectAllComments(msg_idx);
-            Object data = null;
+            ArrayList<MyDatabase.RowDataComments> data = dataBase.selectAllComments(msg_idx);
 
             if (data == null) {
-                return gson.toJson(new StructuredResponse("error", msg_idx + " not found", null));
+                return gson.toJson(new StructuredResponse("error", "unable to find all comments for message " + msg_idx, null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
@@ -467,8 +487,7 @@ public class App {
             }
 
             // // add a new comment to the current message with provided content and current user
-            // int result = dataBase.insertRowComments(req.mMessage, req.mEmail, msg_idx); 
-            int result = -1;
+            int result = dataBase.insertRowComments(req.mMessage, req.mEmail, msg_idx); 
 
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
@@ -495,18 +514,17 @@ public class App {
             }
 
             // // make sure comment exists
-            // if ( dataBase.selectOne(comment_idx, "comments") == null ) {
-            //     return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
-            // }
-            // // make sure current user matches the one who created the comment
-            // if (dataBase.selectOne(comment_idx, "comments").mEmail != req.mEmail) {
-            //     return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
-            // }
+            if ( dataBase.selectOneComment(msg_idx, comment_idx) == null ) {
+                return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
+            }
+            // make sure current user matches the one who created the comment
+            if (dataBase.selectOneComment(comment_idx).mUserID != req.mEmail) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
+            }
 
-            // // update the comment according to the input message
-            // int result = dataBase.updateContentCommentsTable(req.mMessage, comment_idx);
+            // update the comment according to the input message
+            int result = dataBase.updateContentCommentsTable(req.mMessage, comment_idx);
 
-            int result = -1;
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
@@ -532,18 +550,17 @@ public class App {
             }
 
             // // make sure comment exists
-            // if ( dataBase.selectOne(comment_idx, "comments") == null ) {
-            //     return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
-            // }
-            // // make sure current user matches the one who created the comment
-            // if (dataBase.selectOne(comment_idx, "comments").mEmail != req.mEmail) {
-            //     return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
-            // }
+            if ( dataBase.selectOneComment(msg_idx, comment_idx) == null ) {
+                return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
+            }
+            // make sure current user matches the one who created the comment
+            if (dataBase.selectOneComment(comment_idx).mUserID != req.mEmail) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
+            }
 
-            // // update the comment according to the input message
-            // int result = dataBase.deleteRow(comment_idx, "comments");
+            // update the comment according to the input message
+            int result = dataBase.deleteRow(comment_idx, "comments");
 
-            int result = -1;
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error deleting comment " + comment_idx, null));
             } else {
@@ -571,13 +588,12 @@ public class App {
             String username = request.params("username"); 
 
             // // make sure username requested matches current user
-            // if ( !username.equals(req.mEmail) ) {
-            //     return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
-            // }
-            // // TO DO: UPDATE ONCE IMPLEMENTED BY ADMIN
-            // Database.RowData data = dataBase.selectOneUser(username); // get the user object
+            if ( !username.equals(req.mEmail) ) {
+                return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
+            }
 
-            Object data = null;
+            MyDatabase.RowDataUsers data = dataBase.selectOneUser(username); // get the user object
+
             if (data == null) { // return an error if id not found
                 return gson.toJson(new StructuredResponse("error", username + " not found", null));
             } else {

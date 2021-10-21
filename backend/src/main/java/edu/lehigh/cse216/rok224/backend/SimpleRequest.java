@@ -1,7 +1,5 @@
 package edu.lehigh.cse216.rok224.backend;
 
-import java.security.SecureRandom;
-
 /**
  * SimpleRequest provides a format for clients to present title and message 
  * strings to the server.
