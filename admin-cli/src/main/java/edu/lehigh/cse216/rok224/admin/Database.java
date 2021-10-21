@@ -639,13 +639,13 @@ public class Database {
     int updateContentCommentsTable(String content, int msgID) {
         int ret = 0;
         
-        if (testString(content) == false || testString(msgID) == false) {
+        if (testString(content) == false || msgID >= 0) {
             return -1;
         }
 
         try {
             mCommentTableUpdateContent.setString(1, content);
-            mCommentTableUpdateContent.setString(2, msgID);
+            mCommentTableUpdateContent.setInt(2, msgID);
             ret += mCommentTableUpdateContent.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
