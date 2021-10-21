@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/comment.dart';
 import 'package:myapp/data_model.dart';
-import 'package:myapp/login.dart';
+//import 'package:myapp/login.dart';
 import 'package:myapp/network_data.dart';
-import 'package:myapp/profile.dart';
-import 'package:myapp/splash.dart';
+//import 'package:myapp/profile.dart';
+//import 'package:myapp/splash.dart';
 
 import 'buzz_post.dart';
 import 'data_model.dart';
@@ -29,9 +30,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (_) => const MyHomePage(title: 'The Buzz Home Page'),
         //const SplashScreen(),
-        '/login': (_) => const LoginScreen(),
+        //'/login': (_) => const LoginScreen(),
         '/home': (_) => const MyHomePage(title: 'The Buzz Home Page'),
-        '/profile': (_) => const ProfileScreen(),
+        //'/profile': (_) => const ProfileScreen(),
+        '/comments': (_) => const CommentScreen(),
       },
     );
   }
@@ -277,7 +279,11 @@ class _BuzzPostsState extends State<MyHomePage> {
               ),
             ),
           ),
-          IconButton(icon: Icon(Icons.add_box), onPressed: () {}),
+          IconButton(
+              icon: Icon(Icons.add_box),
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/comments');
+              }),
           IconButton(
             icon: Icon(
               Icons.arrow_circle_up,
