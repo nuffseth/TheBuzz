@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import javax.swing.plaf.metal.MetalComboBoxButton;
 
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -98,7 +99,6 @@ public class Database {
     private PreparedStatement mSelectOneBio;
     
     
-    
 
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
@@ -125,7 +125,6 @@ public class Database {
     //     int mLikes;
 
 
-    //     // TODO: MODIFY ROWDATA
 
     //     /**
     //      * Constructor for RowData
@@ -141,11 +140,11 @@ public class Database {
         
     // }
 
-    public static class RowDataUser {
+    public static class RowDataUsers {
         String mUserID;
         String mBio;
 
-        public RowDataUser(String userID, String bio) {
+        public RowDataUsers(String userID, String bio) {
             mUserID = userID;
             mBio = bio;
         }
@@ -275,8 +274,12 @@ public class Database {
             // Standard CRUD operations
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM ? WHERE id = ?");                          //Deletes a row
             // db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO ? VALUES (default, ?, ?)");                //Inserts a row
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from ?");                                     //Selects all the rows
             
+            
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT * FROM ?");                                     //Selects all the rows
+            
+
+
             // TODO: UPDATE SQL HERE SINCE WE NOW HAVE MUTIPLE ROWDATA'S FOR EACH TABLE
             
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from ? WHERE id = ?");                        //Selects a specific row
@@ -469,21 +472,47 @@ public class Database {
         }
     }
 
-    // with old rowData, it just queried 
+    // with old rowData, it just queried the singular lame table
     
     ArrayList<RowDataComments> selectAllComments() {
+        ArrayList<RowDataComments> ret = new ArrayList<RowDataComments>();
 
+        try {
+            ResultSet rs = mSelectAll.executeQuery("comment"); 
+            while (rs.next()) { 
+                ret.add(new RowDataComments(rs.getString("userID"), rs.getInt("id"), rs.getInt("msgID"), rs.getString("content")));
+            }
+            rs.close();
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    ArrayList<RowDataUser> selectAllUser() {
-
-    }
-
-    ArrayList<RowDataMessages> selectAllMessages() {
-
-    }
     
-    // maybe also for likes?
+    // TODO: NEED A CERTAIN WAY TO GET ALL THE LIKES FOR A CERTAIN MESSAGE
+    ArrayList<RowDataMessages> selectAllMessages() {
+        ArrayList<RowDataMessages> ret = new ArrayList<RowDataMessages>();
+
+        try {
+            ResultSet rs = mSelectAll.executeQuery("message");
+
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    int countAllLikesOnMessage(int msgID) {
+        int ret = -1; 
+
+        return ret;
+    }
+
+    
+    // maybe also for likes/USERS??
 
 
 
