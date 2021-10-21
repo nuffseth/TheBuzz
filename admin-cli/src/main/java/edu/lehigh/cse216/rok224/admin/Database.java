@@ -7,6 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+
+import javax.swing.plaf.metal.MetalComboBoxButton;
+
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -95,6 +99,7 @@ public class Database {
     private PreparedStatement mSelectOneBio;
     
     
+
     /**
      * RowData is like a struct in C: we use it to hold data, and we allow 
      * direct access to its fields.  In the context of this Database, RowData 
@@ -105,35 +110,86 @@ public class Database {
      * abstract representation of a row of the database.  RowData and the 
      * Database are tightly coupled: if one changes, the other should too.
      */
-    public static class RowData {
-        /**
-         * The ID of this row of the database
-         */
-        int mId;
+    // public static class RowData {
+    //     // The ID of this row of the database
+         
+    //     //TODO: ALL OF THIS BEING COMMENTED BREAKS A LOT OF THE THINGS
+    //       //  selectAll and selectOne break big time
+        
+    //     int mId;
 
-        /**
-         * The message stored in this row
-         */
-        String mMessage;
+    //     // The message stored in this row
+    //     String mMessage;
 
-        /**
-         * The amount of likes for the message
-         */
-        int mLikes;
+    //     // The amount of likes for the message
+    //     int mLikes;
 
 
-        // TODO: MODIFY ROWDATA
 
-        /**
-         * Constructor for RowData
-         * @param id: Id of post
-         * @param message: The message itself
-         * @param likes: The amount of likes it has
-         */
-        public RowData(int id, String message, int likes){
-            mId = id;
-            mMessage = message;
-            mLikes = likes;    
+    //     /**
+    //      * Constructor for RowData
+    //      * @param id: Id of post
+    //      * @param message: The message itself
+    //      * @param likes: The amount of likes it has
+    //      */
+    //     public RowData(int id, String message, int likes){
+    //         mId = id;
+    //         mMessage = message;
+    //         mLikes = likes;    
+    //     }        
+        
+    // }
+
+    public static class RowDataUsers {
+        String mUserID;
+        String mBio;
+
+        public RowDataUsers(String userID, String bio) {
+            mUserID = userID;
+            mBio = bio;
+        }
+    }
+    public static class RowDataComments {
+        String mUserID;
+        int mCommentID;
+        int mMsgID;
+        String mContent;
+
+        public RowDataComments(String userID, int commentID, int msgID, String content) {
+            mUserID = userID;
+            mCommentID = commentID;
+            mMsgID = msgID;
+            mContent = content;
+        }
+    }
+    public static class RowDataLikes {
+        String mUserID;
+        int mLikeID;
+        int mMsgID;
+        int mStatus;
+
+
+        public RowDataLikes(String userID, int likeID, int msgID, int status) {
+            mUserID = userID;
+            mLikeID = likeID;
+            mMsgID = msgID;
+            mStatus = status;
+        }
+    }
+    public static class RowDataMessages {
+        String mUserID;
+        int mMsgID;
+        String mContent;
+        int mNumLikes;
+        ArrayList<RowDataComments> mComments;
+
+
+        public RowDataMessages(String userID, int msgID, String content, int numLikes, ArrayList<RowDataComments> comments) {
+            mUserID = userID;
+            mMsgID = msgID;
+            mContent = content;
+            mNumLikes = numLikes;
+            mComments = comments; // this is maybe probably wrong b/c arraylists :D
         }
     }
 
@@ -218,7 +274,14 @@ public class Database {
             // Standard CRUD operations
             db.mDeleteOne = db.mConnection.prepareStatement("DELETE FROM ? WHERE id = ?");                          //Deletes a row
             // db.mInsertOne = db.mConnection.prepareStatement("INSERT INTO ? VALUES (default, ?, ?)");                //Inserts a row
-            db.mSelectAll = db.mConnection.prepareStatement("SELECT * from ?");                                     //Selects all the rows
+            
+            
+            db.mSelectAll = db.mConnection.prepareStatement("SELECT * FROM ?");                                     //Selects all the rows
+            
+
+
+            // TODO: UPDATE SQL HERE SINCE WE NOW HAVE MUTIPLE ROWDATA'S FOR EACH TABLE
+            
             db.mSelectOne = db.mConnection.prepareStatement("SELECT * from ? WHERE id = ?");                        //Selects a specific row
             db.mSelectOneBio = db.mConnection.prepareStatement("SELECT * from ? WHERE username = ?");                        //Selects a specific row
                                                                                                                     
@@ -240,6 +303,19 @@ public class Database {
         }
         return db;
     }
+
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+// ====================================================================================
+
 
     /**
      * Close the current connection to the database, if one exists.
@@ -276,7 +352,7 @@ public class Database {
     //  */
     // int insertRow(String message, int likes){
     //     int count = 0;
-    //     if(testMessage(message) == false){
+    //     if(testString(message) == false){
     //         return -1;
     //     }
     //     try {
@@ -289,52 +365,92 @@ public class Database {
     //     return count;
     // }
 
-    // TODO: RETURN -1/NULL INSTEAD OF 
-    void insertRowUser (String user, String bio) {
-        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
+    int insertRowUser (String user, String bio) {
         
+        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
+        // i need to both check the overall validity of the strings getting passed in,
+        // as well as, in the case that we do get a valid string, if it already exists
+        
+        int ret = 0;
 
+        if (testString(user) == false || testString(bio) == false){ // generic validity check on both params
+            return -1;
+        }
 
+        if (true) { // specific user check
+
+        }
+
+        
         try {
             mInsertOneUser.setString(1, user);  // first param is being set as user
             mInsertOneUser.setString(2, bio);   // second param is being set as bio
-            mInsertOneUser.executeUpdate();
+            ret += mInsertOneUser.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return ret;
     }
 
-    void insertRowComments (String content, String userID, int msgID) {
+    int insertRowComments (String content, String userID, int msgID) {
+        int ret = 0;
+        
+        if (testString(content) == false || testString(userID) == false) {   // generic validity check 
+            return -1;
+        } 
+
         try {
             mInsertOneComment.setString(1, content);
             mInsertOneComment.setString(2, userID);
             mInsertOneComment.setInt(3, msgID);
-            mInsertOneComment.executeUpdate();
+            ret += mInsertOneComment.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void insertRowLikes (int status, String userID, int msgID) {
+    int insertRowLikes (int status, String userID, int msgID) {
+        int ret = 0;
+
+        if (testString(userID) == false) {  // generi validity check
+            return -1;
+        }
+
         try {
             mInsertOneLike.setInt(1, status);
             mInsertOneLike.setString(2, userID);
             mInsertOneLike.setInt(3, msgID);
-            mInsertOneLike.executeUpdate();
+            ret += mInsertOneLike.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void insertRowMessages (String content, int userID) {
+    int insertRowMessages (String content, String userID) {
+        int ret = 0;
+        
+        if (testString(content) == false || testString(userID) == false) { // generic validity check
+            return -1;
+        }
+        
         try {
             mInsertOneMessage.setString(1, content);
-            mInsertOneMessage.setInt(2, userID);
-            mInsertOneMessage.executeUpdate();
+            mInsertOneMessage.setString(2, userID);
+            ret += mInsertOneMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
+
+
+
+
 
     /**
      * Query the database for a list of all their IDs
@@ -355,6 +471,50 @@ public class Database {
             return null;
         }
     }
+
+    // with old rowData, it just queried the singular lame table
+    
+    ArrayList<RowDataComments> selectAllComments() {
+        ArrayList<RowDataComments> ret = new ArrayList<RowDataComments>();
+
+        try {
+            ResultSet rs = mSelectAll.executeQuery("comment"); 
+            while (rs.next()) { 
+                ret.add(new RowDataComments(rs.getString("userID"), rs.getInt("id"), rs.getInt("msgID"), rs.getString("content")));
+            }
+            rs.close();
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    
+    // TODO: NEED A CERTAIN WAY TO GET ALL THE LIKES FOR A CERTAIN MESSAGE
+    ArrayList<RowDataMessages> selectAllMessages() {
+        ArrayList<RowDataMessages> ret = new ArrayList<RowDataMessages>();
+
+        try {
+            ResultSet rs = mSelectAll.executeQuery("message");
+
+            return ret;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    int countAllLikesOnMessage(int msgID) {
+        int ret = -1; 
+
+        return ret;
+    }
+
+    
+    // maybe also for likes/USERS??
+
+
 
     /**
      * Get all data for a specific row, by ID
@@ -377,6 +537,22 @@ public class Database {
         }
         return res;
     }
+
+
+    RowDataUser selectOneUser(String userID) {
+
+    }
+
+    RowDataComments selectOneComment(int msgID) {
+
+    }
+
+    RowDataLikes selectOneLike(String userID, int msgID) {
+
+    }
+
+
+
 
     /**
      * Delete a row by ID
@@ -409,7 +585,7 @@ public class Database {
     // int updateOne(int id, String message){
     //     int res = -1;
 
-    //     if(testMessage(message) == false){
+    //     if(testString(message) == false){
     //         return res;
     //     }
     //     try {
@@ -422,97 +598,181 @@ public class Database {
     //     return res;
     // }
 
-    void updateNameUserTable (String username) {
+    int updateNameUserTable (String username) {
+        int ret = 0;
+
+        if (testString(username) == false) {
+            return -1;
+        }
+        
         try {
             mUserTableUpdateName.setString(1, username);
+            ret += mUserTableUpdateName.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
             return;
         }
+
+        return ret;
     }
 
-    void updateBioUserTable (String bio, String user) {
+    int updateBioUserTable (String bio, String user) {
+        int ret = 0;
+
+        if (testString(bio) == false || testString(user) == false) {
+            return -1;
+        }
+        
         try {
             mUserTableUpdateBio.setString(1, bio);
             mUserTableUpdateBio.setString(2, user);
+            ret += mUserTableUpdateBio.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
     //======================================================================  
-    void updateContentCommentsTable(String content, String userID) {
+    int updateContentCommentsTable(String content, String msgID) {
+        int ret = 0;
+        
+        if (testString(content) == false || testString(msgID) == false) {
+            return -1;
+        }
+
         try {
             mCommentTableUpdateContent.setString(1, content);
-            mCommentTableUpdateContent.setString(2, userID);
+            mCommentTableUpdateContent.setString(2, msgID);
+            ret += mCommentTableUpdateContent.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void updateMsgIDCommentsTable(int msgID, int id) {
+    int updateMsgIDCommentsTable(int msgID, int id) {
+        int ret = 0;
+
+        // TODO: WOULD THIS STILL NEED A IF BLOCK TO CHECK RETURN
+
         try {
             mCommentTableUpdateMsgID.setInt(1, msgID);
             mCommentTableUpdateMsgID.setInt(2, id);
+            ret += mCommentTableUpdateMsgID.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void updateUserIDCommentsTable(String userID, int id) {
+    int updateUserIDCommentsTable(String userID, int id) {
+        int ret = 0;
+        
+        if (testString(userID) == false) { 
+            return -1;
+        }
+
         try {
             mCommentTableUpdateUserID.setString(1, userID);
             mCommentTableUpdateUserID.setInt(2, id);
+            ret += mCommentTableUpdateUserID.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
     //======================================================================  
 
-    void updateMsgIDLikesTable(int msgID, int id) {
+    int updateMsgIDLikesTable(int msgID, int id) {
+        int ret = 0;
+        
+        // TODO: WOULD THIS STILL NEED A IF BLOCK TO CHECK RETURN
+
         try {
             mLikesTableUpdateMsgID.setInt(1, msgID);
             mLikesTableUpdateMsgID.setInt(2, id);
+            ret += mLikesTableUpdateMsgID.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void updateUserIDLikesTable(String userID, int id) {
+    int updateUserIDLikesTable(String userID, int id) {
+        int ret = 0;
+        
+        if (testString(userID) == false) {
+            return -1;
+        }
+
         try {
             mLikesTableUpdateUserID.setString(1, userID);
             mLikesTableUpdateUserID.setInt(2, id);
+            ret += mLikesTableUpdateUserID.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
-    void updateStatusLikesTable(int status, int id) {
+    int updateStatusLikesTable(int status, int id) {
+        int ret = 0;
+        
+        // TODO: WOULD THIS STILL NEED An IF BLOCK TO CHECK RETURN
+
         try {
             mLikesTableUpdateStatus.setInt(1, status);
             mLikesTableUpdateStatus.setInt(2, id);
+            ret += mLikesTableUpdateStatus.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
     //======================================================================
-    void updateContentMessageTable(String content, int id){ 
+    int updateContentMessageTable(String content, int id){ 
+        int ret = 0;
+        
+        if (testString(content) == false) {
+            return -1;
+        }
+
         try {
             mMessageTableUpdateContent.setString(1, content);
             mMessageTableUpdateContent.setInt(2, id);
+            ret += mMessageTableUpdateContent.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
 
-    void updateUserIDMessageTable(String userID, int id){ 
+    int updateUserIDMessageTable(String userID, int id){ 
+        int ret = 0;
+        
+        if (testString(userID) == false) {
+            return -1;
+        }
+
         try {
             mMessageTableUpdateUserID.setString(1, userID);
             mMessageTableUpdateUserID.setInt(2, id);
+            ret += mMessageTableUpdateUserID.executeUpdate();
         } catch(SQLException e) {
             e.printStackTrace();
         }
+
+        return ret;
     }
 
     /**
@@ -618,7 +878,7 @@ public class Database {
      * @param message: The message being checked
      * @return: Returns true if valid and false if invalid
      */
-    public boolean testMessage(String message){
+    public boolean testString(String message){
         try {
             if(message.equals("") || message == null){
                 throw new InvalidMessageException();
