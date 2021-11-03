@@ -107,6 +107,7 @@ public class Database {
     // LIKE PREPARED STATEMENTS
     private PreparedStatement psInsertLike;
     private PreparedStatement psUpdateLike;
+    private PreparedStatement psSelectAllLikes; 
 
     // COMMENT PREPARED STATEMENTS
     private PreparedStatement psInsertComment;
@@ -480,25 +481,48 @@ public class Database {
             db.psUserTable = db.mConnection.prepareStatement("CREATE TABLE user (" + 
                             "userID VARCHAR(500) NOT NULL PRIMARY KEY, " + 
                             "bio TEXT)");
+
             db.psMessageTable = db.mConnection.prepareStatement("CREATE TABLE message (" + 
-                            "id SERIAL PRIMARY KEY, " + 
+                            "msgID SERIAL PRIMARY KEY, " + 
                             "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
                             "content TEXT NOT NULL)");
+
             db.psCommentTable = db.mConnection.prepareStatement("CREATE TABLE comment (" + 
-                            "id SERIAL PRIMARY KEY, " + 
+                            "cmtID SERIAL PRIMARY KEY, " + 
                             "msgID SERIAL FOREIGN KEY REFERENCES message(msgID), " + 
                             "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
-                            "content TEXT NOT NULL)");    
+                            "content TEXT NOT NULL)"); 
+
             db.psLikesTable = db.mConnection.prepareStatement("CREATE TABLE likes (" +
-                            "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
                             "msgID SERIAL FOREIGN KEY REFERENCES message(msgID), " +
+                            "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
                             "status INT, " + 
-                            "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  
+                            "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
 
             // USER prepared statements
             db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO user VALUES (?, ?)");  
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from user where userID = ?");
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE user SET bio = ? WHERE userID = ?");
+
+            // MESSAGE prepared statements
+            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO message VALUES (default, ?, ?)");
+            db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from message WHERE msgID = ?");
+            db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM message");
+            db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE message SET content = ? WHERE msgID = ?");
+            db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM message WHERE msgID = ?");
+  
+            // LIKE prepared statements
+            db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
+            // TODO: HOW TO UPDATE A LIKE WHEN WE ARE USING A JOINT PRIMARY KEY?
+            db.psUpdateLike = db.mConnection.prepareStatement("UPDATE likes SET status = ? WHERE like_key = (?,?)");
+            db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from like WHERE msgID = ?");
+
+            // COMMENT prepared statements
+            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comment VALUES (default, ?, ?, ?)");
+            db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comment WHERE cmtID = ?");
+            db.psSelectAllComments = db.mConnection.prepareStatement("SELECT * from comment WHERE msgID = ?");
+            db.psUpdateComment = db.mConnection.prepareStatement("UPDATE message SET content = ? WHERE cmtID = ?");
+            db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM message WHERE cmtID = ?");
 
             // I commented these out because we may not need all of them
 
