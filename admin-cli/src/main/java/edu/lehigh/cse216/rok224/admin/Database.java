@@ -141,6 +141,10 @@ public class Database {
     public class User {
         String mUserID;
         String mBio;
+        // functions:
+        // insertUser(user, bio)
+        // selectUser(user)
+        // updateUser(user)
 
         public User(String userID, String bio) {
             mUserID = userID;
@@ -148,8 +152,7 @@ public class Database {
         }
 
         // add new user
-        int insertRowUser (String user, String bio) {
-        
+        int insertUser (String user, String bio) {
             // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
             // i need to both check the overall validity of the strings getting passed in,
             // as well as, in the case that we do get a valid string, if it already exists
@@ -160,14 +163,22 @@ public class Database {
                 return -1;
             }
     
+            // TODO: what do the executeQuery things return? if user is not found, is that an error??
             // check to see if user already exists in the User table
-            if (true) { 
+            ResultSet rs = null;
+            try {
+                rs = psSelectUser.executeQuery(user);
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            } 
+            if (rs != null) { // if user is found in the table, return 1
+                return 1;
             }
             
             try {
-                mInsertOneUser.setString(1, user);  // first param is being set as user
-                mInsertOneUser.setString(2, bio);   // second param is being set as bio
-                ret += mInsertOneUser.executeUpdate();
+                psInsertUser.setString(1, user);  // first param is being set as user
+                psInsertUser.setString(2, bio);   // second param is being set as bio
+                ret += psInsertUser.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -175,22 +186,33 @@ public class Database {
         }
 
         // get user from ID
+        User selectUser(String user) {
+            User res = null;
+            try {
+                psSelectUser.setString(1, user);
+                ResultSet rs = psSelectUser.executeQuery();
+                if(rs.next()){
+                    res = new User(rs.getString("userID"), rs.getString("bio"));
+                }
+            } catch (SQLException e){
+                e.printStackTrace();
+            }
+            return res;
+        }
 
-        int updateBioUserTable (String bio, String user) {
+        // update user bio of a given user ID
+        int updateUser (String user, String bio) {
             int ret = 0;
-    
             if (testString(bio) == false || testString(user) == false) {
                 return -1;
             }
-            
             try {
-                mUserTableUpdateBio.setString(1, bio);
-                mUserTableUpdateBio.setString(2, user);
-                ret += mUserTableUpdateBio.executeUpdate();
+                psUpdateUser.setString(2, user);
+                psUpdateUser.setString(1, bio);
+                ret += psUpdateUser.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-    
             return ret;
         }
     }
@@ -463,16 +485,9 @@ public class Database {
             return null;
         }
 
-        // Attempt to create all of our prepared statements.  If any of these 
-        // fail, the whole getDatabase() call should fail
+        // If any of our prepared statements fail, the whole getDatabase() call should fail
         try {
-            // NB: we can easily get ourselves in trouble here by typing the
-            //     SQL incorrectly.  We really should have things like "tblData"
-            //     as constants, and then build the strings for the statements
-            //     from those constants.
-
-            // Note: no "IF NOT EXISTS" or "IF EXISTS" checks on table 
-            // creation/deletion, so multiple executions will cause an exception
+            // Note: multiple executions will cause an exception
             // TODO: I don't think we need this??
             db.psCreateTable = db.mConnection.prepareStatement("CREATE TABLE tblData (id SERIAL PRIMARY KEY, message VARCHAR(500) NOT NULL, likes INT)"); //Creates the table
             db.psDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
