@@ -590,40 +590,34 @@ public class Database {
             db.psDropTable = db.mConnection.prepareStatement("DROP TABLE tblData"); //Deletes the table
 
             // Create all the tables we need 
-            db.psUserTable = db.mConnection.prepareStatement("CREATE TABLE user (" + 
-                            "userID VARCHAR(500) NOT NULL PRIMARY KEY, " + 
-                            "bio TEXT)");
+            db.psUserTable = db.mConnection.prepareStatement(
+                "CREATE TABLE users (userID VARCHAR(500) NOT NULL PRIMARY KEY, bio TEXT)");
 
-            db.psMessageTable = db.mConnection.prepareStatement("CREATE TABLE message (" + 
-                            "msgID SERIAL PRIMARY KEY, " + 
-                            "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
-                            "content TEXT NOT NULL)");
+            db.psMessageTable = db.mConnection.prepareStatement(
+                "CREATE TABLE messages (msgID SERIAL PRIMARY KEY, userID VARCHAR(500), content TEXT NOT NULL, CONSTRAINT user_key FOREIGN KEY(userID) REFERENCES users(userID))");
 
-            db.psCommentTable = db.mConnection.prepareStatement("CREATE TABLE comment (" + 
-                            "cmtID SERIAL PRIMARY KEY, " + 
-                            "msgID SERIAL FOREIGN KEY REFERENCES message(msgID), " + 
-                            "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
-                            "content TEXT NOT NULL)"); 
+            db.psCommentTable = db.mConnection.prepareStatement(
+                "CREATE TABLE comments (cmtID SERIAL PRIMARY KEY, msgID INT, userID VARCHAR(500), content TEXT NOT NULL, " + 
+                "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID), CONSTRAINT user_key FOREIGN KEY(userID) REFERENCES users(userID))"); 
 
-            db.psLikesTable = db.mConnection.prepareStatement("CREATE TABLE likes (" +
-                            "msgID SERIAL FOREIGN KEY REFERENCES message(msgID), " +
-                            "userID VARCHAR(500) FOREIGN KEY REFERENCES user(userID), " + 
-                            "status INT, " + 
-                            "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
+            db.psLikesTable = db.mConnection.prepareStatement(
+                "CREATE TABLE likes (msgID INT, userID VARCHAR(500), status INT, " + 
+                "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID), CONSTRAINT user_key FOREIGN KEY(userID) REFERENCES users(userID), " + 
+                "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
 
             // USER prepared statements
-            db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO user VALUES (?, ?)");  
-            db.psSelectUser = db.mConnection.prepareStatement("SELECT * from user where userID = ?");
-            db.psUpdateUser = db.mConnection.prepareStatement("UPDATE user SET bio = ? WHERE userID = ?");
+            db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO users VALUES (?, ?)");  
+            db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
+            db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
 
             // MESSAGE prepared statements
-            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO message VALUES (default, ?, ?)");
-            db.psGetMsgLikes = db.mConnection.prepareStatement("SELECT * from like WHERE msgID = ?");
-            db.psGetMsgComments = db.mConnection.prepareStatement("SELECT * from comment WHERE msgID = ?");
-            db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from message WHERE msgID = ?");
-            db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM message");
-            db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE message SET content = ? WHERE msgID = ?");
-            db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM message WHERE msgID = ?");
+            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?)");
+            db.psGetMsgLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
+            db.psGetMsgComments = db.mConnection.prepareStatement("SELECT * from comments WHERE msgID = ?");
+            db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from messages WHERE msgID = ?");
+            db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM messages");
+            db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE messages SET content = ? WHERE msgID = ?");
+            db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM messages WHERE msgID = ?");
   
             // LIKE prepared statements
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
