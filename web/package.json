@@ -2,9 +2,35 @@
     "name": "web",
     "version": "1.0.0",
     "description": "Web Front-End",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "cross-env NODE_ENV=development webpack serve --config config/webpack.dev.js --open",
+        "build": "cross-env NODE_ENV=production TARGETFOLDER='../backend/src/main/resources' WEBFOLDERNAME=web webpack --config config/webpack.prod.js"
+    },
     "dependencies": {
-        "jasmine-core": "^3.9.0",
+        "bootstrap": "^3.3.7",
+        "jasmine-core": "^3.10.0",
         "jquery": "^3.6.0",
-        "typescript": "^4.4.3"
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2",
+        "react-google-login": "^5.2.2",
+        "react-router-dom": "^5.3.0"
+    },
+    "devDependencies": {
+        "@types/jquery": "^3.5.7",
+        "@types/react": "^17.0.30",
+        "@types/react-dom": "^17.0.9",
+        "@types/react-router-dom": "^5.3.1",
+        "copy-webpack-plugin": "^9.0.1",
+        "cross-env": "^7.0.3",
+        "css-loader": "^6.4.0",
+        "html-webpack-plugin": "^5.4.0",
+        "style-loader": "^3.3.0",
+        "ts-loader": "^9.2.6",
+        "typescript": "^4.4.4",
+        "webpack": "^5.58.2",
+        "webpack-cli": "^4.9.0",
+        "webpack-dev-server": "^4.3.1",
+        "webpack-merge": "^5.8.0"
     }
 }

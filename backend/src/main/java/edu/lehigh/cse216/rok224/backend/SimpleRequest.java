@@ -9,12 +9,9 @@ package edu.lehigh.cse216.rok224.backend;
  */
 public class SimpleRequest {
     /**
-     * The title being provided by the client.
-     */
-    public String mTitle;
-
-    /**
      * The message being provided by the client.
      */
     public String mMessage;
+    public String mSessionKey; // maybe refactor to use an HTTP header??
+    public String mEmail;
 }

@@ -695,7 +695,8 @@ public class Database {
     }
 
     /**
-     * Create tblData.  If it already exists, this will print an error
+     * Increments the like value of a row
+     * @param id: the id of the message
      */
     int createTable(){
         try {
@@ -748,8 +749,8 @@ public class Database {
     }
 
     /**
-     * Remove tblData from the database.  If it does not exist, this will print
-     * an error.
+     * Decrements the like value of a row
+     * @param id: the id of the message
      */
     int dropTable(){
         try {
