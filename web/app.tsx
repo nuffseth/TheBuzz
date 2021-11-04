@@ -24,6 +24,7 @@ class NewEntryForm {
     constructor(){
         $("#addCancel").click(this.clearForm);
         $("#addButton").click(this.submitForm);
+        // TODO: add file picker
     }
 
     /**
@@ -40,6 +41,7 @@ class NewEntryForm {
     /**
      * Check if the input fields are both valid, and if so, do an AJAX call.
      */
+    // ajax means interacting with backend
     submitForm(){
         // get the values of the two fields, force them to be strings, and check 
         // that neither is empty
@@ -48,12 +50,25 @@ class NewEntryForm {
             window.alert("Error: title or message is not valid");
             return;
         }
+        //let fileContent = this.getFileContent(); // TODO: check if content is valid
+ 
+        // getFileContent() {
+        //     let fileName = document.GetElementByID
+        // cast as input
+        // property will be name of file
+        // }
+
+        // unit test the conversion to base64 from file
+        // test by converting to base64 back into binary, compare to original binary
+
+
         // set up an AJAX post.  When the server replies, the result will go to
         // onSubmitResponse
         $.ajax({
             type: "POST",
             url: "/messages",
             dataType: "json",
+            // data: JSON.stringify({mMessage: msg, mFile: fileContent}),
             data: JSON.stringify({mMessage: msg}),
             success: newEntryForm.onSubmitResponse
         });
@@ -282,6 +297,7 @@ class ElementList {
     /**
      * update is the private method used by refresh() to update messageList
      */
+    // photo stuff might go here
     private update(data: any) {
         $("#messageList").html("<table>");
         for (let i = 0; i < data.mData.length; ++i) {
