@@ -153,7 +153,7 @@ public class App {
                 int id = getInt(in, "Enter the row ID");
                 if(id == -1){
                     continue;
-                }
+                } 
                 Database.RowData res = db.selectOne(id);
                 if(res != null) {
                     System.out.println(" ID [" + res.mId + "] ");
