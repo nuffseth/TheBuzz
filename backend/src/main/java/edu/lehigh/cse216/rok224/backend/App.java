@@ -160,11 +160,6 @@ public class App {
             // verify the id token sent to us from the frontend
             String email = verifyIdToken(verifier, idTokenString);
 
-            // check if verifyIdToken returned null (not verified)
-            if (email == null) { // email not verified
-                return gson.toJson(new StructuredResponse("error", "authenticaiton failed", null));
-            }
-
             // check that email ends in @lehigh.edu
             String[] values = email.split("@", 0); 
 
@@ -185,9 +180,6 @@ public class App {
             // add user to user table, Database.java shouldn't add duplicates
             System.out.println("inserting user into database...");
             int result = dataBase.insertRowUser(username, "");
-
-            // TO DO: need a different error code from Database.java if user already exists 
-            // shouldn't give an error if user already exists
 
             // send the session key back to the frontend
             if (result == -1) { // return an error if unable to add user
