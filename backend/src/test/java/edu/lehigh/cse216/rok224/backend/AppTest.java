@@ -50,7 +50,7 @@ public class AppTest
         assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
     }
 
-    // isolate hash table checking and check for errors in that function
+    // test that the hash table works for a valid entry and doesn't work for an invalid entry
     public void testHashTable() {
         String valid_user = "valid123";
         String valid_key = UUID.randomUUID().toString();
@@ -68,7 +68,7 @@ public class AppTest
         assertTrue(result == true); // valid key/user combo should return true
     }
 
-    // isolate oauth token validation, make sure feeding in bogus token results in error
+    // test that a bogus OAuth token returns an error in the OAuth id token verification
     public void testOAuthVerify() {
         // get environment variables
         Map<String, String> env = System.getenv();
