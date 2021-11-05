@@ -108,6 +108,7 @@ public class Database {
 
     // LIKE PREPARED STATEMENTS
     private PreparedStatement psInsertLike;
+    private PreparedStatement psSelectLike;
     private PreparedStatement psUpdateLike;
     private PreparedStatement psSelectAllLikes; 
 
@@ -138,7 +139,7 @@ public class Database {
     
 
     /**
-     * All objects and functions for the User table
+     * All objects for the User table
      */
     public class User {
         String mUserID;
@@ -148,73 +149,73 @@ public class Database {
             mUserID = userID;
             mBio = bio;
         }
+    }
 
-        // add new user
-        int insertUser (String user, String bio) {
-            // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
-            // i need to both check the overall validity of the strings getting passed in,
-            // as well as, in the case that we do get a valid string, if it already exists
-            
-            int ret = 0;
-    
-            if (testString(user) == false || testString(bio) == false){ // generic validity check on both params
-                return -1;
-            }
-    
-            // TODO: what do the executeQuery things return? if user is not found, is that an error??
-            // check to see if user already exists in the User table
-            ResultSet rs = null;
-            try {
-                rs = psSelectUser.executeQuery(user);
-            } catch (SQLException e1) {
-                e1.printStackTrace();
-            } 
-            if (rs != null) { // if user is found in the table, return 1
-                return 1;
-            }
-            
-            try {
-                psInsertUser.setString(1, user);  // first param is being set as user
-                psInsertUser.setString(2, bio);   // second param is being set as bio
-                ret += psInsertUser.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return ret;
+    // add new user
+    int insertUser (String user, String bio) {
+        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
+        // i need to both check the overall validity of the strings getting passed in,
+        // as well as, in the case that we do get a valid string, if it already exists
+        
+        int ret = 0;
+
+        if (testString(user) == false || testString(bio) == false){ // generic validity check on both params
+            return -1;
         }
 
-        // get user from ID
-        User selectUser(String user) {
-            User res = null;
-            try {
-                psSelectUser.setString(1, user);
-                ResultSet rs = psSelectUser.executeQuery();
-                if(rs.next()){
-                    res = new User(rs.getString("userID"), rs.getString("bio"));
-                }
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
-            }
-            return res;
+        // TODO: what do the executeQuery things return? if user is not found, is that an error??
+        // check to see if user already exists in the User table
+        ResultSet rs = null;
+        try {
+            rs = psSelectUser.executeQuery(user);
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        } 
+        if (rs != null) { // if user is found in the table, return 1
+            return 1;
         }
+        
+        try {
+            psInsertUser.setString(1, user);  // first param is being set as user
+            psInsertUser.setString(2, bio);   // second param is being set as bio
+            ret += psInsertUser.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
 
-        // update user bio of a given user ID
-        int updateUser (String user, String bio) {
-            int ret = 0;
-            if (testString(bio) == false || testString(user) == false) {
-                return -1;
+    // get user from ID
+    User selectUser(String user) {
+        User res = null;
+        try {
+            psSelectUser.setString(1, user);
+            ResultSet rs = psSelectUser.executeQuery();
+            if(rs.next()){
+                res = new User(rs.getString("userID"), rs.getString("bio"));
             }
-            try {
-                psUpdateUser.setString(2, user);
-                psUpdateUser.setString(1, bio);
-                ret += psUpdateUser.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
+        return res;
+    }
+
+    // update user bio of a given user ID
+    int updateUser (String user, String bio) {
+        int ret = 0;
+        if (testString(bio) == false || testString(user) == false) {
+            return -1;
+        }
+        try {
+            psUpdateUser.setString(2, user);
+            psUpdateUser.setString(1, bio);
+            ret += psUpdateUser.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
     }
 
     /**
@@ -232,92 +233,93 @@ public class Database {
             mMsgID = msgID;
             mContent = content;
         }
+    }
 
-        // add a comment to the table
-        int insertComment (int msgID, String userID, String content) {
-            int ret = 0;
-            // TODO: is there a testInt method to use to test msgID?
-            if ( !testString(content) || !testString(userID) ) {   // generic validity check 
-                return -1;
-            } 
-    
-            try {
-                psInsertComment.setInt(2, msgID);
-                psInsertComment.setString(3, userID);
-                psInsertComment.setString(4, content);
+    // add a comment to the table
+    int insertComment (int msgID, String userID, String content) {
+        int ret = 0;
+        // TODO: is there a testInt method to use to test msgID?
+        if ( !testString(content) || !testString(userID) ) {   // generic validity check 
+            return -1;
+        } 
 
-                ret += psInsertComment.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+        try {
+            psInsertComment.setInt(2, msgID);
+            psInsertComment.setString(3, userID);
+            psInsertComment.setString(4, content);
+
+            ret += psInsertComment.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
         }
+        return ret;
+    }
 
-        // select one comment 
-        Comment selectComment(int cmtID) {
-            Comment res = null;
-            try {
-                psSelectComment.setInt(1, cmtID);
-                ResultSet rs = psSelectComment.executeQuery();
-                if(rs.next()){
-                    res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"));
-                }
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
+    // select one comment 
+    Comment selectComment(int cmtID) {
+        Comment res = null;
+        try {
+            psSelectComment.setInt(1, cmtID);
+            ResultSet rs = psSelectComment.executeQuery();
+            if(rs.next()){
+                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"));
             }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    }
+
+    // select all comments for a specific message
+    // this is exactly the same as getMsgComments ...
+    ArrayList<Comment> selectAllComments(int msgID){
+        ArrayList<Comment> res = new ArrayList<Comment>();
+        try {
+            psGetMsgComments.setInt(1, msgID);
+            ResultSet rs = psGetMsgComments.executeQuery();
+            while (rs.next()){
+                res.add(new Comment(rs.getInt("cmtID"), 
+                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
+            }
+            rs.close();
             return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
+    }
 
-        // select all comments for a specific message
-        ArrayList<Comment> selectAllComments(int msgID){
-            ArrayList<Comment> res = new ArrayList<Comment>();
-            try {
-                psSelectAllComments.setInt(1, msgID);
-                ResultSet rs = psSelectAllComments.executeQuery();
-                while (rs.next()){
-                    res.add(new Comment(rs.getInt("cmtID"), 
-                            rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
-                }
-                rs.close();
-                return res;
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
-            }
+    // update a comment
+    // TODO: should we do a testInt for cmtID?
+    int updateComment (int cmtID, String content) {
+        int ret = 0;
+        if (testString(content) == false) {
+            return -1;
         }
+        try {
+            psUpdateComment.setInt(2, cmtID);
+            psUpdateComment.setString(1, content);
+            ret += psUpdateComment.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
 
-        // update a comment
-        // TODO: should we do a testInt for cmtID?
-        int updateComment (int cmtID, String content) {
-            int ret = 0;
-            if (testString(content) == false) {
-                return -1;
-            }
-            try {
-                psUpdateComment.setInt(2, cmtID);
-                psUpdateComment.setString(1, content);
-                ret += psUpdateComment.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+    // delete a comment
+    int deleteComment(int cmtID){
+        int res = -1;
+        try {
+            psDeleteComment.setInt(1, cmtID);
+            res = psDeleteComment.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
         }
-
-        // delete a comment
-        int deleteComment(int cmtID){
-            int res = -1;
-            try {
-                psDeleteComment.setInt(1, cmtID);
-                res = psDeleteComment.executeUpdate();
-            } catch (SQLException e){
-                e.printStackTrace();
-                return -1;
-            }
-            return res;
-        }
+        return res;
     }
 
     /**
@@ -325,49 +327,64 @@ public class Database {
      */
     public class Like {
         String mUserID;
-        int mLikeID;
         int mMsgID;
         int mStatus;
 
-        public Like(String userID, int likeID, int msgID, int status) {
-            mUserID = userID;
-            mLikeID = likeID;
+        public Like(int msgID, String userID, int status) {
             mMsgID = msgID;
+            mUserID = userID;
             mStatus = status;
         }
+    }
 
-        // add a new like to the table
-        int insertLike (int status, String userID, int msgID) {
-            int ret = 0;
-            if (testString(userID) == false) {  // general validity check
-                return -1;
-            }
-            try {
-                psInsertLike.setInt(1, msgID);
-                psInsertLike.setString(2, userID);
-                psInsertLike.setInt(3, status);
-                ret += psInsertLike.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+    // add a new like to the table
+    int insertLike (int status, String userID, int msgID) {
+        int ret = 0;
+        if (testString(userID) == false) {  // general validity check
+            return -1;
         }
+        try {
+            psInsertLike.setInt(1, msgID);
+            psInsertLike.setString(2, userID);
+            psInsertLike.setInt(3, status);
+            ret += psInsertLike.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
 
-        // update a like in the table
-        int updateLike(int msgID, String userID, int status) {
-            int ret = 0; 
-            try {
-                psUpdateLike.setInt(1, status);
-                psUpdateLike.setInt(2, msgID);
-                psUpdateLike.setString(3, userID);
-                ret += psUpdateLike.executeUpdate();
-            } catch(SQLException e) {
-                e.printStackTrace();
-                return -1;
+    // select a specific like
+    Like selectLike(int msgID, String userID) {
+        Like res = null; 
+        try {
+            psSelectLike.setInt(1, msgID);
+            psSelectLike.setString(2, userID);
+            ResultSet rs = psSelectLike.executeQuery();
+            if(rs.next()){
+                res = new Like(rs.getInt("msgID"), rs.getString("userID"), rs.getInt("status"));
             }
-            return ret;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return null;
         }
+        return res;
+    }  
+
+    // update a like in the table
+    int updateLike(int msgID, String userID, int status) {
+        int ret = 0; 
+        try {
+            psUpdateLike.setInt(1, status);
+            psUpdateLike.setInt(2, msgID);
+            psUpdateLike.setString(3, userID);
+            ret += psUpdateLike.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
     }
 
     /**
@@ -389,150 +406,133 @@ public class Database {
             mNumLikes = numLikes;
             mComments = comments; // this is maybe probably wrong b/c arraylists :D
         }
+    }
 
-        // add a new message
-        int insertMessage (String userID, String content) {
-            int ret = 0; 
-            if (testString(content) == false || testString(userID) == false) { // generic validity check
-                return -1;
-            }
-            
-            try {
-                psInsertMessage.setString(2, userID);
-                psInsertMessage.setString(3, content);
-                ret += psInsertMessage.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+    // add a new message
+    int insertMessage (String userID, String content) {
+        int ret = 0; 
+        if (testString(content) == false || testString(userID) == false) { // generic validity check
+            return -1;
         }
-
-        // select all comments for a specific message
-        ArrayList<Comment> getComments(int msgID){
-            ArrayList<Comment> res = new ArrayList<Comment>();
-            try {
-                psGetMsgComments.setInt(1, msgID);
-                ResultSet rs = psGetMsgComments.executeQuery();
-                while (rs.next()){
-                    res.add(new Comment(rs.getInt("cmtID"), 
-                            rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
-                }
-                rs.close();
-                return res;
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
-            }
+        
+        try {
+            psInsertMessage.setString(2, userID);
+            psInsertMessage.setString(3, content);
+            ret += psInsertMessage.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
         }
+        return ret;
+    }
 
-        // count all the likes on a specific message (subtract any dislikes)
-        int countLikes(int msgID) {
-            int like_count = 0;
-            try {
-                psGetMsgLikes.setInt(1, msgID);
-                ResultSet rs = psGetMsgLikes.executeQuery();
-                while (rs.next()){
-                    int status = rs.getInt("status");
-                    like_count += status;
-                }
-                rs.close();
-            } catch (SQLException e){
-                e.printStackTrace();
-                return -1;
+    // select all comments for a specific message
+    ArrayList<Comment> getComments(int msgID){
+        ArrayList<Comment> res = new ArrayList<Comment>();
+        try {
+            psGetMsgComments.setInt(1, msgID);
+            ResultSet rs = psGetMsgComments.executeQuery();
+            while (rs.next()){
+                res.add(new Comment(rs.getInt("cmtID"), 
+                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
             }
-            return like_count;
-        }
-
-        // select a specific message
-        Message selectMessage(int msgID) {
-            Message res = null;
-            try {
-                psSelectMessage.setInt(1, msgID);
-                ResultSet rs = psSelectComment.executeQuery();
-                if(rs.next()){
-                    // populate ArrayList of all of this message's comments
-                    ArrayList<Comment> allComments = getComments(msgID);
-                    int likes = countLikes(msgID);
-                    res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments);
-                }
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
-            }
+            rs.close();
             return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
+    }
 
-        /**
-         * SELECT 
-         *   m.msgID, m.userID, m.content, count(l.*) as like_count
-         * FROM
-         *   message m
-         * LEFT JOIN
-         *   like l
-         * ON
-         *   l.msgID = m.msgID
-         * LEFT JOIN 
-         *   comments c
-         * ON
-         *   c.msgID = m.msgID
-         * WHERE
-         *   m.msgID = ?
-         */
-
-        // select all messages
-        ArrayList<Message> selectAllMessages(){
-            ArrayList<Message> res = new ArrayList<Message>();
-            try {
-                ResultSet rs = psSelectAllMessages.executeQuery();
-                while (rs.next()){
-                    // for each message, get all comments and like count
-                    int this_msg = rs.getInt("msgID");
-                    ArrayList<Comment> comments = getComments(this_msg);
-                    int likes = countLikes(this_msg);
-
-                    // create Message object and add to our ArrayList
-                    Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments);
-                    res.add(thisMessage);
-                }
-                rs.close();
-                return res;
-            } catch (SQLException e){
-                e.printStackTrace();
-                return null;
+    // count all the likes on a specific message (subtract any dislikes)
+    int countLikes(int msgID) {
+        int like_count = 0;
+        try {
+            psGetMsgLikes.setInt(1, msgID);
+            ResultSet rs = psGetMsgLikes.executeQuery();
+            while (rs.next()){
+                int status = rs.getInt("status");
+                like_count += status;
             }
+            rs.close();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
         }
+        return like_count;
+    }
 
-        // update a message
-        // TODO: should we do a testInt for msgID?
-        int updateMessage (int msgID, String content) {
-            int ret = 0;
-            if (testString(content) == false) {
-                return -1;
+    // select a specific message
+    Message selectMessage(int msgID) {
+        Message res = null;
+        try {
+            psSelectMessage.setInt(1, msgID);
+            ResultSet rs = psSelectMessage.executeQuery();
+            if(rs.next()){
+                // populate ArrayList of all of this message's comments
+                ArrayList<Comment> allComments = getComments(msgID);
+                int likes = countLikes(msgID);
+                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments);
             }
-            try {
-                psUpdateMessage.setInt(2, msgID);
-                psUpdateMessage.setString(1, content);
-                ret += psUpdateMessage.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return -1;
-            }
-            return ret;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
+        return res;
+    }
 
-        // delete a message
-        int deleteMessage(int msgID){
-            int res = -1;
-            try {
-                psDeleteMessage.setInt(1, msgID);
-                res = psDeleteMessage.executeUpdate();
-            } catch (SQLException e){
-                e.printStackTrace();
-                return -1;
+    // select all messages
+    ArrayList<Message> selectAllMessages(){
+        ArrayList<Message> res = new ArrayList<Message>();
+        try {
+            ResultSet rs = psSelectAllMessages.executeQuery();
+            while (rs.next()){
+                // for each message, get all comments and like count
+                int this_msg = rs.getInt("msgID");
+                ArrayList<Comment> comments = getComments(this_msg);
+                int likes = countLikes(this_msg);
+
+                // create Message object and add to our ArrayList
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments);
+                res.add(thisMessage);
             }
+            rs.close();
             return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
+    }
+
+    // update a message
+    // TODO: should we do a testInt for msgID?
+    int updateMessage (int msgID, String content) {
+        int ret = 0;
+        if (testString(content) == false) {
+            return -1;
+        }
+        try {
+            psUpdateMessage.setInt(2, msgID);
+            psUpdateMessage.setString(1, content);
+            ret += psUpdateMessage.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+    // delete a message
+    int deleteMessage(int msgID){
+        int res = -1;
+        try {
+            psDeleteMessage.setInt(1, msgID);
+            res = psDeleteMessage.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
     }
 
     /**
@@ -623,13 +623,14 @@ public class Database {
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
             // TODO: HOW TO UPDATE A LIKE WHEN WE ARE USING A JOINT PRIMARY KEY?
             db.psUpdateLike = db.mConnection.prepareStatement("UPDATE likes SET status = ? WHERE msgID = ? AND userID = ?");
-            db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from like WHERE msgID = ?");
+            db.psSelectLike = db.mConnection.prepareStatement("SELECT * from likes where msgID = ? AND userID = ?");
+            db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
 
             // COMMENT prepared statements
-            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comment VALUES (default, ?, ?, ?)");
-            db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comment WHERE cmtID = ?");
-            db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comment SET content = ? WHERE cmtID = ?");
-            db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comment WHERE cmtID = ?");
+            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?)");
+            db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
+            db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
+            db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
 
             // I commented these out because we may not need all of them
 
