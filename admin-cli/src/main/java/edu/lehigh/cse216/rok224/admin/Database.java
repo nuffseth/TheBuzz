@@ -14,12 +14,19 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import com.google.api.services.drive.Drive;
+
 public class Database {
     /**
      * The connection to the database.  When there is no connection, it should
      * be null.  Otherwise, there is a valid open connection
      */
     private Connection mConnection;
+
+    /**
+     * The connection to the Google Drive service. 
+     */
+    private Drive mService;
 
     // prepared statements from phase 0 - do we still need these?
     // private PreparedStatement mSelectAll;
@@ -132,7 +139,7 @@ public class Database {
 
         // TODO: what do the executeQuery things return? if user is not found, is that an error??
         // check to see if user already exists in the User table
-        ResultSet rs = null;
+        // ResultSet rs = null;
         // try {
         //     System.out.println("checking if user is in database...");
         //     psSelectUser.setString(1, user);
@@ -613,7 +620,8 @@ public class Database {
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
      */
-    private Database() {
+    private Database(Drive service) {
+        mService = service;
     }
 
     /**
@@ -627,9 +635,9 @@ public class Database {
      * 
      * @return A Database object, or null if we cannot connect properly
      */
-    static Database getDatabase(String url) {
+    static Database getDatabase(String url, Drive service) {
         // Create an un-configured Database object
-        Database db = new Database();
+        Database db = new Database(service);
 
         // Give the Database object a connection, fail if we cannot get one
         try {
