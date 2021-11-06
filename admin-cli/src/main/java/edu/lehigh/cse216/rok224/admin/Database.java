@@ -86,6 +86,7 @@ public class Database {
     // ALTER TABLE comments ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
     // ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
 
+
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
     private PreparedStatement mCommentTableUpdateUserID;
@@ -125,28 +126,37 @@ public class Database {
         
         int ret = 0;
 
-        if (testString(user) == false || testString(bio) == false){ // generic validity check on both params
+        if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
 
         // TODO: what do the executeQuery things return? if user is not found, is that an error??
         // check to see if user already exists in the User table
         ResultSet rs = null;
-        try {
-            rs = psSelectUser.executeQuery(user);
-        } catch (SQLException e1) {
-            e1.printStackTrace();
-        } 
-        if (rs != null) { // if user is found in the table, return 1
-            return 1;
-        }
+        // try {
+        //     System.out.println("checking if user is in database...");
+        //     psSelectUser.setString(1, user);
+        //     rs = psSelectUser.executeQuery();
+        // } catch (SQLException e1) {
+        //     e1.printStackTrace();
+        // } 
+        // System.out.println(rs);
+        // if (rs != null) { // if user is found in the table, return 1
+        //     return 1;
+        // }
         
         try {
+            System.out.println("trying to add user to database...");
             psInsertUser.setString(1, user);  // first param is being set as user
             psInsertUser.setString(2, bio);   // second param is being set as bio
             ret += psInsertUser.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
+                ret = 0;
+            }
+            else {
+                e.printStackTrace();
+            }
         }
         return ret;
     }
