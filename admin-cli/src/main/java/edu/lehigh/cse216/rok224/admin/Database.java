@@ -14,57 +14,6 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-    /**
-     * Update the message for a row in the database
-     * 
-     * @param id The id of the row to update
-     * @param message The new message contents
-     * 
-     * @return The number of rows that were updated.  -1 indicates an error.
-     */
-
-    /**
-     * Delete a row by ID
-     * 
-     * @param id The id of the row to delete
-     * 
-     * @return The number of rows that were deleted.  -1 indicates an error.
-     */
-
-    /**
-     * Query the database for a list of all their IDs
-     * 
-     * @return All rows, as an ArrayList
-     */
-
-    /**
-     * Get all data for a specific row, by ID
-     * 
-     * @param id The id of the row being requested
-     * 
-     * @return The data for the requested row, or null if the ID was invalid
-     */
-
-    /**
-     * Insert a row into the database
-     * 
-     * @param message The message body for this new row
-     * @param likes The amount of likes a message has
-     * 
-     * @return The number of rows that were inserted
-     */
-
-    /**
-     * RowData is like a struct in C: we use it to hold data, and we allow 
-     * direct access to its fields.  In the context of this Database, RowData 
-     * represents the data we'd see in a row.
-     * 
-     * We make RowData a static class of Database because we don't really want
-     * to encourage users to think of RowData as being anything other than an
-     * abstract representation of a row of the database.  RowData and the 
-     * Database are tightly coupled: if one changes, the other should too.
-     */  
-
 public class Database {
     /**
      * The connection to the database.  When there is no connection, it should
@@ -90,7 +39,8 @@ public class Database {
     private PreparedStatement psMessageTable;
     private PreparedStatement psLikesTable;
     private PreparedStatement psCommentTable;
-
+    private PreparedStatement psMsgFileTable;
+    private PreparedStatement psCmtFileTable;
 
     // USER PREPARED STATEMENTS 
     private PreparedStatement psInsertUser;
@@ -119,24 +69,40 @@ public class Database {
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
 
+    // FILE PREPARED STATEMENTS
+    private PreparedStatement psInsertMessageFile;
+    private PreparedStatement psSelectMessageFile;
+    private PreparedStatement psInsertCommentFile;
+    private PreparedStatement psSelectCommentFile;
 
-    // DEPRECATED
-    // private PreparedStatement mCommentTableUpdateContent;
-    // private PreparedStatement mCommentTableUpdateUserID;
-    // private PreparedStatement mCommentTableUpdateMsgID;
-    // //-----------------------=
-    // private PreparedStatement mLikesTableUpdateStatus;
-    // private PreparedStatement mLikesTableUpdateUserID;
-    // private PreparedStatement mLikesTableUpdateMsgID;
-    // //-----------------------=
-    // private PreparedStatement mMessageTableUpdateContent;
-    // private PreparedStatement mMessageTableUpdateUserID;
-    // private PreparedStatement mInsertOneUser;
-    // private PreparedStatement mInsertOneComment;
-    // private PreparedStatement mInsertOneLike;
-    // private PreparedStatement mInsertOneMessage;
-    // private PreparedStatement mSelectOneBio;
-    
+    // PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
+    // ALTER TABLE messages ADD COLUMN msgLink INT
+    // ALTER TABLE messages ADD COLUMN cmtLink INT
+    // ALTER TABLE messages ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
+    // ALTER TABLE messages ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
+
+    // ALTER TABLE comments ADD COLUMN msgLink INT
+    // ALTER TABLE comments ADD COLUMN cmtLink INT
+    // ALTER TABLE comments ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
+    // ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
+
+    /** DEPRECATED PREPARED STATEMENTS
+    private PreparedStatement mCommentTableUpdateContent;
+    private PreparedStatement mCommentTableUpdateUserID;
+    private PreparedStatement mCommentTableUpdateMsgID;
+    //-----------------------=
+    private PreparedStatement mLikesTableUpdateStatus;
+    private PreparedStatement mLikesTableUpdateUserID;
+    private PreparedStatement mLikesTableUpdateMsgID;
+    //-----------------------=
+    private PreparedStatement mMessageTableUpdateContent;
+    private PreparedStatement mMessageTableUpdateUserID;
+    private PreparedStatement mInsertOneUser;
+    private PreparedStatement mInsertOneComment;
+    private PreparedStatement mInsertOneLike;
+    private PreparedStatement mInsertOneMessage;
+    private PreparedStatement mSelectOneBio;
+    */ 
 
     /**
      * All objects for the User table
@@ -397,8 +363,6 @@ public class Database {
         int mNumLikes;
         ArrayList<Comment> mComments;
 
-
-        // TODO: what to do about the comments array thing?? I think this will copy it?
         public Message(int msgID, String userID, String content, int numLikes, ArrayList<Comment> comments) {
             mMsgID = msgID;
             mUserID = userID;
@@ -535,6 +499,106 @@ public class Database {
         return res;
     }
 
+    // object to store file metadata
+    // NOTE: does not include the file content, that must be accessed through the Drive API using the fileID
+    public class MyFile{
+        String mFileID;
+        int mMsgCmtID;
+        String mMime;
+        String mFilename;
+
+        public MyFile(String fileID, int msg_cmtID, String mime, String filename) {
+            mFileID = fileID;
+            mMsgCmtID = msg_cmtID;
+            mMime = mime;
+            mFilename = filename;
+        }
+    }
+
+    // TODO: work with backend to create a method to upload a file from the drive
+    String postFileContent(String file_content, String mime) {
+        // file_content is a bigass string of base64 stuff
+        String fileID = null;
+        return fileID;
+    }
+    // TODO: work with backend to create a method to download a file from the drive
+    String getFileContent(String fileID) {
+        String file_content = null;
+        return file_content;
+    }
+
+    int insertMessageFile(String fileID, int msgID, String mime, String filename) {
+        int ret = 0; 
+        if (testString(mime) == false || testString(filename) == false) { // generic validity check
+            return -1;
+        }
+        
+        try {
+            psInsertMessageFile.setString(1, fileID);
+            psInsertMessageFile.setInt(2, msgID);
+            psInsertMessageFile.setString(3, mime);
+            psInsertMessageFile.setString(4, filename);
+            ret += psInsertMessageFile.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+    // returns an object of all msg file metadata 
+    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    MyFile selectMsgFile(String fileID) {
+        MyFile res = null;
+        try {
+            psSelectMessageFile.setString(1, fileID);
+            ResultSet rs = psSelectMessageFile.executeQuery();
+            if(rs.next()){
+                res = new MyFile(rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename"));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    }
+
+    int insertCommentFile(String fileID, int cmtID, String mime, String filename) {
+        int ret = 0; 
+        if (testString(mime) == false || testString(filename) == false) { // generic validity check
+            return -1;
+        }
+        
+        try {
+            psInsertCommentFile.setString(1, fileID);
+            psInsertCommentFile.setInt(2, cmtID);
+            psInsertCommentFile.setString(3, mime);
+            psInsertCommentFile.setString(4, filename);
+            ret += psInsertCommentFile.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+    // returns an object of all msg file metadata 
+    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    MyFile selectCmtFile(String fileID) {
+        MyFile res = null;
+        try {
+            psSelectCommentFile.setString(1, fileID);
+            ResultSet rs = psSelectCommentFile.executeQuery();
+            if(rs.next()){
+                res = new MyFile(rs.getString("fileID"), rs.getInt("cmtID"), rs.getString("mime"), rs.getString("filename"));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    }
+
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
@@ -605,6 +669,16 @@ public class Database {
                 "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID), CONSTRAINT user_key FOREIGN KEY(userID) REFERENCES users(userID), " + 
                 "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
 
+            db.psMsgFileTable = db.mConnection.prepareStatement(
+                "CREATE TABLE msgfiles (fileID TEXT, msgID INT, mime TEXT, filename VARCHAR(500), " +
+                "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID) )"
+            );
+
+            db.psCmtFileTable = db.mConnection.prepareStatement(
+                "CREATE TABLE cmtfiles (fileID TEXT, cmtID INT, mime TEXT, filename VARCHAR(500), " +
+                "CONSTRAINT cmt_key FOREIGN KEY(cmtID) REFERENCES comments(cmtID) )"
+            );
+
             // USER prepared statements
             db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO users VALUES (?, ?)");  
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
@@ -631,6 +705,13 @@ public class Database {
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
+
+            // FILE prepared statements (two tables: message files and comment files)
+            db.psInsertMessageFile = db.mConnection.prepareStatement("INSERT INTO msgfiles VALUES (?, ?, ?, ?)");
+            db.psSelectMessageFile = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE fileID = ?");
+
+            db.psInsertCommentFile = db.mConnection.prepareStatement("INSERT INTO cmtfiles VALUES (?, ?, ?, ?)");
+            db.psSelectCommentFile = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE fileID = ?");
 
             // I commented these out because we may not need all of them
 
