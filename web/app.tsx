@@ -17,6 +17,9 @@ var newEntryForm: NewEntryForm;
  * NewEntryForm encapsulates all of the code for the form for adding an entry
  */
 class NewEntryForm {
+    // has content from filePicker
+    private fileContent: string[]; 
+
     /**
      * To initialize the object, we say what method of NewEntryForm should be
      * run in response to each of the form's buttons being clicked.
@@ -24,7 +27,8 @@ class NewEntryForm {
     constructor(){
         $("#addCancel").click(this.clearForm);
         $("#addButton").click(this.submitForm);
-        // TODO: add file picker
+        // TODO: add file picker (event listener, event listening for change, every change results in converting file to base64 string array)
+        document.getElementById("filePicker").addEventListener('change', this.onFilePickerChange.bind(this));
     }
 
     /**
@@ -50,14 +54,7 @@ class NewEntryForm {
             window.alert("Error: title or message is not valid");
             return;
         }
-        //let fileContent = this.getFileContent(); // TODO: check if content is valid
- 
-        // getFileContent() {
-        //     let fileName = document.GetElementByID
-        // cast as input
-        // property will be name of file
-        // }
-
+        
         // unit test the conversion to base64 from file
         // test by converting to base64 back into binary, compare to original binary
 
@@ -68,8 +65,8 @@ class NewEntryForm {
             type: "POST",
             url: "/messages",
             dataType: "json",
-            // data: JSON.stringify({mMessage: msg, mFile: fileContent}),
-            data: JSON.stringify({mMessage: msg}),
+            data: JSON.stringify({mMessage: msg, mFiles: this.fileContent}),
+            //data: JSON.stringify({mMessage: msg}),
             success: newEntryForm.onSubmitResponse
         });
     }
@@ -94,6 +91,26 @@ class NewEntryForm {
         // Handle other errors with a less-detailed popup message
         else {
             window.alert("Unspecified error");
+        }
+    }
+    
+    onFilePickerChange() {
+        this.fileContent=[];
+        // TODO: iterate thru all files in files[]
+
+        // var fileName = document.getElementById('filePicker').files[0];  
+        const fileName = (document.getElementById('filePicker') as HTMLInputElement).files[0];
+        //for
+        // var fileName = $('#filePicker')[0].files[0]; 
+        const read = new FileReader();
+        read.readAsBinaryString(fileName);
+        //console.log("reading file");
+        read.onloadend = () => {
+            console.log(`type of result ${typeof read.result}`);
+            //console.log(read.result);
+            const base64 = btoa(read.result as string);
+            console.log(`base64 is  ${base64}`);
+            this.fileContent.push(base64);
         }
     }
 } // end class NewEntryForm
