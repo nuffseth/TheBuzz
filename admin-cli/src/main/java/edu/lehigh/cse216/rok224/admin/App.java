@@ -113,7 +113,7 @@ public class App {
         String db_url = env.get("DATABASE_URL");
         // Get a fully-configured connection to the database, or exit 
         // immediately
-        Database db = Database.getDatabase(db_url);
+        Database db = Database.getDatabase(db_url, null);
         if (db == null)
             return;
 

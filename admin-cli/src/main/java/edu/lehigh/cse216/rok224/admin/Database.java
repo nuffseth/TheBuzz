@@ -7,14 +7,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.*;
 
 import javax.swing.plaf.metal.MetalComboBoxButton;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 
 public class Database {
     /**
@@ -59,6 +71,7 @@ public class Database {
     private PreparedStatement psSelectMessage;
     private PreparedStatement psGetMsgLikes;
     private PreparedStatement psGetMsgComments;
+    private PreparedStatement psGetMsgFileData;
     private PreparedStatement psSelectAllMessages;
     private PreparedStatement psUpdateMessage;
     private PreparedStatement psDeleteMessage;
@@ -73,6 +86,7 @@ public class Database {
     private PreparedStatement psInsertComment;
     private PreparedStatement psSelectComment;
     private PreparedStatement psSelectAllComments;
+    private PreparedStatement psGetCmtFileData;
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
 
@@ -82,7 +96,7 @@ public class Database {
     private PreparedStatement psInsertCommentFile;
     private PreparedStatement psSelectCommentFile;
 
-    // PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
+    /* PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
     // ALTER TABLE messages ADD COLUMN msgLink INT
     // ALTER TABLE messages ADD COLUMN cmtLink INT
     // ALTER TABLE messages ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
@@ -92,7 +106,7 @@ public class Database {
     // ALTER TABLE comments ADD COLUMN cmtLink INT
     // ALTER TABLE comments ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
     // ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
-
+    */
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -209,12 +223,14 @@ public class Database {
         int mCommentID;
         int mMsgID;
         String mContent;
+        ArrayList<MyFile> mFileData;
 
-        public Comment(int commentID, String userID, int msgID, String content) {
+        public Comment(int commentID, String userID, int msgID, String content, ArrayList<MyFile> fileData) {
             mUserID = userID;
             mCommentID = commentID;
             mMsgID = msgID;
             mContent = content;
+            mFileData = fileData;
         }
     }
 
@@ -239,6 +255,23 @@ public class Database {
         return ret;
     }
 
+    // get file matadata for a specific comment
+    ArrayList<MyFile> getCmtFiles(int cmtID) {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            psGetCmtFileData.setInt(1, cmtID);
+            ResultSet rs = psGetCmtFileData.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile( rs.getString("fileID"), rs.getInt("cmtID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // select one comment 
     Comment selectComment(int cmtID) {
         Comment res = null;
@@ -246,7 +279,8 @@ public class Database {
             psSelectComment.setInt(1, cmtID);
             ResultSet rs = psSelectComment.executeQuery();
             if(rs.next()){
-                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"));
+                ArrayList<MyFile> fileData = getCmtFiles(cmtID);
+                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"), fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -263,8 +297,9 @@ public class Database {
             psGetMsgComments.setInt(1, msgID);
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
+                ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
                 res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
+                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), fileData));
             }
             rs.close();
             return res;
@@ -379,13 +414,15 @@ public class Database {
         String mContent;
         int mNumLikes;
         ArrayList<Comment> mComments;
+        ArrayList<MyFile> mFileData;
 
-        public Message(int msgID, String userID, String content, int numLikes, ArrayList<Comment> comments) {
+        public Message(int msgID, String userID, String content, int numLikes, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
             mNumLikes = numLikes;
-            mComments = comments; // this is maybe probably wrong b/c arraylists :D
+            mComments = comments; 
+            mFileData = fileData;
         }
     }
 
@@ -414,8 +451,9 @@ public class Database {
             psGetMsgComments.setInt(1, msgID);
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
+                ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
                 res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
+                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), fileData));
             }
             rs.close();
             return res;
@@ -443,6 +481,23 @@ public class Database {
         return like_count;
     }
 
+    // get file matadata for a specific comment
+    ArrayList<MyFile> getMsgFiles(int msgID) {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            psGetMsgFileData.setInt(1, msgID);
+            ResultSet rs = psGetMsgFileData.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile( rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // select a specific message
     Message selectMessage(int msgID) {
         Message res = null;
@@ -453,7 +508,8 @@ public class Database {
                 // populate ArrayList of all of this message's comments
                 ArrayList<Comment> allComments = getComments(msgID);
                 int likes = countLikes(msgID);
-                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments);
+                ArrayList<MyFile> fileData = getMsgFiles(msgID);
+                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments, fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -472,9 +528,10 @@ public class Database {
                 int this_msg = rs.getInt("msgID");
                 ArrayList<Comment> comments = getComments(this_msg);
                 int likes = countLikes(this_msg);
+                ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments, fileData);
                 res.add(thisMessage);
             }
             rs.close();
@@ -532,8 +589,30 @@ public class Database {
         }
     }
 
+    FileList getAllDriveFiles() {
+        FileList result;
+        try {
+            result = mService.files().list()
+                .setPageSize(10)
+                .setFields("nextPageToken, files(id, name)")
+                .execute();
+            List<File> files = result.getFiles();
+            if (files == null || files.isEmpty()) {
+                System.out.println("No files found.");
+            } else {
+                System.out.println("Files:");
+                for (File file : files) {
+                    System.out.printf("%s (%s)\n", file.getName(), file.getId());
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
+    }
     // TODO: work with backend to create a method to upload a file from the drive
-    String postFileContent(String file_content, String mime) {
+    String uploadFile(String filename, String mime, String file_content) {
         // file_content is a bigass string of base64 stuff
         String fileID = null;
         return fileID;
@@ -706,6 +785,7 @@ public class Database {
             db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?)");
             db.psGetMsgLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
             db.psGetMsgComments = db.mConnection.prepareStatement("SELECT * from comments WHERE msgID = ?");
+            db.psGetMsgFileData = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE msgID = ?");
             db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from messages WHERE msgID = ?");
             db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM messages");
             db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE messages SET content = ? WHERE msgID = ?");
@@ -713,13 +793,13 @@ public class Database {
   
             // LIKE prepared statements
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
-            // TODO: HOW TO UPDATE A LIKE WHEN WE ARE USING A JOINT PRIMARY KEY?
             db.psUpdateLike = db.mConnection.prepareStatement("UPDATE likes SET status = ? WHERE msgID = ? AND userID = ?");
             db.psSelectLike = db.mConnection.prepareStatement("SELECT * from likes where msgID = ? AND userID = ?");
             db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
 
             // COMMENT prepared statements
             db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?)");
+            db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
