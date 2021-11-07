@@ -51,7 +51,7 @@ public class AppTest extends TestCase {
     public void testTableCreation(){
         try {
             Map<String, String> env = System.getenv();
-            Database db = Database.getDatabase(env.get("DATABASE_URL"));
+            Database db = Database.getDatabase(env.get("DATABASE_URL"), null);
             assertEquals(-1, db.createTable());
 
         } catch(Exception e){

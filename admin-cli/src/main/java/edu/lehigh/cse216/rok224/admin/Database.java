@@ -9,22 +9,22 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.*;
 
-import javax.swing.plaf.metal.MetalComboBoxButton;
+// import javax.swing.plaf.metal.MetalComboBoxButton;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
+// import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
+// import com.google.api.client.auth.oauth2.Credential;
+// import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+// import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+// import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+// import com.google.api.client.http.javanet.NetHttpTransport;
+// import com.google.api.client.json.JsonFactory;
+// import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
+// import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -126,6 +126,19 @@ public class Database {
     private PreparedStatement mSelectOneBio;
     */ 
 
+    int createAllTables() {
+        try {
+            psUserTable.executeQuery();
+            psMessageTable.executeQuery();
+            psLikesTable.executeQuery();
+            psCommentTable.executeQuery();
+            psMsgFileTable.executeQuery();
+            psCmtFileTable.executeQuery();
+        } catch  (SQLException e) {
+            return -1;
+        }
+        return 1;
+    }
     /**
      * All objects for the User table
      */
@@ -224,18 +237,22 @@ public class Database {
         int mMsgID;
         String mContent;
         ArrayList<MyFile> mFileData;
+        int mMsgLink;
+        int mCmtLink;
 
-        public Comment(int commentID, String userID, int msgID, String content, ArrayList<MyFile> fileData) {
+        public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData) {
             mUserID = userID;
             mCommentID = commentID;
             mMsgID = msgID;
             mContent = content;
             mFileData = fileData;
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
         }
     }
 
     // add a comment to the table
-    int insertComment (int msgID, String userID, String content) {
+    int insertComment (int msgID, String userID, String content, int msgLink, int cmtLink) {
         int ret = 0;
         // TODO: is there a testInt method to use to test msgID?
         if ( !testString(content) || !testString(userID) ) {   // generic validity check 
@@ -246,6 +263,8 @@ public class Database {
             psInsertComment.setInt(2, msgID);
             psInsertComment.setString(3, userID);
             psInsertComment.setString(4, content);
+            psInsertComment.setInt(5, msgLink);
+            psInsertComment.setInt(6, cmtLink);
 
             ret += psInsertComment.executeUpdate();
         } catch (SQLException e) {
@@ -280,7 +299,8 @@ public class Database {
             ResultSet rs = psSelectComment.executeQuery();
             if(rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(cmtID);
-                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"), fileData);
+                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), 
+                    rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -298,8 +318,8 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
-                res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), fileData));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -310,7 +330,6 @@ public class Database {
     }
 
     // update a comment
-    // TODO: should we do a testInt for cmtID?
     int updateComment (int cmtID, String content) {
         int ret = 0;
         if (testString(content) == false) {
@@ -413,21 +432,25 @@ public class Database {
         int mMsgID;
         String mContent;
         int mNumLikes;
+        int mMsgLink;
+        int mCmtLink;
         ArrayList<Comment> mComments;
         ArrayList<MyFile> mFileData;
 
-        public Message(int msgID, String userID, String content, int numLikes, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
             mNumLikes = numLikes;
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
             mComments = comments; 
             mFileData = fileData;
         }
     }
 
     // add a new message
-    int insertMessage (String userID, String content) {
+    int insertMessage (String userID, String content, int msgLink, int cmtLink) {
         int ret = 0; 
         if (testString(content) == false || testString(userID) == false) { // generic validity check
             return -1;
@@ -436,6 +459,8 @@ public class Database {
         try {
             psInsertMessage.setString(2, userID);
             psInsertMessage.setString(3, content);
+            psInsertMessage.setInt(4, msgLink);
+            psInsertMessage.setInt(5, cmtLink);
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -452,8 +477,8 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
-                res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), fileData));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -509,7 +534,8 @@ public class Database {
                 ArrayList<Comment> allComments = getComments(msgID);
                 int likes = countLikes(msgID);
                 ArrayList<MyFile> fileData = getMsgFiles(msgID);
-                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments, fileData);
+                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -531,7 +557,8 @@ public class Database {
                 ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments, fileData);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData);
                 res.add(thisMessage);
             }
             rs.close();
@@ -543,7 +570,6 @@ public class Database {
     }
 
     // update a message
-    // TODO: should we do a testInt for msgID?
     int updateMessage (int msgID, String content) {
         int ret = 0;
         if (testString(content) == false) {
@@ -589,6 +615,7 @@ public class Database {
         }
     }
 
+    // function to test drive connection
     FileList getAllDriveFiles() {
         FileList result;
         try {
@@ -613,7 +640,6 @@ public class Database {
     }
     // TODO: work with backend to create a method to upload a file from the drive
     String uploadFile(String filename, String mime, String file_content) {
-        // file_content is a bigass string of base64 stuff
         String fileID = null;
         return fileID;
     }
@@ -782,7 +808,7 @@ public class Database {
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
 
             // MESSAGE prepared statements
-            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?)");
+            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?, ?, ?)");
             db.psGetMsgLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
             db.psGetMsgComments = db.mConnection.prepareStatement("SELECT * from comments WHERE msgID = ?");
             db.psGetMsgFileData = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE msgID = ?");
@@ -798,7 +824,7 @@ public class Database {
             db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
 
             // COMMENT prepared statements
-            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?)");
+            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?, ?, ?)");
             db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
