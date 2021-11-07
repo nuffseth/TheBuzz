@@ -1,4 +1,5 @@
 package edu.lehigh.cse216.rok224.backend;
+import java.util.ArrayList;
 
 /**
  * SimpleRequest provides a format for clients to present title and message 

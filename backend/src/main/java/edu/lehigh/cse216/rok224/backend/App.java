@@ -11,6 +11,9 @@ import java.util.UUID;
 
 // Import Google's JSON library and Oauth
 import com.google.gson.*;
+
+import org.apache.commons.codec.digest.Md5Crypt;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -33,6 +36,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.code.ssm.CacheFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,6 +45,20 @@ import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+
+import net.rubyeye.xmemcached.MemcachedClient;
+import net.rubyeye.xmemcached.MemcachedClientBuilder;
+import net.rubyeye.xmemcached.XMemcachedClientBuilder;
+import net.rubyeye.xmemcached.auth.AuthInfo;
+import net.rubyeye.xmemcached.command.BinaryCommandFactory;
+import net.rubyeye.xmemcached.exception.MemcachedException;
+import net.rubyeye.xmemcached.utils.AddrUtil;
+
+import java.lang.InterruptedException;
+import java.net.InetSocketAddress;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * For now, our app creates an HTTP server that can only get and add data.
@@ -53,6 +71,7 @@ public class App {
     // create local hash table for storing temporary session keys and corresponding user email
     // map user email to session key
     protected static HashMap<String, String> hash_map = new HashMap<String, String>();
+    private static MemcachedClient mc;
 
     /**
      * Get an integer environment varible if it exists, and otherwise return the
@@ -79,7 +98,7 @@ public class App {
      */
     protected static boolean authenticate(String email, String session_key) {
         // search the provided hash map for the session_key and make sure it matches the email
-        String map_value = hash_map.get(email);
+        String map_value = mc.get(email);
         // make sure the session key sent matches the value on the hash map
         if ( map_value == null ) { // if email not found, return false
             return false;
@@ -109,7 +128,10 @@ public class App {
             return null;
         } 
     }
-
+    
+    /**
+     * Google Drive API Setup Variables
+     */
     private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
@@ -129,7 +151,7 @@ public class App {
      */
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
-        InputStream in = DriveQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = App.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
@@ -146,7 +168,6 @@ public class App {
     }
 
     public static void main(String[] args) {
-
         // gson provides us with a way to turn JSON into objects, and objects into JSON.
         // must be final, so that it can be accessed from our lambdas
         final Gson gson = new Gson();
@@ -160,12 +181,51 @@ public class App {
         // needed to be implemented. I created them as empty functions so the backend code compiles.
         // final MyDatabase dataBase = MyDatabase.getDatabase(url);
 
-        // uncomment this and delete MyDatabase.java once Database.java is implemented
-        final Database dataBase = Database.getDatabase(url);
+        // Memcache Setup
+        List<InetSocketAddress> servers =
+            AddrUtil.getAddresses(System.getenv("mc5.dev.ec2.memcachier.com").replace(",", " "));
+        AuthInfo authInfo =
+            AuthInfo.plain(System.getenv("9026FA"),
+                           System.getenv("CED0D9DD88E877C403678EB697265E5C"));
+        MemcachedClientBuilder builder = new XMemcachedClientBuilder(servers);
 
+        // Configure SASL auth for each server
+        for(InetSocketAddress server : servers) {
+            builder.addAuthInfo(server, authInfo);
+        }
+
+        // Use binary protocol
+        builder.setCommandFactory(new BinaryCommandFactory());
+        // Connection timeout in milliseconds (default: )
+        builder.setConnectTimeout(1000);
+        // Reconnect to servers (default: true)
+        builder.setEnableHealSession(true);
+        // Delay until reconnect attempt in milliseconds (default: 2000)
+        builder.setHealSessionInterval(2000);
+
+        try {
+            MemcachedClient mc = builder.build();
+            try {
+                mc.set("foo", 0, "bar");
+                String val = mc.get("foo");
+                System.out.println(val);
+            } catch (TimeoutException te) {
+                System.err.println("Timeout during set or get: " +
+                                te.getMessage());
+            } catch (InterruptedException ie) {
+                System.err.println("Interrupt during set or get: " +
+                                ie.getMessage());
+            } catch (MemcachedException me) {
+                System.err.println("Memcached error during get or set: " +
+                                me.getMessage());
+            }
+        } catch (IOException ioe) {
+        System.err.println("Couldn't create a connection to MemCachier: " +
+                            ioe.getMessage());
+        }
+        
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
-
         // set up the verifier (from Google OAuth API) to use to verify the id token
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
             // Specify the CLIENT_ID of the app that accesses the backend:
@@ -181,11 +241,11 @@ public class App {
                 .build();
 
         // Print the names and IDs for up to 10 files.
-        FileList result = service.files().list()
+        FileList fileList = service.files().list()
                 .setPageSize(10)
                 .setFields("nextPageToken, files(id, name)")
                 .execute();
-        List<File> files = result.getFiles();
+        List<File> files = fileList.getFiles();
         if (files == null || files.isEmpty()) {
             System.out.println("No files found.");
         } else {
@@ -195,6 +255,9 @@ public class App {
             }
         }
 
+        // uncomment this and delete MyDatabase.java once Database.java is implemented
+        final Database dataBase = Database.getDatabase(url, service);
+        
         // Set up the location for serving static files
         Spark.staticFileLocation("/web");
 
@@ -303,7 +366,6 @@ public class App {
 
 
             Database.Message data = dataBase.selectMessage(idx); // get one message object
-
             // ensure status 200 OK, with a MIME type of JSON, and return
             response.status(200);
             response.type("application/json");
