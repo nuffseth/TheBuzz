@@ -84,13 +84,13 @@ public class App {
      */
     static char prompt(BufferedReader in, char menu) {
         // The valid actions:
-        String actions = "?qMUCF";
+        String actions = "?MUCFq";
 
         switch(menu) { // change possible inputs if accessing a different menu
-            case 'M': actions = "MmpsxDrq"; break;
-            case 'U': actions = "Uaurq"; break;
-            case 'C': actions = "Ccoldrq"; break;
-            case 'F': actions = "Frq"; break;
+            case 'M': actions = "MmpsxDqr"; break;
+            case 'U': actions = "Uauqr"; break;
+            case 'C': actions = "Ccoldqr"; break;
+            case 'F': actions = "FA^+Rqr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -480,8 +480,32 @@ public class App {
     static void file_menu() {
         System.out.println("File Menu");
         System.out.println("    [F] View files table menu (this message)");
+        System.out.println("    [A] View ALL file metadata");
+        System.out.println("    [^] Download a file");
+        System.out.println("    [+] Upload a file");
+        System.out.println("    [R] Remove a file");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
+    }
+
+    static void view_file_metadata(Database db, BufferedReader in) {
+        System.out.println("View file metadata currently unimplemented.");
+        return;
+    }
+
+    static void download_file(Database db, BufferedReader in) {
+        System.out.println("File download currently unimplemented.");
+        return;
+    }
+
+    static void upload_file(Database db, BufferedReader in) {
+        System.out.println("File upload currently unimplemented.");
+        return;
+    }
+
+    static void remove_file(Database db, BufferedReader in) {
+        System.out.println("File removal currently unimplemented.");
+        return;
     }
 
     /**
@@ -565,6 +589,10 @@ public class App {
                 case 'd': delete_comment(db, in); break;
 
                 // file actions (only accessible from file menu)
+                case 'A': view_file_metadata(db, in); break;
+                case '^': download_file(db, in); break;
+                case '+': upload_file(db, in); break;
+                case 'R': remove_file(db, in); break;
             }
             /*if (action == '1'){                      // query specific row --------------------------------------
                 int id = getInt(in, "Enter the message ID");
