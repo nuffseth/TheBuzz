@@ -87,7 +87,7 @@ public class App {
         String actions = "?qMUCF";
 
         switch(menu) { // change possible inputs if accessing a different menu
-            case 'M': actions = "Mrq"; break;
+            case 'M': actions = "MmpsxDrq"; break;
             case 'U': actions = "Uaurq"; break;
             case 'C': actions = "Crq"; break;
             case 'F': actions = "Frq"; break;
@@ -168,8 +168,147 @@ public class App {
     static void message_menu() {
         System.out.println("Message Menu");
         System.out.println("    [M] View messages table menu (this message)");
+        System.out.println("    [m] View all messages");
+        System.out.println("    [p] View specific message");
+        System.out.println("    [s] List all comments on specific message");
+        System.out.println("    [x] List all files attached to specific message");
+        System.out.println("    [D] Delete a message from the database");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
+    }
+
+    /**
+     * Displays all messages stored in the database
+     */
+    static void view_messages(Database db, BufferedReader in) {
+        ArrayList<Database.Message> messages = db.selectAllMessages();
+        System.out.println("--------------------");
+        System.out.println("Messagess Table");
+        System.out.println("--------------------");
+        System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
+        for( Database.Message message : messages) {
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%s \n", message.mContent);
+        }
+        return;
+    }
+
+    /**
+     * Prompts the user for the ID of a specific message, if message exists in database, displays that message
+     */
+    static void view_one_message(Database db, BufferedReader in) {
+        int msgID = getInt(in, "Enter the id of the message to view: ");
+        Database.Message message = db.selectMessage(msgID);
+        if (message == null) {
+            System.out.println("\tError: unable to find message with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%s \n", message.mContent);   
+        }
+        return;
+    }
+
+    /**
+     * Prompts the user for the ID of a specific message, if message exists in database, displays the message's comments
+     */
+    static void list_msg_comments(Database db, BufferedReader in) {
+        int msgID = getInt(in, "Enter the id of the message to view comments: ");
+        Database.Message message = db.selectMessage(msgID);
+        if (message == null) {
+            System.out.println("\tError: unable to find message with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%s \n", message.mContent);   
+        }
+
+        ArrayList<Database.Comment> comments = db.getComments(msgID);
+        if (comments.size() == 0) {
+            System.out.println("\tNo comments available for this message.");
+        }
+        else {
+            for (Database.Comment comment : comments) {
+                System.out.printf("%5s \t%-10s \t%s\n", "Cmt ID", "User", "Content");
+                System.out.printf("%5d \t", comment.mCommentID);
+                System.out.printf("%-10s \t", comment.mUserID);
+                System.out.printf("%s \n", comment.mContent); 
+            }  
+        }
+        return;
+    }
+
+    /**
+     * Prompts the user for the ID of a specific message
+     * if message exists in database, displays the message's attached file metadata
+     */
+    static void list_msg_files(Database db, BufferedReader in) {
+        int msgID = getInt(in, "Enter the id of the message to view files: ");
+        Database.Message message = db.selectMessage(msgID);
+        if (message == null) {
+            System.out.println("\tError: unable to find message with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%s \n", message.mContent);   
+        }
+
+        ArrayList<Database.MyFile> files = db.getMsgFiles(msgID);
+        if (files.size() == 0) {
+            System.out.println("\tNo files available for this message.");
+        }
+        else {
+            for (Database.MyFile file : files) {
+                System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
+                System.out.printf("%-20s \t", file.mFilename);
+                System.out.printf("%-20s \t", file.mFileID);
+                System.out.printf("%-10s \n", file.mMime); 
+            }  
+        }
+        return;
+    }
+
+    /**
+     * Prompts the user for the ID of a specific message, if message exists in database, deletes it
+     */
+    static void delete_message(Database db, BufferedReader in) {
+        int msgID = getInt(in, "Enter the id of the message to delete: ");
+        Database.Message message = db.selectMessage(msgID);
+        if (message == null) {
+            System.out.println("\tError: unable to find message with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%s \n", message.mContent);   
+        }
+
+        String confirm = getString(in, "Confirm deletion [Type 'delete' to confirm]: ");
+        if (confirm.equalsIgnoreCase("delete")) {
+            int result = db.deleteMessage(message.mMsgID);
+            if (result == -1) {
+                System.out.println("Error: Deletion failed.");
+            } else {
+                System.out.println("Message " + message.mMsgID + " has been deleted.");
+            }
+            return;
+        } else {
+            System.out.println("Invalid deletion confirmation, deletion cancelled.");
+            return;
+        }
     }
 
     /**
@@ -304,6 +443,13 @@ public class App {
                 // user actions (only accessible from user menu)
                 case 'u': view_users(db, in); break;
                 case 'a': create_account(db, in); break;
+
+                // message actions (only accessible from message mentu)
+                case 'm': view_messages(db, in); break;
+                case 'p': view_one_message(db, in); break;
+                case 's': list_msg_comments(db, in); break;
+                case 'x': list_msg_files(db, in); break;
+                case 'D': delete_message(db, in); break;
 
                 // message actions (only accessible from message menu)
 
