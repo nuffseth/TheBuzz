@@ -371,24 +371,107 @@ public class App {
         System.out.println("    [r] Return to general menu");
     }
 
+    /**
+     * Display all comments stored in the database (for ALL messages).
+     */
     static void view_comments(Database db, BufferedReader in) {
-        System.out.println("View comments currently unimplemented.");
+        ArrayList<Database.Comment> comments = db.selectAllComments();
+        System.out.println("--------------------");
+        System.out.println("Comments Table");
+        System.out.println("--------------------");
+        System.out.printf("%5s \t%5s \t%-10s \t%s\n", "Cmt ID", "Msg ID", "User", "Content");
+        for( Database.Comment comment : comments) {
+            System.out.printf("%5d \t", comment.mCommentID);
+            System.out.printf("%5d \t", comment.mMsgID);
+            System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%s \n", comment.mContent);
+        }
         return;
     }
 
+    /**
+     * Prompt the user to input a comment id
+     * if that comment exists, display it
+     */
     static void view_one_comment(Database db, BufferedReader in) {
-        System.out.println("View specific comment currently unimplemented.");
+        int cmtID = getInt(in, "Enter comment id: ");
+        Database.Comment comment = db.selectComment(cmtID);
+        if (comment == null) {
+            System.out.println("\tError: comment " + cmtID + " not found in database.");
+        } else {
+            System.out.printf("%5s \t%5s \t%-10s \t%s\n", "Cmt ID", "Msg ID", "User", "Content");
+            System.out.printf("%5d \t", comment.mCommentID);
+            System.out.printf("%5d \t", comment.mMsgID);
+            System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%s \n", comment.mContent);
+        }
         return;
     }
 
+    /**
+     * Prompt the user to input a comment id
+     * If the comment exists, list the files attached to it
+     */
     static void list_cmt_files(Database db, BufferedReader in) {
-        System.out.println("List comment files currently unimplemented.");
+        int cmtID = getInt(in, "Enter the id of the comment to view files: ");
+        Database.Comment comment = db.selectComment(cmtID);
+        if (comment == null) {
+            System.out.println("\tError: unable to find comment with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%5s \t%-10s \t%s\n", "Cmt ID", "Msg ID", "User", "Content");
+            System.out.printf("%5d \t", comment.mCommentID);
+            System.out.printf("%5d \t", comment.mMsgID);
+            System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%s \n", comment.mContent);  
+        }
+
+        ArrayList<Database.MyFile> files = db.getCmtFiles(cmtID);
+        if (files.size() == 0) {
+            System.out.println("\tNo files available for this comment.");
+        }
+        else {
+            for (Database.MyFile file : files) {
+                System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
+                System.out.printf("%-20s \t", file.mFilename);
+                System.out.printf("%-20s \t", file.mFileID);
+                System.out.printf("%-10s \n", file.mMime); 
+            }  
+        }
         return;
     }
 
+    /**
+     * Prompt the user to input a comment id
+     * If the comment exists, confirm deletion, and delete it
+     */
     static void delete_comment(Database db, BufferedReader in) {
-        System.out.println("Delete comment currently unimplemented.");
-        return;
+        int cmtID = getInt(in, "Enter the id of the comment to delete: ");
+        Database.Comment comment = db.selectComment(cmtID);
+        if (comment == null) {
+            System.out.println("\tError: unable to find comment with provided ID.");
+        }
+        else {
+            System.out.printf("%5s \t%5s \t%-10s \t%s\n", "Cmt ID", "Msg ID", "User", "Content");
+            System.out.printf("%5d \t", comment.mCommentID);
+            System.out.printf("%5d \t", comment.mMsgID);
+            System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%s \n", comment.mContent);   
+        }
+
+        String confirm = getString(in, "Confirm deletion [Type 'delete' to confirm]: ");
+        if (confirm.equalsIgnoreCase("delete")) {
+            int result = db.deleteComment(comment.mCommentID);
+            if (result == -1) {
+                System.out.println("Error: Deletion failed.");
+            } else {
+                System.out.println("Message " + comment.mCommentID + " has been deleted.");
+            }
+            return;
+        } else {
+            System.out.println("Invalid deletion confirmation, deletion cancelled.");
+            return;
+        }
     }
 
     /**

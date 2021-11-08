@@ -325,13 +325,11 @@ public class Database {
         return res;
     }
 
-    // select all comments for a specific message
-    // this is exactly the same as getMsgComments ...
-    ArrayList<Comment> selectAllComments(int msgID){
+    // select all comments in the database (only used by admin CLI)
+    ArrayList<Comment> selectAllComments(){
         ArrayList<Comment> res = new ArrayList<Comment>();
         try {
-            psGetMsgComments.setInt(1, msgID);
-            ResultSet rs = psGetMsgComments.executeQuery();
+            ResultSet rs = psSelectAllComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
                 res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
@@ -844,6 +842,7 @@ public class Database {
             db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?, ?, ?)");
             db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
+            db.psSelectAllComments = db.mConnection.prepareStatement("SELECT * from comments");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
 
