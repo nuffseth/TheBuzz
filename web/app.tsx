@@ -94,23 +94,25 @@ class NewEntryForm {
         }
     }
     
+    // function that reads files and convertes to base64 when uploaded
     onFilePickerChange() {
         this.fileContent=[];
-        // TODO: iterate thru all files in files[]
 
-        // var fileName = document.getElementById('filePicker').files[0];  
-        const fileName = (document.getElementById('filePicker') as HTMLInputElement).files[0];
-        //for
-        // var fileName = $('#filePicker')[0].files[0]; 
-        const read = new FileReader();
-        read.readAsBinaryString(fileName);
-        //console.log("reading file");
-        read.onloadend = () => {
-            console.log(`type of result ${typeof read.result}`);
-            //console.log(read.result);
-            const base64 = btoa(read.result as string);
-            console.log(`base64 is  ${base64}`);
-            this.fileContent.push(base64);
+        //const fileName = (document.getElementById('filePicker') as HTMLInputElement).files[0];
+        const fileNames = (document.getElementById('filePicker') as HTMLInputElement).files;
+        
+        for (let i = 0; i < fileNames.length; i++) {
+            let indivFile = fileNames.item(i);
+            console.log(indivFile.name);
+            const read = new FileReader();
+            read.readAsBinaryString(indivFile);
+            read.onloadend = () => {
+                console.log(`type of result ${typeof read.result}`);
+                //console.log(read.result);
+                const base64 = btoa(read.result as string);
+                console.log(`base64 is  ${base64}`);
+                this.fileContent.push(base64);
+            }
         }
     }
 } // end class NewEntryForm
