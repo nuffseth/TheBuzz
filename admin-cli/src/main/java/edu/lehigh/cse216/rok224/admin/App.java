@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
-import java.util.ArrayList;
+// import java.util.ArrayList;
 import java.util.Map;
 
 // all imports for Google Drive connection
@@ -20,14 +20,14 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
+// import com.google.api.services.drive.model.File;
+// import com.google.api.services.drive.model.FileList;
 
 import java.util.Collections;
 import java.util.List;
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
+// import java.io.ByteArrayInputStream;
+// import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
 
 /**
@@ -73,45 +73,25 @@ public class App {
                 .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
-        System.out.println("made flow");
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        System.out.println("made receiver");
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
     /**
-     * Print the menu for our program
-     */
-    static void menu() {
-        System.out.println("Main Menu");
-        System.out.println("  [T] Create tblData");
-        System.out.println("  [D] Drop tblData");
-        System.out.println("  [1] Query for a specific row");
-        System.out.println("  [*] Query for all rows");
-        System.out.println("  [-] Delete a row");
-        System.out.println("  [+] Insert a new row");
-        System.out.println("  [~] Update a row");
-        System.out.println("  [q] Quit Program");
-        System.out.println("  [?] Help (this message)");
-        System.out.println("  [i] Increment likes for a specific row");
-        System.out.println("  [d] Decrement likes for a specific row");
-
-        System.out.println("  [L] Create likes table");
-        System.out.println("  [M] Create messages table");
-        System.out.println("  [C] Create comments table");
-        System.out.println("  [U] Create user table");
-    }
-
-    /**
      * Ask the user to enter a menu option; repeat until we get a valid option
-     * 
      * @param in A BufferedReader, for reading from the keyboard
-     * 
      * @return The character corresponding to the chosen menu option
      */
-    static char prompt(BufferedReader in) {
+    static char prompt(BufferedReader in, char menu) {
         // The valid actions:
-        String actions = "TD1*-+~q?id";
+        String actions = "?qMUCF";
+
+        switch(menu) { // change possible inputs if accessing a different menu
+            case 'M': actions = "Mrq"; break;
+            case 'U': actions = "Uaurq"; break;
+            case 'C': actions = "Crq"; break;
+            case 'F': actions = "Frq"; break;
+        }
 
         // We repeat until a valid single-character option is selected        
         while (true) {
@@ -134,10 +114,8 @@ public class App {
 
     /**
      * Ask the user to enter a String message
-     * 
      * @param in A BufferedReader, for reading from the keyboard
      * @param message A message to display when asking for input
-     * 
      * @return The string that the user provided.  May be "".
      */
     static String getString(BufferedReader in, String message){
@@ -154,10 +132,8 @@ public class App {
 
     /**
      * Ask the user to enter an integer
-     * 
      * @param in A BufferedReader, for reading from the keyboard
      * @param message A message to display when asking for input
-     * 
      * @return The integer that the user provided.  On error, it will be -1
      */
     static int getInt(BufferedReader in, String message){
@@ -174,9 +150,78 @@ public class App {
     }
 
     /**
-     * The main routine runs a loop that gets a request from the user and
-     * processes it
-     * 
+     * Print the menu for our program
+     */
+    static void menu() {
+        System.out.println("Main Menu");
+        System.out.println("    [?] Help (this message)");
+        System.out.println("    [q] Quit Program");
+        System.out.println("    [M] View messages table menu");
+        System.out.println("    [U] View users table menu");
+        System.out.println("    [C] View comments table menu");
+        System.out.println("    [F] View files table menu");
+    }
+
+    /**
+     * Print the menu for all message table operations.
+     */
+    static void message_menu() {
+        System.out.println("Message Menu");
+        System.out.println("    [M] View messages table menu (this message)");
+        System.out.println("    [q] Quit Program");
+        System.out.println("    [r] Return to general menu");
+    }
+
+    /**
+     * Print the menu for all user table operations.
+     */
+    static void user_menu() {
+        System.out.println("User Menu");
+        System.out.println("    [U] View users table menu (this message)");
+        System.out.println("    [q] Quit Program");
+        System.out.println("    [u] View all users");
+        System.out.println("    [a] Create a new user account");
+        System.out.println("    [r] Return to general menu");
+    }
+
+    /**
+     * Display all information from the users table.
+     */
+    static void view_users() {
+        System.out.println("User table dipslay currently unimplemented.");
+        return;
+    }
+
+    /**
+     * Prompt the user for a username and optional bio to add to the users table.
+     */
+    static void create_account() {
+        System.out.println("Account creation crrently unimplemented.");
+        return;
+    }
+
+    /**
+     * Print the menu for all comments table operations.
+     */
+    static void comment_menu() {
+        System.out.println("Comment Menu");
+        System.out.println("    [C] View comments table menu (this message)");
+        System.out.println("    [q] Quit Program");
+        System.out.println("    [r] Return to general menu");
+    }
+
+    /**
+     * Print the menu for all files table operations.
+     */
+    static void file_menu() {
+        System.out.println("File Menu");
+        System.out.println("    [F] View files table menu (this message)");
+        System.out.println("    [q] Quit Program");
+        System.out.println("    [r] Return to general menu");
+    }
+
+    /**
+     * The main routine runs a loop that gets a request from the user and processes it
      * @param argv Command-line options.  Ignored by this program.
      */
     public static void main(String[] argv){
@@ -193,24 +238,25 @@ public class App {
                     .setApplicationName(APPLICATION_NAME)
                     .build();
 
-            // // Print the names and IDs for up to 10 files.
-            // FileList result = service.files().list()
-            //         .setPageSize(10)
-            //         .setFields("nextPageToken, files(id, name)")
-            //         .execute();
-            // List<File> files = result.getFiles();
-            // if (files == null || files.isEmpty()) {
-            //     System.out.println("No files found.");
-            // } else {
-            //     System.out.println("Files:");
-            //     for (File file : files) {
-            //         System.out.printf("%s (%s)\n", file.getName(), file.getId());
-            //     }
-            // }
+            /* Print the names and IDs for up to 10 files.
+            FileList result = service.files().list()
+                    .setPageSize(10)
+                    .setFields("nextPageToken, files(id, name)")
+                    .execute();
+            List<File> files = result.getFiles();
+            if (files == null || files.isEmpty()) {
+                System.out.println("No files found.");
+            } else {
+                System.out.println("Files:");
+                for (File file : files) {
+                    System.out.printf("%s (%s)\n", file.getName(), file.getId());
+                }
+            }
+            */
 
         } catch (Exception e) {
-            System.out.println("Unable to create database");
-            System.out.println(e.toString());
+            System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
+            //e.printStackTrace();
         }
 
         // create the database with the google drive service
@@ -220,18 +266,34 @@ public class App {
 
         // Start our basic command-line interpreter:
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        while (true) {
+        boolean exit = false;
+        char menu = 'G'; // general menu is the default
+        while (!exit) {
             // Get the user's request, and do it
-            //
-            // NB: for better testability, each action should be a separate
-            //     function call
-            char action = prompt(in);
-            // help menu
-            if(action == '?'){
-                menu();
-            } else if (action == 'q'){                      // quit --------------------------------------
-                break;
-            } else if (action == '1'){                      // query specific row --------------------------------------
+            char action = prompt(in, menu);  // pass appropraite menu options
+
+            // all possible user actions
+            switch(action) {
+                // general menu actions
+                case '?': menu(); break;            // display the help menu
+                case 'q': exit = true; break;       // exit the program
+                case 'M': menu = 'M'; message_menu(); break;    // show message menu
+                case 'U': menu = 'U'; user_menu(); break;       // show user menu
+                case 'C': menu = 'C'; comment_menu(); break;    // show comment menu
+                case 'F': menu = 'F'; file_menu(); break;       // show file menu
+                case 'r': menu = 'G'; menu(); break;            // return to general menu and reset prompt string
+
+                // user actions (only accessible from user menu)
+                case 'u': view_users(); break;
+                case 'a': create_account(); break;
+
+                // message actions (only accessible from message menu)
+
+                // comment actions (only accessible form comment menu)
+
+                // file actions (only accessible from file menu)
+            }
+            /*if (action == '1'){                      // query specific row --------------------------------------
                 int id = getInt(in, "Enter the message ID");
                 if(id == -1){
                     continue;
@@ -281,50 +343,11 @@ public class App {
                     continue;
                 }
                 System.out.println("  " + res + " rows updated");
-            } else if (action == 'i'){                      // increment likes for a specific row --------------------------------------
-                int id = getInt(in, "Enter the row ID :> ");
-                if(id == -1){
-                    continue;
-                }
-                db.incrementLikes(id);
-            } else if (action == 'd'){                      // decrement likes for a specific row --------------------------------------
-                int id = getInt(in, "Enter the row ID :> ");
-                if(id == -1){
-                    continue;
-                }
-                int res = db.decrementLikes(id);
-                if(res == -1){
-                    continue;
-                }
-                System.out.println("Row has been updated");
-            } else if (action == 'L') {                     // create likes table --------------------------------------
-                int res = db.createLikesTable();
-                if(res == -1){
-                    continue;
-                }
-                System.out.println("Likes table has been created");
-            } else if (action == 'M') {                     // create message table --------------------------------------
-                int res = db.createMsgTable();
-                if(res == -1){
-                    continue;
-                }
-                System.out.println("Message table has been created");
-            } else if (action == 'C') {                     // create comments table
-                int res = db.createCommentsTable();
-                if(res == -1){
-                    continue;
-                }
-                System.out.println("Comments table has been created");
-            } else if (action == 'U') {                     // create user table
-                int res = db.createUserTable();
-                if(res == -1){
-                    continue;
-                }
-                System.out.println("User table has been created");
             }
+            */
         }
-        // Always remember to disconnect from the database when the program 
-        // exits
+        // Always remember to disconnect from the database when the program exits
+        System.out.println("Disconnecting database and exiting program...");
         db.disconnect();
     }
 }
