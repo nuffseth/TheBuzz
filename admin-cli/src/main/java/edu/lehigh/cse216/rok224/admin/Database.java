@@ -64,6 +64,7 @@ public class Database {
     // USER PREPARED STATEMENTS 
     private PreparedStatement psInsertUser;
     private PreparedStatement psSelectUser;
+    private PreparedStatement psSelectAllUsers;
     private PreparedStatement psUpdateUser;
 
     // MESSAGE PREPARED STATEMENTS
@@ -211,6 +212,21 @@ public class Database {
         return res;
     }
 
+    // view all users (only accessible from admin CLI)
+    ArrayList<User> selectAllUsers() {
+        ArrayList<User> res = new ArrayList<User>();
+        try {
+            ResultSet rs = psSelectAllUsers.executeQuery();
+            while (rs.next()){
+                res.add(new User( rs.getString("userID"), rs.getString("bio")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
     // update user bio of a given user ID
     int updateUser (String user, String bio) {
         int ret = 0;
@@ -805,6 +821,7 @@ public class Database {
             // USER prepared statements
             db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO users VALUES (?, ?)");  
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
+            db.psSelectAllUsers = db.mConnection.prepareStatement("SELECT * from users");
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
 
             // MESSAGE prepared statements

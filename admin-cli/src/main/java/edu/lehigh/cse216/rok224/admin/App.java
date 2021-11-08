@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 
-// import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.Map;
 
 // all imports for Google Drive connection
@@ -187,16 +187,34 @@ public class App {
     /**
      * Display all information from the users table.
      */
-    static void view_users() {
-        System.out.println("User table dipslay currently unimplemented.");
+    static void view_users(Database db, BufferedReader in) {
+        ArrayList<Database.User> users = db.selectAllUsers();
+        System.out.println("--------------------");
+        System.out.println("Users Table");
+        System.out.println("--------------------");
+        System.out.printf("%20s \tBio\n", "User");
+        for( Database.User user : users) {
+            System.out.printf("%20s \t", user.mUserID);
+            System.out.println(user.mBio);
+        }
         return;
     }
 
     /**
      * Prompt the user for a username and optional bio to add to the users table.
      */
-    static void create_account() {
-        System.out.println("Account creation crrently unimplemented.");
+    static void create_account(Database db, BufferedReader in) {
+        String username = getString(in, "Enter the username you would like to add: ");
+        String bio = getString(in, "Enter a bio for your new account (optional): ");
+
+        int success = db.insertUser(username, bio);
+        if (success == 0) {
+            System.out.println("Unable to add user, username already exists.");
+        } else if (success == -1) {
+            System.out.println("Adding user to database failed.");
+        } else {
+            System.out.println("User " + username + " added to the database.");
+        }
         return;
     }
 
@@ -284,8 +302,8 @@ public class App {
                 case 'r': menu = 'G'; menu(); break;            // return to general menu and reset prompt string
 
                 // user actions (only accessible from user menu)
-                case 'u': view_users(); break;
-                case 'a': create_account(); break;
+                case 'u': view_users(db, in); break;
+                case 'a': create_account(db, in); break;
 
                 // message actions (only accessible from message menu)
 
