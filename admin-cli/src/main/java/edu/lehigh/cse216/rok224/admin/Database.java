@@ -94,8 +94,10 @@ public class Database {
     // FILE PREPARED STATEMENTS
     private PreparedStatement psInsertMessageFile;
     private PreparedStatement psSelectMessageFile;
+    private PreparedStatement psSelectAllMsgFiles;
     private PreparedStatement psInsertCommentFile;
     private PreparedStatement psSelectCommentFile;
+    private PreparedStatement psSelectAllCmtFiles;
 
     /* PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
     // ALTER TABLE messages ADD COLUMN msgLink INT
@@ -699,6 +701,21 @@ public class Database {
         return res;
     }
 
+    ArrayList<MyFile> selectAllMsgFiles() {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            ResultSet rs = psSelectAllMsgFiles.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile(rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     int insertCommentFile(String fileID, int cmtID, String mime, String filename) {
         int ret = 0; 
         if (testString(mime) == false || testString(filename) == false) { // generic validity check
@@ -733,6 +750,21 @@ public class Database {
             return null;
         }
         return res;
+    }
+
+    ArrayList<MyFile> selectAllCmtFiles() {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            ResultSet rs = psSelectAllCmtFiles.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile(rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -807,12 +839,12 @@ public class Database {
                 "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
 
             db.psMsgFileTable = db.mConnection.prepareStatement(
-                "CREATE TABLE msgfiles (fileID TEXT, msgID INT, mime TEXT, filename VARCHAR(500), " +
+                "CREATE TABLE msgfiles (fileID TEXT PRIMARY KEY, msgID INT, mime TEXT, filename VARCHAR(500), " +
                 "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID) )"
             );
 
             db.psCmtFileTable = db.mConnection.prepareStatement(
-                "CREATE TABLE cmtfiles (fileID TEXT, cmtID INT, mime TEXT, filename VARCHAR(500), " +
+                "CREATE TABLE cmtfiles (fileID TEXT PRIMARY KEY, cmtID INT, mime TEXT, filename VARCHAR(500), " +
                 "CONSTRAINT cmt_key FOREIGN KEY(cmtID) REFERENCES comments(cmtID) )"
             );
 
@@ -849,9 +881,11 @@ public class Database {
             // FILE prepared statements (two tables: message files and comment files)
             db.psInsertMessageFile = db.mConnection.prepareStatement("INSERT INTO msgfiles VALUES (?, ?, ?, ?)");
             db.psSelectMessageFile = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE fileID = ?");
+            db.psSelectAllMsgFiles = db.mConnection.prepareStatement("SELECT * from msgfiles");
 
             db.psInsertCommentFile = db.mConnection.prepareStatement("INSERT INTO cmtfiles VALUES (?, ?, ?, ?)");
             db.psSelectCommentFile = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE fileID = ?");
+            db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
 
             // I commented these out because we may not need all of them
 

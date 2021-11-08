@@ -12,5 +12,9 @@ ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES
 
 -- commands run to create two new tables: one for message files, and one for comment files
 
-CREATE TABLE msgfiles (fileID TEXT, msgID INT, mime TEXT, filename VARCHAR(500), CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID))
-CREATE TABLE cmtfiles (fileID TEXT, cmtID INT, mime TEXT, filename VARCHAR(500), CONSTRAINT cmt_key FOREIGN KEY(cmtID) REFERENCES comments(cmtID) )
+CREATE TABLE msgfiles (fileID TEXT PRIMARY KEY, msgID INT, mime TEXT, filename VARCHAR(500), CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID))
+CREATE TABLE cmtfiles (fileID TEXT PRIMARY KEY, cmtID INT, mime TEXT, filename VARCHAR(500), CONSTRAINT cmt_key FOREIGN KEY(cmtID) REFERENCES comments(cmtID))
+
+INSERT INTO msgfiles VALUES ('fileID-abcd123', 2, '.txt', 'testing file table')
+INSERT INTO msgfiles VALUES ('fileID-xyz456', 2, '.txt', 'second file for msg 2')
+INSERT INTO msgfiles VALUES ('qwertyuiop', 1, '.txt', 'file test for message 1')

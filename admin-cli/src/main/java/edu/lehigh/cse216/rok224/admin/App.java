@@ -84,13 +84,13 @@ public class App {
      */
     static char prompt(BufferedReader in, char menu) {
         // The valid actions:
-        String actions = "?MUCFq";
+        String actions = "?MUCFQq";
 
         switch(menu) { // change possible inputs if accessing a different menu
             case 'M': actions = "MmpsxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
-            case 'F': actions = "FA^+Rqr"; break;
+            case 'F': actions = "FA^+QRqr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -155,11 +155,12 @@ public class App {
     static void menu() {
         System.out.println("Main Menu");
         System.out.println("    [?] Help (this message)");
-        System.out.println("    [q] Quit Program");
         System.out.println("    [M] View messages table menu");
         System.out.println("    [U] View users table menu");
         System.out.println("    [C] View comments table menu");
         System.out.println("    [F] View files table menu");
+        System.out.println("    [Q] View drive quota");
+        System.out.println("    [q] Quit Program");
     }
 
     /**
@@ -269,8 +270,8 @@ public class App {
             System.out.println("\tNo files available for this message.");
         }
         else {
+            System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
             for (Database.MyFile file : files) {
-                System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
                 System.out.printf("%-20s \t", file.mFilename);
                 System.out.printf("%-20s \t", file.mFileID);
                 System.out.printf("%-10s \n", file.mMime); 
@@ -483,13 +484,40 @@ public class App {
         System.out.println("    [A] View ALL file metadata");
         System.out.println("    [^] Download a file");
         System.out.println("    [+] Upload a file");
+        System.out.println("    [Q] View drive quota");
         System.out.println("    [R] Remove a file");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
     }
 
+    static void drive_quota() {
+        System.out.println("Drive quota functionality not implemented.");
+        return;
+    }
+
     static void view_file_metadata(Database db, BufferedReader in) {
-        System.out.println("View file metadata currently unimplemented.");
+        ArrayList<Database.MyFile> msg_files = db.selectAllMsgFiles();
+        System.out.println("--------------------");
+        System.out.println("Message Files Table");
+        System.out.println("--------------------");
+        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
+        for( Database.MyFile file : msg_files) {
+            System.out.printf("%-30s \t", file.mFilename);
+            System.out.printf("%-30s \t", file.mFileID);
+            System.out.printf("%-10d \t", file.mMsgCmtID);
+            System.out.printf("%-10s \n", file.mMime);
+        }
+        ArrayList<Database.MyFile> cmt_files = db.selectAllCmtFiles();
+        System.out.println("\n--------------------");
+        System.out.println("Comment Files Table");
+        System.out.println("--------------------");
+        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
+        for( Database.MyFile file : cmt_files) {
+            System.out.printf("%-30s \t", file.mFilename);
+            System.out.printf("%-30s \t", file.mFileID);
+            System.out.printf("%-10d \t", file.mMsgCmtID);
+            System.out.printf("%-10s \n", file.mMime);
+        }
         return;
     }
 
@@ -544,7 +572,7 @@ public class App {
 
         } catch (Exception e) {
             System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
-            //e.printStackTrace();
+            e.printStackTrace();
         }
 
         // create the database with the google drive service
@@ -569,6 +597,7 @@ public class App {
                 case 'U': menu = 'U'; user_menu(); break;       // show user menu
                 case 'C': menu = 'C'; comment_menu(); break;    // show comment menu
                 case 'F': menu = 'F'; file_menu(); break;       // show file menu
+                case 'Q': drive_quota(); break;
                 case 'r': menu = 'G'; menu(); break;            // return to general menu and reset prompt string
 
                 // user actions (only accessible from user menu)
