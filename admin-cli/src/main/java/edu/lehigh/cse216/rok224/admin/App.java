@@ -89,7 +89,7 @@ public class App {
         switch(menu) { // change possible inputs if accessing a different menu
             case 'M': actions = "MmpsxDrq"; break;
             case 'U': actions = "Uaurq"; break;
-            case 'C': actions = "Crq"; break;
+            case 'C': actions = "Ccoldrq"; break;
             case 'F': actions = "Frq"; break;
         }
 
@@ -363,8 +363,32 @@ public class App {
     static void comment_menu() {
         System.out.println("Comment Menu");
         System.out.println("    [C] View comments table menu (this message)");
+        System.out.println("    [c] View all comments (for all messages)");
+        System.out.println("    [o] View specific comment");
+        System.out.println("    [l] List all files attached to specific comment");
+        System.out.println("    [d] Delete a comment from the database");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
+    }
+
+    static void view_comments(Database db, BufferedReader in) {
+        System.out.println("View comments currently unimplemented.");
+        return;
+    }
+
+    static void view_one_comment(Database db, BufferedReader in) {
+        System.out.println("View specific comment currently unimplemented.");
+        return;
+    }
+
+    static void list_cmt_files(Database db, BufferedReader in) {
+        System.out.println("List comment files currently unimplemented.");
+        return;
+    }
+
+    static void delete_comment(Database db, BufferedReader in) {
+        System.out.println("Delete comment currently unimplemented.");
+        return;
     }
 
     /**
@@ -451,9 +475,11 @@ public class App {
                 case 'x': list_msg_files(db, in); break;
                 case 'D': delete_message(db, in); break;
 
-                // message actions (only accessible from message menu)
-
                 // comment actions (only accessible form comment menu)
+                case 'c': view_comments(db, in); break;
+                case 'o': view_one_comment(db, in); break;
+                case 'l': list_cmt_files(db, in); break;
+                case 'd': delete_comment(db, in); break;
 
                 // file actions (only accessible from file menu)
             }
