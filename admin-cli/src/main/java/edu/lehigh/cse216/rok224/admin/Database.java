@@ -663,7 +663,7 @@ public class Database {
         String currentDirectory = System.getProperty("user.dir");
         System.out.println("current directory: " + currentDirectory);
         File fileMetadata = new File();
-        fileMetadata.setName("photo2.jpg");
+        fileMetadata.setName("photo3.jpg");
         java.io.File filePath = new java.io.File("photo.jpg");
         FileContent mediaContent = new FileContent("image/jpeg", filePath);
         File file;
