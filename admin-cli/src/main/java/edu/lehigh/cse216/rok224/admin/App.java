@@ -14,6 +14,7 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -30,6 +31,34 @@ import java.io.InputStream;
 // import java.io.InputStreamReader;
 import java.io.FileNotFoundException;
 
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
+// imports from Rafaela
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
+import org.apache.commons.io.FileUtils;
+
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * App is our basic admin app.  For now, it is a demonstration of the six key 
  * operations on a database: connect, insert, update, query, delete, disconnect
@@ -39,7 +68,7 @@ public class App {
     /**
      * Set up connection to the Google Service Account Drive for file upload
      */
-    private static final String APPLICATION_NAME = "Google Drive API Java Quickstart";
+    private static final String APPLICATION_NAME = "Google Drive API Java Quickstart for Admin App";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
@@ -56,7 +85,7 @@ public class App {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private static HttpRequestInitializer getCredentials() throws IOException {
         // Load client secrets.
         System.out.println(CREDENTIALS_FILE_PATH);
         InputStream in = App.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -64,17 +93,20 @@ public class App {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
 
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        // GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
+        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(ServiceAccountCredentials.fromStream(in)
+            .createScoped(Collections.singletonList(DriveScopes.DRIVE)));
+         return requestInitializer;
         // TODO: THIS IS WHAT IS CAUSING THE DATABASE CREATION TO FAIL
         // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        // GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+        //         HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+        //         .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+        //         .setAccessType("offline")
+        //         .build();
+        // LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
+        // return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
     /**
@@ -549,12 +581,12 @@ public class App {
         // Build a new authorized API client service.
         Drive service = null;
         try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials())
                     .setApplicationName(APPLICATION_NAME)
                     .build();
 
-            /* Print the names and IDs for up to 10 files.
+            //Print the names and IDs for up to 10 files.
             FileList result = service.files().list()
                     .setPageSize(10)
                     .setFields("nextPageToken, files(id, name)")
@@ -568,7 +600,6 @@ public class App {
                     System.out.printf("%s (%s)\n", file.getName(), file.getId());
                 }
             }
-            */
 
         } catch (Exception e) {
             System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
