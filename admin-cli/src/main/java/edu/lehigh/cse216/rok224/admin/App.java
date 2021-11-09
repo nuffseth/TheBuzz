@@ -559,7 +559,11 @@ public class App {
     }
 
     static void upload_file(Database db, BufferedReader in) {
-        System.out.println("File upload currently unimplemented.");
+        System.out.println("Testing hardcoded file upload.");
+        String fileID = db.uploadFile("");
+        if (fileID == null) {
+            System.out.println("Something went wrong...");
+        }
         return;
     }
 

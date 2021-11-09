@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import com.google.api.client.http.FileContent;
 // import com.google.api.client.auth.oauth2.Credential;
 // import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 // import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
@@ -655,8 +656,31 @@ public class Database {
         return null;
     }
     // TODO: work with backend to create a method to upload a file from the drive
-    String uploadFile(String filename, String mime, String file_content) {
+    String uploadFile(String file_content) {
         String fileID = null;
+        String mime = null;
+        String filename = null;
+        String currentDirectory = System.getProperty("user.dir");
+        System.out.println("current directory: " + currentDirectory);
+        File fileMetadata = new File();
+        fileMetadata.setName("photo2.jpg");
+        java.io.File filePath = new java.io.File("photo.jpg");
+        FileContent mediaContent = new FileContent("image/jpeg", filePath);
+        File file;
+        try {
+            file = mService.files().create(fileMetadata, mediaContent)
+                .setFields("id")
+                .execute();
+            fileID = file.getId();
+            mime = file.getMimeType();
+            filename = file.getName();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("File ID: " + fileID);
+        System.out.println("Mime: " + mime);
+        System.out.println("Filename: " + filename);
         return fileID;
     }
     // TODO: work with backend to create a method to download a file from the drive
