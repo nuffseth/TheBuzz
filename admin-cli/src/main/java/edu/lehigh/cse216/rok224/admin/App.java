@@ -600,7 +600,6 @@ public class App {
                     System.out.printf("%s (%s)\n", file.getName(), file.getId());
                 }
             }
-
         } catch (Exception e) {
             System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
             e.printStackTrace();
@@ -628,7 +627,7 @@ public class App {
                 case 'U': menu = 'U'; user_menu(); break;       // show user menu
                 case 'C': menu = 'C'; comment_menu(); break;    // show comment menu
                 case 'F': menu = 'F'; file_menu(); break;       // show file menu
-                case 'Q': drive_quota(); break;
+                case 'Q': drive_quota(); break;                 // display quota
                 case 'r': menu = 'G'; menu(); break;            // return to general menu and reset prompt string
 
                 // user actions (only accessible from user menu)
