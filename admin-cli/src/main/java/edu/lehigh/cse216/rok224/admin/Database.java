@@ -100,9 +100,14 @@ public class Database {
     private PreparedStatement psInsertMessageFile;
     private PreparedStatement psSelectMessageFile;
     private PreparedStatement psSelectAllMsgFiles;
+    private PreparedStatement psDeleteMsgFile;
+    private PreparedStatement psGetMsgFileID;
+
     private PreparedStatement psInsertCommentFile;
     private PreparedStatement psSelectCommentFile;
     private PreparedStatement psSelectAllCmtFiles;
+    private PreparedStatement psDeleteCmtFile;
+    private PreparedStatement psGetCmtFileID;
 
     /* PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
     // ALTER TABLE messages ADD COLUMN msgLink INT
@@ -637,26 +642,18 @@ public class Database {
     }
 
     // function to test drive connection
-    FileList getAllDriveFiles() {
+    List<File> getAllDriveFiles() {
         FileList result;
+        List<File> files = null;
         try {
             result = mService.files().list()
-                .setPageSize(10)
                 .setFields("nextPageToken, files(id, name)")
                 .execute();
-            List<File> files = result.getFiles();
-            if (files == null || files.isEmpty()) {
-                System.out.println("No files found.");
-            } else {
-                System.out.println("Files:");
-                for (File file : files) {
-                    System.out.printf("%s (%s)\n", file.getName(), file.getId());
-                }
-            }
+            files = result.getFiles();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return files;
     }
 
     String uploadFile(java.io.File content, String filename, String mime) {
@@ -684,14 +681,25 @@ public class Database {
     }
     // TODO: work with backend to create a method to download a file from the drive
     OutputStream downloadFile(String fileID) {
-    OutputStream outputStream = new ByteArrayOutputStream();
-    try {
-        mService.files().get(fileID).executeMediaAndDownloadTo(outputStream);
-    } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            mService.files().get(fileID).executeMediaAndDownloadTo(outputStream);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return outputStream;
     }
-    return outputStream;
+
+    // method to delete a file from the database (helper function for deleteMsgFile and deleteCmtFile)
+    int deleteFile(String fileID) {
+        int ret = 0;
+        try {
+            mService.files().delete(fileID).execute();
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e);
+        }
+        return ret;
     }
 
     int insertMsgFile(int msgID, java.io.File file) {
@@ -746,6 +754,22 @@ public class Database {
         return res;
     }
 
+    ArrayList<String> getMsgFileID(String filename) {
+        ArrayList<String> fileIDs = new ArrayList<String>();
+        try {
+            psGetMsgFileID.setString(1, filename);
+            ResultSet rs = psGetMsgFileID.executeQuery();
+            while (rs.next()){
+                fileIDs.add(rs.getString("fileID"));
+            }
+            rs.close();
+            return fileIDs;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     ArrayList<MyFile> selectAllMsgFiles() {
         ArrayList<MyFile> res = new ArrayList<MyFile>();
         try {
@@ -759,6 +783,25 @@ public class Database {
             e.printStackTrace();
             return null;
         }
+    }
+
+    int deleteMsgFile(String fileID) {
+        // delete the file from the Drive
+        int res = deleteFile(fileID);
+        if (res == -1) {
+            System.out.println("Unable to delete file from the Drive.");
+            return -1;
+        }
+
+        // delete the file from the msgFile database
+        try {
+            psDeleteMsgFile.setString(1, fileID);
+            res = psDeleteMsgFile.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
     }
 
     int insertCmtFile(int cmtID, java.io.File file) {
@@ -819,6 +862,22 @@ public class Database {
         return res;
     }
 
+    ArrayList<String> getCmtFileID(String filename) {
+        ArrayList<String> fileIDs = new ArrayList<String>();
+        try {
+            psGetCmtFileID.setString(1, filename);
+            ResultSet rs = psGetCmtFileID.executeQuery();
+            while (rs.next()){
+                fileIDs.add(rs.getString("fileID"));
+            }
+            rs.close();
+            return fileIDs;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     ArrayList<MyFile> selectAllCmtFiles() {
         ArrayList<MyFile> res = new ArrayList<MyFile>();
         try {
@@ -832,6 +891,25 @@ public class Database {
             e.printStackTrace();
             return null;
         }
+    }
+
+    int deleteCmtFile(String fileID) {
+        // delete the file from the Drive
+        int res = deleteFile(fileID);
+        if (res == -1) {
+            System.out.println("Unable to delete file from the Drive.");
+            return -1;
+        }
+
+        // delete the file from the msgFile database
+        try {
+            psDeleteCmtFile.setString(1, fileID);
+            res = psDeleteCmtFile.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
     }
 
     /**
@@ -948,11 +1026,15 @@ public class Database {
             // FILE prepared statements (two tables: message files and comment files)
             db.psInsertMessageFile = db.mConnection.prepareStatement("INSERT INTO msgfiles VALUES (?, ?, ?, ?)");
             db.psSelectMessageFile = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE fileID = ?");
+            db.psGetMsgFileID = db.mConnection.prepareStatement("SELECT fileID from msgfiles WHERE filename = ?");
             db.psSelectAllMsgFiles = db.mConnection.prepareStatement("SELECT * from msgfiles");
+            db.psDeleteMsgFile = db.mConnection.prepareStatement("DELETE FROM msgfiles WHERE fileID = ?");
 
             db.psInsertCommentFile = db.mConnection.prepareStatement("INSERT INTO cmtfiles VALUES (?, ?, ?, ?)");
             db.psSelectCommentFile = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE fileID = ?");
+            db.psGetCmtFileID = db.mConnection.prepareStatement("SELECT fileID from cmtfiles WHERE filename = ?");
             db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
+            db.psDeleteCmtFile = db.mConnection.prepareStatement("DELETE FROM cmtfiles WHERE fileID = ?");
 
             // I commented these out because we may not need all of them
 

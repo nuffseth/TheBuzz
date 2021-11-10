@@ -2,6 +2,7 @@ package edu.lehigh.cse216.rok224.admin;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.io.IOException;
@@ -124,7 +125,7 @@ public class App {
             case 'M': actions = "MmpsxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
-            case 'F': actions = "FA^+#Q-qr"; break;
+            case 'F': actions = "FAv~^+#Q-qr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -515,12 +516,14 @@ public class App {
     static void file_menu() {
         System.out.println("File Menu");
         System.out.println("    [F] View files table menu (this message)");
-        System.out.println("    [A] View ALL file metadata");
+        System.out.println("    [A] View all file metadata");
+        System.out.println("    [v] View all files on the drive");
         System.out.println("    [^] Download a file");
         System.out.println("    [+] Upload a file (and attach to a message)");
         System.out.println("    [#] Upload a file (and attach to a comment)");
         System.out.println("    [Q] View drive quota");
         System.out.println("    [-] Remove a file");
+        System.out.println("    [~] Delete a file from the Drive ONLY");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
     }
@@ -530,16 +533,36 @@ public class App {
         return;
     }
 
+    static void view_drive_files(Database db) {
+        List<File> files = db.getAllDriveFiles();
+        if (files == null || files.isEmpty()) {
+            System.out.println("No files found.");
+        } else {
+            System.out.println("Files:");
+            for (File file : files) {
+                System.out.printf("%s (%s)\n", file.getName(), file.getId());
+            }
+        }
+    }
+
+    static void delete_drive_only(Database db, BufferedReader in) {
+        String fileID = getString(in, "Enter the file ID of the file to delete: ");
+        int ret = db.deleteFile(fileID);
+        if (ret == -1) {
+            System.out.println("Error deleting file " + fileID);
+        }
+    }
+
     static void view_file_metadata(Database db, BufferedReader in) {
         ArrayList<Database.MyFile> msg_files = db.selectAllMsgFiles();
         System.out.println("--------------------");
         System.out.println("Message Files Table");
         System.out.println("--------------------");
-        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
+        System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
         if (msg_files != null) {
             for( Database.MyFile file : msg_files) {
                 System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-30s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFileID);
                 System.out.printf("%-10d \t", file.mMsgCmtID);
                 System.out.printf("%-10s \n", file.mMime);
             }
@@ -548,11 +571,11 @@ public class App {
         System.out.println("\n--------------------");
         System.out.println("Comment Files Table");
         System.out.println("--------------------");
-        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Cmt ID", "Mime");
+        System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Cmt ID", "Mime");
         if (cmt_files != null) {
             for( Database.MyFile file : cmt_files) {
                 System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-30s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFileID);
                 System.out.printf("%-10d \t", file.mMsgCmtID);
                 System.out.printf("%-10s \n", file.mMime);
             }
@@ -561,7 +584,10 @@ public class App {
     }
 
     static void download_file(Database db, BufferedReader in) {
-        System.out.println("File download currently unimplemented.");
+        String fileID = getFileID(db, in);
+        OutputStream data = db.downloadFile(fileID);
+        System.out.println("Output stream of file with id " + fileID);
+        System.out.println(data);
         return;
     }
 
@@ -598,8 +624,69 @@ public class App {
     }
 
     static void remove_file(Database db, BufferedReader in) {
-        System.out.println("File removal currently unimplemented.");
+        String fileID = getFileID(db, in);
+        if (fileID == null) {
+            System.out.println("Exiting file removal.");
+            return;
+        }
+
+        // check if fileID is in msgFile table or cmtFile table
+        String table = "msgFiles";
+        Database.MyFile file = db.selectMsgFile(fileID);
+        if (file == null) { // check comment file table
+            table = "cmtFiles";
+            file = db.selectCmtFile(fileID);
+        }
+
+        if (file == null) { // if not found in comment file table either, print error message and exit
+            System.out.println("\tError: fileID " + fileID + " not found.");
+            return;
+        }
+
+        int res = -1;
+        // if found in message table, delete from message table
+        if (table.equals("msgFiles")) {
+            res = db.deleteMsgFile(fileID);
+        } else if (table.equals("cmtFiles")) {
+            res = db.deleteCmtFile(fileID);
+        }
+
+        if (res == -1) {
+            System.out.println("\tError: unable to delete file " + fileID);
+        } else {
+            System.out.println("File " + fileID + " deleted from " + table);
+        }
         return;
+    }
+
+    // helper function to get the fileID of a file in a more user friendly way
+    static String getFileID(Database db, BufferedReader in) {
+        String filename = getString(in, "Enter filename of the file: ");
+        ArrayList<String> fileIDs = db.getMsgFileID(filename);  // search for file ID in msgFiles
+        fileIDs.addAll(db.getCmtFileID(filename)); // search for fileID in cmtFiles
+
+        if (fileIDs.size() == 1) { // if only one fileID with provided filename, return that
+            return fileIDs.get(0); 
+        } else if (fileIDs.size() == 0) {
+            System.out.println("No files with filename " + filename + " found.");
+            return null;
+        } else { // otherwise, display all corresponding files and ask user to type appropriate file ID
+            System.out.println("All files with filename " + filename);
+            System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg/Cmt ID", "Mime");
+            for (String fileID : fileIDs) {
+                Database.MyFile file = db.selectMsgFile(fileID);
+                if (file == null) { // if fileID not found in msgFiles table, check cmtFiles table
+                    file = db.selectCmtFile(fileID);
+                }
+                System.out.printf("%-30s \t", file.mFilename);
+                System.out.printf("%-40s \t", file.mFileID);
+                System.out.printf("%-10d \t", file.mMsgCmtID);
+                System.out.printf("%-10s \n", file.mMime);
+            }
+            String typed_id = getString(in, "Enter the fileID of the file: ");
+            return typed_id;
+        }
+
     }
 
     /**
@@ -683,6 +770,8 @@ public class App {
 
                 // file actions (only accessible from file menu)
                 case 'A': view_file_metadata(db, in); break;
+                case 'v': view_drive_files(db); break;
+                case '~': delete_drive_only(db, in); break;
                 case '^': download_file(db, in); break;
                 case '+': upload_msg_file(db, in); break;
                 case '#': upload_cmt_file(db, in); break;
