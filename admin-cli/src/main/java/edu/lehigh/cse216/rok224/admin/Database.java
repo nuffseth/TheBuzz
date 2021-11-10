@@ -8,13 +8,17 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.*;
+import java.io.ByteArrayOutputStream;
 
 // import javax.swing.plaf.metal.MetalComboBoxButton;
 
 import java.io.IOException;
+import java.io.OutputStream;
 // import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.google.api.client.http.FileContent;
 // import com.google.api.client.auth.oauth2.Credential;
@@ -650,52 +654,69 @@ public class Database {
                 }
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return null;
     }
-    // TODO: work with backend to create a method to upload a file from the drive
-    String uploadFile(String file_content) {
-        String fileID = null;
-        String mime = null;
-        String filename = null;
-        String currentDirectory = System.getProperty("user.dir");
-        System.out.println("current directory: " + currentDirectory);
+
+    String uploadFile(java.io.File content, String filename, String mime) {
+        // create metadata for the file
         File fileMetadata = new File();
-        fileMetadata.setName("photo3.jpg");
-        java.io.File filePath = new java.io.File("photo.jpg");
-        FileContent mediaContent = new FileContent("image/jpeg", filePath);
-        File file;
+        fileMetadata.setName(filename);
+        fileMetadata.setMimeType(mime);
+        // create file content
+        FileContent mediaContent = new FileContent(mime, content);
+
+        // upload the file to the drive
+        String fileID = null;
         try {
-            file = mService.files().create(fileMetadata, mediaContent)
+            File file = mService.files().create(fileMetadata, mediaContent)
                 .setFields("id")
                 .execute();
             fileID = file.getId();
-            mime = file.getMimeType();
-            filename = file.getName();
+            System.out.println("Entire file object:");
+            System.out.println(file);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            System.out.println("File upload error.");
             e.printStackTrace();
         }
-        System.out.println("File ID: " + fileID);
-        System.out.println("Mime: " + mime);
-        System.out.println("Filename: " + filename);
         return fileID;
     }
     // TODO: work with backend to create a method to download a file from the drive
-    String getFileContent(String fileID) {
-        String file_content = null;
-        return file_content;
+    OutputStream downloadFile(String fileID) {
+    OutputStream outputStream = new ByteArrayOutputStream();
+    try {
+        mService.files().get(fileID).executeMediaAndDownloadTo(outputStream);
+    } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    return outputStream;
     }
 
-    int insertMessageFile(String fileID, int msgID, String mime, String filename) {
+    int insertMsgFile(int msgID, java.io.File file) {
+        String fileID = null;
         int ret = 0; 
+
+        // get filename and mime
+        String filename = file.getName();
+        Path path = file.toPath();
+        String mime = "";
+        try {
+            mime = Files.probeContentType(path);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
         if (testString(mime) == false || testString(filename) == false) { // generic validity check
             return -1;
         }
         
-        try {
+        // upload file and get fileID
+        fileID = uploadFile(file, filename, mime); //upload file to the drive
+        if (fileID == null) {
+            return -1;
+        }
+        try { //add file metadata to the database
             psInsertMessageFile.setString(1, fileID);
             psInsertMessageFile.setInt(2, msgID);
             psInsertMessageFile.setString(3, mime);
@@ -709,7 +730,7 @@ public class Database {
     }
 
     // returns an object of all msg file metadata 
-    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    // in order to obtain file contents, need to use downloadFile (connection to Drive)
     MyFile selectMsgFile(String fileID) {
         MyFile res = null;
         try {
@@ -740,12 +761,34 @@ public class Database {
         }
     }
 
-    int insertCommentFile(String fileID, int cmtID, String mime, String filename) {
+    int insertCmtFile(int cmtID, java.io.File file) {
+        String fileID = null;
         int ret = 0; 
+
+        // get filename and mime
+        String filename = file.getName();
+        Path path = file.toPath();
+        String mime = "";
+        try {
+            mime = Files.probeContentType(path);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        System.out.println("Mime: " + mime);
+        System.out.println("Filename: " + filename);
+        if (mime == null) {
+            System.out.println("Error, content type could not be determined.");
+            return -1;
+        }
         if (testString(mime) == false || testString(filename) == false) { // generic validity check
             return -1;
         }
-        
+
+        // upload file and get fileID
+        fileID = uploadFile(file, filename, mime); //upload file to the drive
+        if (fileID == null) {
+            return -1;
+        }
         try {
             psInsertCommentFile.setString(1, fileID);
             psInsertCommentFile.setInt(2, cmtID);
@@ -760,7 +803,7 @@ public class Database {
     }
 
     // returns an object of all msg file metadata 
-    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    // in order to obtain file contents, need to use downloadFile (connection to Drive)
     MyFile selectCmtFile(String fileID) {
         MyFile res = null;
         try {
@@ -781,7 +824,7 @@ public class Database {
         try {
             ResultSet rs = psSelectAllCmtFiles.executeQuery();
             while (rs.next()){
-                res.add(new MyFile(rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+                res.add(new MyFile(rs.getString("fileID"), rs.getInt("cmtID"), rs.getString("mime"), rs.getString("filename")));
             }
             rs.close();
             return res;

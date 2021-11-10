@@ -2,6 +2,8 @@ package edu.lehigh.cse216.rok224.admin;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -122,7 +124,7 @@ public class App {
             case 'M': actions = "MmpsxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
-            case 'F': actions = "FA^+QRqr"; break;
+            case 'F': actions = "FA^+#Q-qr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -515,9 +517,10 @@ public class App {
         System.out.println("    [F] View files table menu (this message)");
         System.out.println("    [A] View ALL file metadata");
         System.out.println("    [^] Download a file");
-        System.out.println("    [+] Upload a file");
+        System.out.println("    [+] Upload a file (and attach to a message)");
+        System.out.println("    [#] Upload a file (and attach to a comment)");
         System.out.println("    [Q] View drive quota");
-        System.out.println("    [R] Remove a file");
+        System.out.println("    [-] Remove a file");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
     }
@@ -533,22 +536,26 @@ public class App {
         System.out.println("Message Files Table");
         System.out.println("--------------------");
         System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
-        for( Database.MyFile file : msg_files) {
-            System.out.printf("%-30s \t", file.mFilename);
-            System.out.printf("%-30s \t", file.mFileID);
-            System.out.printf("%-10d \t", file.mMsgCmtID);
-            System.out.printf("%-10s \n", file.mMime);
+        if (msg_files != null) {
+            for( Database.MyFile file : msg_files) {
+                System.out.printf("%-30s \t", file.mFilename);
+                System.out.printf("%-30s \t", file.mFileID);
+                System.out.printf("%-10d \t", file.mMsgCmtID);
+                System.out.printf("%-10s \n", file.mMime);
+            }
         }
         ArrayList<Database.MyFile> cmt_files = db.selectAllCmtFiles();
         System.out.println("\n--------------------");
         System.out.println("Comment Files Table");
         System.out.println("--------------------");
-        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
-        for( Database.MyFile file : cmt_files) {
-            System.out.printf("%-30s \t", file.mFilename);
-            System.out.printf("%-30s \t", file.mFileID);
-            System.out.printf("%-10d \t", file.mMsgCmtID);
-            System.out.printf("%-10s \n", file.mMime);
+        System.out.printf("%-30s \t%-30s \t%-10s \t%-10s\n", "Filename", "File ID", "Cmt ID", "Mime");
+        if (cmt_files != null) {
+            for( Database.MyFile file : cmt_files) {
+                System.out.printf("%-30s \t", file.mFilename);
+                System.out.printf("%-30s \t", file.mFileID);
+                System.out.printf("%-10d \t", file.mMsgCmtID);
+                System.out.printf("%-10s \n", file.mMime);
+            }
         }
         return;
     }
@@ -558,10 +565,33 @@ public class App {
         return;
     }
 
-    static void upload_file(Database db, BufferedReader in) {
-        System.out.println("Testing hardcoded file upload.");
-        String fileID = db.uploadFile("");
-        if (fileID == null) {
+    static void upload_msg_file(Database db, BufferedReader in) {
+        String pathname = getString(in, "Enter the path of the file to upload: ");
+        java.io.File file = new java.io.File(pathname);
+        if (!file.exists()) {
+            System.out.println("\tError: unable to find file.");
+            return;
+        }
+
+        int msgID = getInt(in, "Enter the id of the message to attach the file to:");
+        int ret = db.insertMsgFile(msgID, file);
+        if (ret == -1) {
+            System.out.println("Something went wrong...");
+        }
+        return;
+    }
+
+    static void upload_cmt_file(Database db, BufferedReader in) {
+        String pathname = getString(in, "Enter the path of the file to upload: ");
+        java.io.File file = new java.io.File(pathname);
+        if (!file.exists()) {
+            System.out.println("\tError: unable to find file.");
+            return;
+        }
+
+        int cmtID = getInt(in, "Enter the id of the comment to attach the file to:");
+        int ret = db.insertCmtFile(cmtID, file);
+        if (ret == -1) {
             System.out.println("Something went wrong...");
         }
         return;
@@ -654,8 +684,9 @@ public class App {
                 // file actions (only accessible from file menu)
                 case 'A': view_file_metadata(db, in); break;
                 case '^': download_file(db, in); break;
-                case '+': upload_file(db, in); break;
-                case 'R': remove_file(db, in); break;
+                case '+': upload_msg_file(db, in); break;
+                case '#': upload_cmt_file(db, in); break;
+                case '-': remove_file(db, in); break;
             }
             /*if (action == '1'){                      // query specific row --------------------------------------
                 int id = getInt(in, "Enter the message ID");
