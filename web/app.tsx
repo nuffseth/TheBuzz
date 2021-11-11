@@ -110,11 +110,11 @@ class NewEntryForm {
             const read = new FileReader();
             read.readAsBinaryString(indivFile);
             read.onloadend = () => {
-                console.log(`type of result ${typeof read.result}`);
-                //console.log(read.result);
+                // console.log(`type of result ${typeof read.result}`);
                 const base64 = btoa(read.result as string);
-                console.log(`base64 is  ${base64}`);
-                const attachmentFile = new AttachmentFile (indivFile.name, base64, "TODO: add MIME");
+                // console.log(`base64 is  ${base64}`);
+                // console.log(`mime type is: ${indivFile.type}`);
+                const attachmentFile = new AttachmentFile (indivFile.name, base64, indivFile.type);
                 this.attachmentFiles.push(attachmentFile);
             }
         }
