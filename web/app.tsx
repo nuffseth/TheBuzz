@@ -7,6 +7,7 @@ import * as ReactDOM from "react-dom";
 import { Like } from "./like";
 import { Login } from "./login";
 import GoogleLogin from 'react-google-login';
+import { AttachmentFile } from "./attachment-file"
 
 // The 'this' keyword does not behave in JavaScript/TypeScript like it does in
 // Java.  Since there is only one NewEntryForm, we will save it to a global, so
@@ -18,7 +19,7 @@ var newEntryForm: NewEntryForm;
  */
 class NewEntryForm {
     // has content from filePicker
-    private fileContent: string[]; 
+    private attachmentFiles: AttachmentFile[]; 
 
     /**
      * To initialize the object, we say what method of NewEntryForm should be
@@ -27,7 +28,7 @@ class NewEntryForm {
     constructor(){
         $("#addCancel").click(this.clearForm);
         $("#addButton").click(this.submitForm);
-        // TODO: add file picker (event listener, event listening for change, every change results in converting file to base64 string array)
+        // file picker (event listener, event listening for change, every change results in converting file to base64 string array)
         document.getElementById("filePicker").addEventListener('change', this.onFilePickerChange.bind(this));
     }
 
@@ -57,6 +58,7 @@ class NewEntryForm {
         
         // unit test the conversion to base64 from file
         // test by converting to base64 back into binary, compare to original binary
+        // create blob and pass into method to get data, see if response has correct name, type, base64
 
 
         // set up an AJAX post.  When the server replies, the result will go to
@@ -65,7 +67,8 @@ class NewEntryForm {
             type: "POST",
             url: "/messages",
             dataType: "json",
-            data: JSON.stringify({mMessage: msg, mFiles: this.fileContent}),
+            // include msg link and comment link if they exist
+            data: {mMessage: msg, mFiles: this.attachmentFiles},
             //data: JSON.stringify({mMessage: msg}),
             success: newEntryForm.onSubmitResponse
         });
@@ -96,7 +99,7 @@ class NewEntryForm {
     
     // function that reads files and convertes to base64 when uploaded
     onFilePickerChange() {
-        this.fileContent=[];
+        this.attachmentFiles=[];
 
         //const fileName = (document.getElementById('filePicker') as HTMLInputElement).files[0];
         const fileNames = (document.getElementById('filePicker') as HTMLInputElement).files;
@@ -111,7 +114,8 @@ class NewEntryForm {
                 //console.log(read.result);
                 const base64 = btoa(read.result as string);
                 console.log(`base64 is  ${base64}`);
-                this.fileContent.push(base64);
+                const attachmentFile = new AttachmentFile (indivFile.name, base64, "TODO: add MIME");
+                this.attachmentFiles.push(attachmentFile);
             }
         }
     }
@@ -331,6 +335,27 @@ class ElementList {
             // Show the table row:
             tr.appendChild(likes);
             $("#messageList").append(tr);
+
+            // for(let file of data.mData[i].files) {
+            //     if (file.type.startsWith('image/')) {
+            //         let img = document.createElement('img');
+            //         tr.appendChild(img);
+            //         $.ajax({
+            //             type: "GET",
+            //             url: "/files/" + file.id,
+            //             dataType: "json",
+            //             success: (fileData) => {
+            //                 img.src = 'thing in slide';
+            //             }
+            //         });
+            //     }
+            //     else {
+            //         // display download button
+            //         // document.createlemt
+            //         // tr.append inserts iti into page
+            //         // blob.save to prompt user to save
+            //     }
+            // }
         }
         $("#messageList").append("</table>");
         // Find all of the delete buttons, and set their behavior
