@@ -21,6 +21,7 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
@@ -28,6 +29,8 @@ import com.google.api.services.drive.DriveScopes;
 // import com.google.api.services.drive.model.FileList;
 
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.io.InputStream;
 // import java.io.ByteArrayInputStream;
@@ -66,7 +69,7 @@ import java.util.List;
  * App is our basic admin app.  For now, it is a demonstration of the six key 
  * operations on a database: connect, insert, update, query, delete, disconnect
  */
-public class App {
+public class App implements Comparator<File>{
 
     /**
      * Set up connection to the Google Service Account Drive for file upload
@@ -125,7 +128,7 @@ public class App {
             case 'M': actions = "MmpsxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
-            case 'F': actions = "FAv~^+#Q-qr"; break;
+            case 'F': actions = "FAvL~^+#Q-qr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -518,6 +521,7 @@ public class App {
         System.out.println("    [F] View files table menu (this message)");
         System.out.println("    [A] View all file metadata");
         System.out.println("    [v] View all files on the drive");
+        System.out.println("    [L] View least recently used files");
         System.out.println("    [^] Download a file");
         System.out.println("    [+] Upload a file (and attach to a message)");
         System.out.println("    [#] Upload a file (and attach to a comment)");
@@ -528,8 +532,16 @@ public class App {
         System.out.println("    [r] Return to general menu");
     }
 
-    static void drive_quota() {
-        System.out.println("Drive quota functionality not implemented.");
+    static void drive_quota(Database db) {
+        Object quota = null;
+        try {
+            quota = db.driveQuota();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (quota == null) {
+            System.out.println("\tErrror fetching drive quota.");
+        }
         return;
     }
 
@@ -544,6 +556,34 @@ public class App {
             }
         }
     }
+
+    static void view_LRU(Database db, BufferedReader in) {
+        List<File> files = db.getAllDriveFiles();
+
+        System.out.println("\nAll Files:");
+        File oldest = files.get(0);
+        for (File file : files) {
+            System.out.printf("%-20s \t%-20s \t%-20s\n", file.getName(), file.getId(), file.getModifiedTime().toString());
+            if ( compareDate(oldest, file) == -1 ) {
+                oldest = file;
+            }
+        }
+
+        System.out.println("\nLeast recently used file: ");
+        System.out.printf("%-20s \t%-20s \t%-20s\n", oldest.getName(), oldest.getId(), oldest.getModifiedTime().toString());
+    }
+
+    static int compareDate(File file1, File file2) {
+        DateTime date1 = file1.getModifiedTime();
+        DateTime date2 = file2.getModifiedTime();
+        if (date1.getValue() > date2.getValue()) {
+            return -1;
+        } else if (date1.getValue() == date2.getValue()) {
+            return 0;
+        } else {
+            return 1;
+        }
+     }
 
     static void delete_drive_only(Database db, BufferedReader in) {
         String fileID = getString(in, "Enter the file ID of the file to delete: ");
@@ -585,9 +625,28 @@ public class App {
 
     static void download_file(Database db, BufferedReader in) {
         String fileID = getFileID(db, in);
+        Database.MyFile file = db.selectMsgFile(fileID);
+        if (file == null) {
+            file = db.selectMsgFile(fileID);
+        }
+
+        if (file == null) {
+            System.out.println("Unable to find file with file ID" + fileID);
+            return;
+        }
+
         OutputStream data = db.downloadFile(fileID);
-        System.out.println("Output stream of file with id " + fileID);
-        System.out.println(data);
+        ByteArrayOutputStream bytes_data= (ByteArrayOutputStream) data;
+        byte[] write_data = bytes_data.toByteArray();
+
+        try {
+            FileUtils.writeByteArrayToFile(new java.io.File(file.mFilename), write_data);
+            System.out.println("Check current directory to see " + file.mFilename);
+        } catch (IOException e) {
+            System.out.println("Error writing downloaded data to file.");
+            e.printStackTrace();
+        }
+
         return;
     }
 
@@ -748,7 +807,7 @@ public class App {
                 case 'U': menu = 'U'; user_menu(); break;       // show user menu
                 case 'C': menu = 'C'; comment_menu(); break;    // show comment menu
                 case 'F': menu = 'F'; file_menu(); break;       // show file menu
-                case 'Q': drive_quota(); break;                 // display quota
+                case 'Q': drive_quota(db); break;                 // display quota
                 case 'r': menu = 'G'; menu(); break;            // return to general menu and reset prompt string
 
                 // user actions (only accessible from user menu)
@@ -771,6 +830,7 @@ public class App {
                 // file actions (only accessible from file menu)
                 case 'A': view_file_metadata(db, in); break;
                 case 'v': view_drive_files(db); break;
+                case 'L': view_LRU(db, in); break;
                 case '~': delete_drive_only(db, in); break;
                 case '^': download_file(db, in); break;
                 case '+': upload_msg_file(db, in); break;

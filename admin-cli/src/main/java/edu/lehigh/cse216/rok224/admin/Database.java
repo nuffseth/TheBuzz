@@ -29,6 +29,8 @@ import com.google.api.client.http.FileContent;
 // import com.google.api.client.json.JsonFactory;
 // import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.Drive.About;
+import com.google.api.services.drive.Drive.About.Get;
 // import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -45,12 +47,13 @@ public class Database {
      */
     private Drive mService;
 
-    // prepared statements from phase 0 - do we still need these?
+    /* prepared statements from phase 0 - do we still need these?
     // private PreparedStatement mSelectAll;
     // private PreparedStatement mSelectOne;
     // private PreparedStatement mDeleteOne;
     // private PreparedStatement mInsertOne; 
     // private PreparedStatement mUpdateOne;
+    */
 
     // prepared statements from phase 1 - do we still need these?
     private PreparedStatement psCreateTable;
@@ -109,18 +112,6 @@ public class Database {
     private PreparedStatement psDeleteCmtFile;
     private PreparedStatement psGetCmtFileID;
 
-    /* PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
-    // ALTER TABLE messages ADD COLUMN msgLink INT
-    // ALTER TABLE messages ADD COLUMN cmtLink INT
-    // ALTER TABLE messages ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
-    // ALTER TABLE messages ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
-
-    // ALTER TABLE comments ADD COLUMN msgLink INT
-    // ALTER TABLE comments ADD COLUMN cmtLink INT
-    // ALTER TABLE comments ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
-    // ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
-    */
-
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
     private PreparedStatement mCommentTableUpdateUserID;
@@ -167,30 +158,10 @@ public class Database {
 
     // add new user
     int insertUser (String user, String bio) {
-        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
-        // i need to both check the overall validity of the strings getting passed in,
-        // as well as, in the case that we do get a valid string, if it already exists
-        
         int ret = 0;
-
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-
-        // TODO: what do the executeQuery things return? if user is not found, is that an error??
-        // check to see if user already exists in the User table
-        // ResultSet rs = null;
-        // try {
-        //     System.out.println("checking if user is in database...");
-        //     psSelectUser.setString(1, user);
-        //     rs = psSelectUser.executeQuery();
-        // } catch (SQLException e1) {
-        //     e1.printStackTrace();
-        // } 
-        // System.out.println(rs);
-        // if (rs != null) { // if user is found in the table, return 1
-        //     return 1;
-        // }
         
         try {
             System.out.println("trying to add user to database...");
@@ -198,6 +169,7 @@ public class Database {
             psInsertUser.setString(2, bio);   // second param is being set as bio
             ret += psInsertUser.executeUpdate();
         } catch (SQLException e) {
+            // if error bc user already exists, return 0
             if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
                 ret = 0;
             }
@@ -641,13 +613,36 @@ public class Database {
         }
     }
 
+    // function to get the drive quota
+    int driveQuota() throws IOException {
+        Object quota = mService.about().get().setFields("storageQuota").execute();
+
+        System.out.println(quota);
+        return -1;
+    }
+
+    List<File> getLRU(int num) {
+        List<File> files = null;
+        FileList result;
+        try {
+            result = mService.files().list()
+                .setFields("nextPageToken, files(id, name, modifiedTime)")
+                .execute();
+            files = result.getFiles();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
     // function to test drive connection
     List<File> getAllDriveFiles() {
         FileList result;
         List<File> files = null;
         try {
             result = mService.files().list()
-                .setFields("nextPageToken, files(id, name)")
+                .setFields("nextPageToken, files(id, name, modifiedTime)")
                 .execute();
             files = result.getFiles();
         } catch (IOException e) {
