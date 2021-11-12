@@ -39,31 +39,18 @@ import java.io.FileNotFoundException;
 
 import com.google.auth.oauth2.ServiceAccountCredentials;
 
-// imports from Rafaela
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 
 import org.apache.commons.io.FileUtils;
-
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * App is our basic admin app.  For now, it is a demonstration of the six key 
@@ -128,7 +115,7 @@ public class App implements Comparator<File>{
             case 'M': actions = "MmpsxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
-            case 'F': actions = "FAvL~^+#Q-qr"; break;
+            case 'F': actions = "FAvL^+#Q-qr"; break;
         }
 
         // We repeat until a valid single-character option is selected        
@@ -308,9 +295,9 @@ public class App implements Comparator<File>{
             System.out.println("\tNo files available for this message.");
         }
         else {
-            System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
+            System.out.printf("%-30s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
             for (Database.MyFile file : files) {
-                System.out.printf("%-20s \t", file.mFilename);
+                System.out.printf("%-30s \t", file.mFilename);
                 System.out.printf("%-20s \t", file.mFileID);
                 System.out.printf("%-10s \n", file.mMime); 
             }  
@@ -326,6 +313,7 @@ public class App implements Comparator<File>{
         Database.Message message = db.selectMessage(msgID);
         if (message == null) {
             System.out.println("\tError: unable to find message with provided ID.");
+            return;
         }
         else {
             System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
@@ -471,9 +459,9 @@ public class App implements Comparator<File>{
         }
         else {
             for (Database.MyFile file : files) {
-                System.out.printf("%-20s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
-                System.out.printf("%-20s \t", file.mFilename);
-                System.out.printf("%-20s \t", file.mFileID);
+                System.out.printf("%-30s \t%-40s \t%-10s\n",  "Filename", "File ID", "MimeType");
+                System.out.printf("%-40s \t", file.mFilename);
+                System.out.printf("%-30s \t", file.mFileID);
                 System.out.printf("%-10s \n", file.mMime); 
             }  
         }
@@ -527,7 +515,6 @@ public class App implements Comparator<File>{
         System.out.println("    [#] Upload a file (and attach to a comment)");
         System.out.println("    [Q] View drive quota");
         System.out.println("    [-] Remove a file");
-        System.out.println("    [~] Delete a file from the Drive ONLY");
         System.out.println("    [q] Quit Program");
         System.out.println("    [r] Return to general menu");
     }
@@ -625,13 +612,17 @@ public class App implements Comparator<File>{
 
     static void download_file(Database db, BufferedReader in) {
         String fileID = getFileID(db, in);
+        if (fileID == null) {
+            System.out.println("File not found.");
+            return;
+        }
         Database.MyFile file = db.selectMsgFile(fileID);
         if (file == null) {
-            file = db.selectMsgFile(fileID);
+            file = db.selectCmtFile(fileID);
         }
 
         if (file == null) {
-            System.out.println("Unable to find file with file ID" + fileID);
+            System.out.println("Unable to find file with file ID " + fileID);
             return;
         }
 
@@ -646,6 +637,7 @@ public class App implements Comparator<File>{
             System.out.println("Error writing downloaded data to file.");
             e.printStackTrace();
         }
+
 
         return;
     }
@@ -685,7 +677,7 @@ public class App implements Comparator<File>{
     static void remove_file(Database db, BufferedReader in) {
         String fileID = getFileID(db, in);
         if (fileID == null) {
-            System.out.println("Exiting file removal.");
+            System.out.println("File not found.");
             return;
         }
 
@@ -831,7 +823,6 @@ public class App implements Comparator<File>{
                 case 'A': view_file_metadata(db, in); break;
                 case 'v': view_drive_files(db); break;
                 case 'L': view_LRU(db, in); break;
-                case '~': delete_drive_only(db, in); break;
                 case '^': download_file(db, in); break;
                 case '+': upload_msg_file(db, in); break;
                 case '#': upload_cmt_file(db, in); break;

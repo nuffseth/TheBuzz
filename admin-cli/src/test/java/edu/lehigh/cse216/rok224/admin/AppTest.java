@@ -48,15 +48,23 @@ public class AppTest extends TestCase {
     /**
      * Tests to see if only one table can be made
      */
-    public void testTableCreation(){
-        try {
-            Map<String, String> env = System.getenv();
-            Database db = Database.getDatabase(env.get("DATABASE_URL"), null);
-            assertEquals(-1, db.createTable());
+    // public void testTableCreation(){
+    //     try {
+    //         Map<String, String> env = System.getenv();
+    //         Database db = Database.getDatabase(env.get("DATABASE_URL"), null);
+    //         assertEquals(-1, db.createTable());
 
-        } catch(Exception e){
-            System.out.println(e.getMessage());
-            // assertFalse(true);
-        }
+    //     } catch(Exception e){
+    //         System.out.println(e.getMessage());
+    //         // assertFalse(true);
+    //     }
+    // }
+
+    public void testFileID() {
+        String validID = "1OgMeG1K1jV2Mkfha-AximB823SSTS66h";
+        String invalidID = "gosh buckley is so cool";
+
+        assert(Database.validFileID(validID) == true);
+        assert(Database.validFileID(invalidID) == false);
     }
 }
