@@ -286,7 +286,7 @@ class _BuzzPostsState extends State<MyHomePage> {
           IconButton(
               icon: Icon(Icons.add_box),
               onPressed: () {
-                setMessageID(post.mId);
+                // setMessageID(post.mId);
                 Navigator.pushReplacementNamed(context, '/comments');
               }),
           IconButton(
