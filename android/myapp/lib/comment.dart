@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/buzz_post.dart';
+import 'package:myapp/data_model.dart';
 
 class CommentScreen extends StatefulWidget {
   const CommentScreen({Key? key}) : super(key: key);

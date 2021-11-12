@@ -50,6 +50,7 @@ class MyApp extends StatelessWidget {
 * always marked "final".
 */
 // homepage widget that gets "passed in"/returned in the home argument in app.build
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
@@ -64,8 +65,11 @@ class MyHomePage extends StatefulWidget {
 *
 * 
 */
+
+late Future<List<BuzzPost>> jsonPosts;
+
 class _BuzzPostsState extends State<MyHomePage> {
-  late Future<List<BuzzPost>> jsonPosts;
+  // late Future<List<BuzzPost>> jsonPosts;
 
   // list of posts
   final _posts = [];
@@ -282,6 +286,7 @@ class _BuzzPostsState extends State<MyHomePage> {
           IconButton(
               icon: Icon(Icons.add_box),
               onPressed: () {
+                setMessageID(post.mId);
                 Navigator.pushReplacementNamed(context, '/comments');
               }),
           IconButton(
