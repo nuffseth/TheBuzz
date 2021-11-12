@@ -30,6 +30,10 @@ dependencies:
   flutter:
     sdk: flutter
   english_words: ^4.0.0
+  camera: 
+  path_provider: 
+  path: 
+  
   #http: 0.13.3
 
 
