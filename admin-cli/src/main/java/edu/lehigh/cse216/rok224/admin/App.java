@@ -295,10 +295,10 @@ public class App implements Comparator<File>{
             System.out.println("\tNo files available for this message.");
         }
         else {
-            System.out.printf("%-30s \t%-20s \t%-10s\n",  "Filename", "File ID", "MimeType");
+            System.out.printf("%-40s \t%-35s \t%-10s\n",  "Filename", "File ID", "MimeType");
             for (Database.MyFile file : files) {
-                System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-20s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFilename);
+                System.out.printf("%-35s \t", file.mFileID);
                 System.out.printf("%-10s \n", file.mMime); 
             }  
         }
@@ -459,9 +459,9 @@ public class App implements Comparator<File>{
         }
         else {
             for (Database.MyFile file : files) {
-                System.out.printf("%-30s \t%-40s \t%-10s\n",  "Filename", "File ID", "MimeType");
+                System.out.printf("%-40s \t%-35s \t%-10s\n",  "Filename", "File ID", "MimeType");
                 System.out.printf("%-40s \t", file.mFilename);
-                System.out.printf("%-30s \t", file.mFileID);
+                System.out.printf("%-35s \t", file.mFileID);
                 System.out.printf("%-10s \n", file.mMime); 
             }  
         }
@@ -539,7 +539,7 @@ public class App implements Comparator<File>{
         } else {
             System.out.println("Files:");
             for (File file : files) {
-                System.out.printf("%s (%s)\n", file.getName(), file.getId());
+                System.out.printf("%-40s \t(%s)\n", file.getName(), file.getId());
             }
         }
     }
@@ -550,7 +550,7 @@ public class App implements Comparator<File>{
         System.out.println("\nAll Files:");
         File oldest = files.get(0);
         for (File file : files) {
-            System.out.printf("%-20s \t%-20s \t%-20s\n", file.getName(), file.getId(), file.getModifiedTime().toString());
+            System.out.printf("%-40s \t(%s) \t%-20s\n", file.getName(), file.getId(), file.getModifiedTime().toString());
             if ( compareDate(oldest, file) == -1 ) {
                 oldest = file;
             }
@@ -585,11 +585,11 @@ public class App implements Comparator<File>{
         System.out.println("--------------------");
         System.out.println("Message Files Table");
         System.out.println("--------------------");
-        System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
+        System.out.printf("%-40s \t%-35s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg ID", "Mime");
         if (msg_files != null) {
             for( Database.MyFile file : msg_files) {
-                System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-40s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFilename);
+                System.out.printf("%-35s \t", file.mFileID);
                 System.out.printf("%-10d \t", file.mMsgCmtID);
                 System.out.printf("%-10s \n", file.mMime);
             }
@@ -598,11 +598,11 @@ public class App implements Comparator<File>{
         System.out.println("\n--------------------");
         System.out.println("Comment Files Table");
         System.out.println("--------------------");
-        System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Cmt ID", "Mime");
+        System.out.printf("%-40s \t%-35s \t%-10s \t%-10s\n", "Filename", "File ID", "Cmt ID", "Mime");
         if (cmt_files != null) {
             for( Database.MyFile file : cmt_files) {
-                System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-40s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFilename);
+                System.out.printf("%-35s \t", file.mFileID);
                 System.out.printf("%-10d \t", file.mMsgCmtID);
                 System.out.printf("%-10s \n", file.mMime);
             }
@@ -626,9 +626,7 @@ public class App implements Comparator<File>{
             return;
         }
 
-        OutputStream data = db.downloadFile(fileID);
-        ByteArrayOutputStream bytes_data= (ByteArrayOutputStream) data;
-        byte[] write_data = bytes_data.toByteArray();
+        byte[] write_data = db.downloadFile(fileID);
 
         try {
             FileUtils.writeByteArrayToFile(new java.io.File(file.mFilename), write_data);
@@ -723,14 +721,14 @@ public class App implements Comparator<File>{
             return null;
         } else { // otherwise, display all corresponding files and ask user to type appropriate file ID
             System.out.println("All files with filename " + filename);
-            System.out.printf("%-30s \t%-40s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg/Cmt ID", "Mime");
+            System.out.printf("%-40s \t%-35s \t%-10s \t%-10s\n", "Filename", "File ID", "Msg/Cmt ID", "Mime");
             for (String fileID : fileIDs) {
                 Database.MyFile file = db.selectMsgFile(fileID);
                 if (file == null) { // if fileID not found in msgFiles table, check cmtFiles table
                     file = db.selectCmtFile(fileID);
                 }
-                System.out.printf("%-30s \t", file.mFilename);
-                System.out.printf("%-40s \t", file.mFileID);
+                System.out.printf("%-40s \t", file.mFilename);
+                System.out.printf("%-35s \t", file.mFileID);
                 System.out.printf("%-10d \t", file.mMsgCmtID);
                 System.out.printf("%-10s \n", file.mMime);
             }

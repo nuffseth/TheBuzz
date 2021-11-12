@@ -673,7 +673,7 @@ public class Database {
         return fileID;
     }
     // TODO: work with backend to create a method to download a file from the drive
-    OutputStream downloadFile(String fileID) {
+    byte[] downloadFile(String fileID) {
         if (!validFileID(fileID)) { // make sure fileID is valid
             return null;
         }
@@ -684,7 +684,12 @@ public class Database {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return outputStream;
+
+        // convert output stream to byte array
+        ByteArrayOutputStream bytes_data= (ByteArrayOutputStream) outputStream;
+        byte[] data = bytes_data.toByteArray();
+        return data;
+
     }
 
     // method to delete a file from the database (helper function for deleteMsgFile and deleteCmtFile)
