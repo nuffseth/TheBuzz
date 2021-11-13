@@ -64,3 +64,8 @@ label, input, textarea, #addButton, #editButton, download-button {
     margin-bottom: 5px;
     margin-left: 15px;
 }
+
+.add-entry--label{
+    display: inline;
+
+}

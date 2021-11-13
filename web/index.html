@@ -20,22 +20,21 @@
             <!-- insert filepicker button that only allows access to img and pdf MIME types, can upload multiple files -->
             <input type="file" id="filePicker" multiple accept="image/*,.pdf">
             <!-- field to add link to another message/comment -->
-            <label for="msgLink">Add link to another message ID:</label>
-            <select name="msgLink" id="msgLink">
+            <div>
+                <label class="add-entry--label" for="msgLink">Add link to another message ID:</label>
+                <select name="msgLink" id="msgLink" class="add-entry--selector">
+                    <option value="" selected></option>
+                </select>
+            </div>
+            
+
+            <label for="commentLink">Add link to another comment ID:</label>
+            <select name="commentLink" id="commentLink">
                 <option value="" selected></option>
                 <option value="9">Volvo</option>
                 <!-- TODO: dynamically create options in selector, format value="msgid">content</option> -->
+                <option value="commentid">content</option>
             </select>
-
-
-            <label for="commentLink">Add link to another comment ID:</label>
-            <input type="number" id="commentLink">
-
-        
-            
-            
-
-
 
             <button id="addButton">Add</button>
             <button id="addCancel">Cancel</button>

@@ -30,10 +30,38 @@ class NewEntryForm {
         $("#addButton").click(this.submitForm.bind(this));
         // file picker (event listener, event listening for change, every change results in converting file to base64 string array)
         document.getElementById("filePicker").addEventListener('change', this.onFilePickerChange.bind(this));
-
+        this.getMessages();
         this.attachmentFiles = [];
     }
 
+    private getMessages() {
+        //Issue a GET, and then pass the result to update()
+        // $.ajax({
+        //     type: "GET",
+        //     url: "/messages",
+        //     dataType: "json",
+        //     success: this.updateMsgSelect.bind(this)
+        // });
+        window.setTimeout(() => {this.updateMsgSelect({
+            mData:[{mId:"1", mMessage:"msg1", mLikes:0, mFiles:[{mimeType:"image/", id:"1"}]}, {mId:"2", mMessage:"msg2", mLikes:0, mFiles:[{mimeType:"application/pdf", id:"2"}]}, {mId:"3", mMessage:"msg3", mLikes:0, mFiles:[]}, {mId:"4", mMessage:"msg4", mLikes:0, mFiles:[{mimeType:"application/pdf", id:"3"}, {mimeType:"image/", id:"4"}]}]
+        });},1000);
+    }
+
+    private updateMsgSelect(msgData:any) {
+        
+        const select = document.getElementById("msgLink");
+        for (let index = select.children.length-1; index > 0; index--) {
+            select.removeChild(select.children[index]); 
+        }
+
+        for (let index = 0; index < msgData.mData.length; index++) {
+            const msgElements = msgData.mData[index];
+            let option = document.createElement("option");
+            option.textContent = msgElements.mMessage;
+            option.value = msgElements.mId;
+            select.appendChild(option); 
+        }
+    }
     /**
      * Clear the form's input fields
      */
@@ -348,7 +376,7 @@ class ElementList {
         //     success: mainList.update
         // });
         window.setTimeout(() => {mainList.update({
-            mData:[{mId:"1", mMessage:"msg1", mLikes:0, mFiles:[{mimeType:"image/", id:"1"}]}, {mId:"2", mMessage:"msg2", mLikes:0, mFiles:[{mimeType:"application/pdf", id:"2"}]}]
+            mData:[{mId:"1", mMessage:"msg1", mLikes:0, mFiles:[{mimeType:"image/", id:"1"}]}, {mId:"2", mMessage:"msg2", mLikes:0, mFiles:[{mimeType:"application/pdf", id:"2"}]}, {mId:"3", mMessage:"msg3", mLikes:0, mFiles:[]}, {mId:"4", mMessage:"msg4", mLikes:0, mFiles:[{mimeType:"application/pdf", id:"3"}, {mimeType:"image/", id:"4"}]}]
         });},1000);
     }
 
@@ -356,7 +384,6 @@ class ElementList {
     /**
      * update is the private method used by refresh() to update messageList
      */
-    // photo stuff might go here
     private update(data: any) {
         $("#messageList").html("<table>");
         for (let i = 0; i < data.mData.length; ++i) {
