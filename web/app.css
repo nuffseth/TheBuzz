@@ -54,7 +54,7 @@ textarea {
 }
 
 /* put some left space before form elements */
-label, input, textarea, #addButton, #editButton {
+label, input, textarea, #addButton, #editButton, download-button {
     margin-left: 15px;
 }
 
