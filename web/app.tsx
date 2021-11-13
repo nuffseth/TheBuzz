@@ -79,8 +79,8 @@ class NewEntryForm {
         }
     }
 
-       // fn to update the comment link select drop down
-       private updateCommentSelect(msgData:any) {
+    // fn to update the comment link select drop down
+    private updateCommentSelect(msgData:any) {
         const select = document.getElementById("commentLink");
         for (let index = select.children.length-1; index > 0; index--) {
             select.removeChild(select.children[index]); 
@@ -118,9 +118,6 @@ class NewEntryForm {
             return;
         }
         
-        // unit test the conversion to base64 from file
-        // test by converting to base64 back into binary, compare to original binary
-        // create blob and pass into method to get data, see if response has correct name, type, base64
         const msgLinkID:string|null = $("#msgLink").val() !== "" ? $("#msgLink").val() as string:null;
         const commentLinkID:string|null = $("#commentLink").val() !== "" ? $("#commentLink").val() as string:null;
 
