@@ -5,8 +5,8 @@ import * as ReactDOM from "react-dom";
 export class Login extends React.Component {
 
     responseGoogle = (response: any) => {
-        console.log(response);
-        console.log(response.profileObj);
+        // console.log(response);
+        // console.log(response.profileObj);
         const email = response.profileObj.email;
         //response.getAuthResponse().id_token)
         $.ajax({
@@ -14,15 +14,16 @@ export class Login extends React.Component {
             url: "/login",
             dataType: "json",
             data: JSON.stringify({mMessage: response.getAuthResponse().id_token}),
-            success: function(result) {
+            success: function(result: any) {
                 result.body
+                //console.log(response);
                 //TODO: Figure out how to get session key.
+                console.log(result.mData);
             }
         });
       }
 
     render(){
-        console.log("Hello");
         return (
             <div>
             <GoogleLogin

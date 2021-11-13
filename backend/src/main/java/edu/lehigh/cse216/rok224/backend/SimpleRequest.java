@@ -1,5 +1,4 @@
 package edu.lehigh.cse216.rok224.backend;
-import java.util.ArrayList;
 
 /**
  * SimpleRequest provides a format for clients to present title and message 
@@ -15,7 +14,7 @@ public class SimpleRequest {
     public String mMessage;
     public String mSessionKey; // maybe refactor to use an HTTP header??
     public String mEmail;
-    public ArrayList<String> mFile;
+    public jsonFile mFiles;
     public int messageLink;
     public int commentLink;
 }

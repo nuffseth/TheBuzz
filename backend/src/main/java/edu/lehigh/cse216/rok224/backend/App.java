@@ -13,10 +13,12 @@ import java.util.UUID;
 import com.google.gson.*;
 
 import org.apache.commons.codec.digest.Md5Crypt;
+import org.apache.http.impl.execchain.MainClientExec;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -60,6 +62,30 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
+import org.apache.commons.io.FileUtils;
+
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.FileContent;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 /**
  * For now, our app creates an HTTP server that can only get and add data.
  */
@@ -70,8 +96,8 @@ public class App {
 
     // create local hash table for storing temporary session keys and corresponding user email
     // map user email to session key
-    protected static HashMap<String, String> hash_map = new HashMap<String, String>();
-    private static MemcachedClient mc;
+    //protected static HashMap<String, String> hash_map = new HashMap<String, String>();
+    static MemcachedClient mc;
 
     /**
      * Get an integer environment varible if it exists, and otherwise return the
@@ -98,13 +124,25 @@ public class App {
      */
     protected static boolean authenticate(String email, String session_key) {
         // search the provided hash map for the session_key and make sure it matches the email
-        String map_value = mc.get(email);
-        // make sure the session key sent matches the value on the hash map
-        if ( map_value == null ) { // if email not found, return false
-            return false;
-        }
-        if ( map_value.equals(session_key)) { // if user/session_key combo is valid, return true
-            return true; 
+        String map_value;
+        try {
+            map_value = mc.get(email);
+            // make sure the session key sent matches the value on the hash map
+            if ( map_value == null ) { // if email not found, return false
+                return false;
+            }
+            if ( map_value.equals(session_key)) { // if user/session_key combo is valid, return true
+                return true; 
+            }
+        } catch (TimeoutException te) {
+            System.err.println("Timeout during set or get: " +
+                            te.getMessage());
+        } catch (InterruptedException ie) {
+            System.err.println("Interrupt during set or get: " +
+                            ie.getMessage());
+        } catch (MemcachedException me) {
+            System.err.println("Memcached error during get or set: " +
+                            me.getMessage());
         }
         return false; // email/session_key pair not found in hash map
     }
@@ -141,7 +179,7 @@ public class App {
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_METADATA_READONLY);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    private static final String CREDENTIALS_FILE_PATH = "credentials.json";
 
      /**
      * Creates an authorized Credential object.
@@ -149,22 +187,28 @@ public class App {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private static HttpRequestInitializer getCredentials() throws IOException {
         // Load client secrets.
+        System.out.println(CREDENTIALS_FILE_PATH);
         InputStream in = App.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
+        // GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(ServiceAccountCredentials.fromStream(in)
+            .createScoped(Collections.singletonList(DriveScopes.DRIVE)));
+         return requestInitializer;
+        // TODO: THIS IS WHAT IS CAUSING THE DATABASE CREATION TO FAIL
         // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                .setAccessType("offline")
-                .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+        // GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+        //         HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+        //         .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+        //         .setAccessType("offline")
+        //         .build();
+        // LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
+        // return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
     public static void main(String[] args) {
@@ -183,10 +227,10 @@ public class App {
 
         // Memcache Setup
         List<InetSocketAddress> servers =
-            AddrUtil.getAddresses(System.getenv("mc5.dev.ec2.memcachier.com").replace(",", " "));
+            AddrUtil.getAddresses(env.get("MEMCACHIER_SERVERS").replace(",", " "));
         AuthInfo authInfo =
-            AuthInfo.plain(System.getenv("9026FA"),
-                           System.getenv("CED0D9DD88E877C403678EB697265E5C"));
+            AuthInfo.plain(env.get("MEMCACHIER_USERNAME"),
+                           env.get("MEMCACHIER_PASSWORD"));
         MemcachedClientBuilder builder = new XMemcachedClientBuilder(servers);
 
         // Configure SASL auth for each server
@@ -223,7 +267,7 @@ public class App {
         System.err.println("Couldn't create a connection to MemCachier: " +
                             ioe.getMessage());
         }
-        
+
         // store OAuth variables 
         String client_id = env.get("CLIENT_ID");
         // set up the verifier (from Google OAuth API) to use to verify the id token
@@ -234,25 +278,30 @@ public class App {
             //.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
             .build();
 
-        // Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+        Drive service = null;
+        try {
+            NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials())
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
 
-        // Print the names and IDs for up to 10 files.
-        FileList fileList = service.files().list()
-                .setPageSize(10)
-                .setFields("nextPageToken, files(id, name)")
-                .execute();
-        List<File> files = fileList.getFiles();
-        if (files == null || files.isEmpty()) {
-            System.out.println("No files found.");
-        } else {
-            System.out.println("Files:");
-            for (File file : files) {
-                System.out.printf("%s (%s)\n", file.getName(), file.getId());
+            //Print the names and IDs for up to 10 files.
+            FileList result = service.files().list()
+                    .setPageSize(10)
+                    .setFields("nextPageToken, files(id, name)")
+                    .execute();
+            List<File> files = result.getFiles();
+            if (files == null || files.isEmpty()) {
+                System.out.println("No files found.");
+            } else {
+                System.out.println("Files:");
+                for (File file : files) {
+                    System.out.printf("%s (%s)\n", file.getName(), file.getId());
+                }
             }
+        } catch (Exception e) {
+            System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
+            e.printStackTrace();
         }
 
         // uncomment this and delete MyDatabase.java once Database.java is implemented
@@ -317,7 +366,7 @@ public class App {
             // save user and session key in local hash table
             String session_key = UUID.randomUUID().toString(); // make a random string
             System.out.println("random session key: " + session_key);
-            hash_map.put(username, session_key);
+            mc.set(username, 3600, session_key);
 
             // add user to user table, Database.java shouldn't add duplicates
             System.out.println("inserting user into database...");
@@ -393,11 +442,21 @@ public class App {
             }
 
             // add input message and current user to messages table
-            int result = dataBase.insertMessage(req.mMessage, req.mEmail); 
+            int result = dataBase.insertMessage(req.mMessage, req.mEmail, req.messageLink, req.commentLink);
+            
 
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to add message to database", null));
             } else {
+                // inserts file
+                if (req.mFiles != null ){
+                    java.io.File newFile = new java.io.File(req.mFiles.fileName);
+                    // checks if file is in memcachier
+                    if(mc.get(req.mFiles.fileName) == null){
+                        mc.set(req.mFiles.fileName, 3600, req.mFiles);
+                    }
+                    dataBase.insertMsgFile(result, newFile);
+                }
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
         });
@@ -424,6 +483,7 @@ public class App {
             }
 
             int result = dataBase.updateMessage(idx, req.mMessage);
+
 
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to update row " + idx, null));
@@ -462,6 +522,8 @@ public class App {
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "unable to delete row " + idx, null));
             } else {
+                //Deletes files associated with message.
+                //dataBase.deleteMsgFile(getMsgFileID());
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
         });
@@ -626,6 +688,7 @@ public class App {
             if (data == null) {
                 return gson.toJson(new StructuredResponse("error", "unable to find all comments for message " + msg_idx, null));
             } else {
+
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
         });
@@ -645,11 +708,17 @@ public class App {
             }
 
             // // add a new comment to the current message with provided content and current user
-            int result = dataBase.insertComment(msg_idx, req.mEmail, req.mMessage); 
+            int result = dataBase.insertComment(msg_idx, req.mEmail, req.mMessage, req.messageLink, req.commentLink); 
 
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error performing insertion", null));
             } else {
+                java.io.File newFile = new java.io.File(req.mFiles.fileName);
+                // checks if file is in memcachier
+                if(mc.get(req.mFiles.fileName) == null){
+                    mc.set(req.mFiles.fileName, 3600, req.mFiles);
+                }
+                dataBase.insertCmtFile(result, newFile);
                 return gson.toJson(new StructuredResponse("ok", "", null));
             }
         });
@@ -722,6 +791,8 @@ public class App {
             if (result == -1) {
                 return gson.toJson(new StructuredResponse("error", "error deleting comment " + comment_idx, null));
             } else {
+                // delete file associated with comment
+                // dataBase.deleteCmtFile(fileID);
                 return gson.toJson(new StructuredResponse("ok", "", null));
             }
         });
@@ -754,6 +825,25 @@ public class App {
 
             if (data == null) { // return an error if id not found
                 return gson.toJson(new StructuredResponse("error", username + " not found", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, data));
+            }
+        });
+        // GET route for downloading files
+        Spark.get("/messages/:id/File", (request, response) -> {
+            // get id from URL and find in database
+            int idx = Integer.parseInt(request.params("id")); // if id not an int, 500 error
+
+            //ArrayList<DataBase.MyFile> fileInfo = dataBase.getMsgFiles(idx); // get file
+            //byte[] fileData = dataBase.downloadFile(fileInfo.get(0).mFileID);
+            //byte[] encoded = Base64.getEncoder().encode(fileData);
+
+            ArrayList<Database.MyFile> data = dataBase.getMsgFiles(idx);
+            // ensure status 200 OK, with a MIME type of JSON, and return
+            response.status(200);
+            response.type("application/json");
+            if (data == null) { // return an error if id not found
+                return gson.toJson(new StructuredResponse("error", idx + " not found", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }

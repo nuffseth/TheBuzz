@@ -7,13 +7,31 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.*;
+import java.io.ByteArrayOutputStream;
 
-import javax.swing.plaf.metal.MetalComboBoxButton;
+// import javax.swing.plaf.metal.MetalComboBoxButton;
 
-import java.lang.reflect.Array;
+import java.io.IOException;
+import java.io.OutputStream;
+// import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+import com.google.api.client.http.FileContent;
+// import com.google.api.client.auth.oauth2.Credential;
+// import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+// import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+// import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+// import com.google.api.client.http.javanet.NetHttpTransport;
+// import com.google.api.client.json.JsonFactory;
+// import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.drive.Drive;
+// import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 
 public class Database {
     /**
@@ -22,12 +40,18 @@ public class Database {
      */
     private Connection mConnection;
 
-    // prepared statements from phase 0 - do we still need these?
+    /**
+     * The connection to the Google Drive service. 
+     */
+    private Drive mService;
+
+    /* prepared statements from phase 0 - do we still need these?
     // private PreparedStatement mSelectAll;
     // private PreparedStatement mSelectOne;
     // private PreparedStatement mDeleteOne;
     // private PreparedStatement mInsertOne; 
     // private PreparedStatement mUpdateOne;
+    */
 
     // prepared statements from phase 1 - do we still need these?
     private PreparedStatement psCreateTable;
@@ -46,6 +70,7 @@ public class Database {
     // USER PREPARED STATEMENTS 
     private PreparedStatement psInsertUser;
     private PreparedStatement psSelectUser;
+    private PreparedStatement psSelectAllUsers;
     private PreparedStatement psUpdateUser;
 
     // MESSAGE PREPARED STATEMENTS
@@ -53,6 +78,7 @@ public class Database {
     private PreparedStatement psSelectMessage;
     private PreparedStatement psGetMsgLikes;
     private PreparedStatement psGetMsgComments;
+    private PreparedStatement psGetMsgFileData;
     private PreparedStatement psSelectAllMessages;
     private PreparedStatement psUpdateMessage;
     private PreparedStatement psDeleteMessage;
@@ -67,26 +93,22 @@ public class Database {
     private PreparedStatement psInsertComment;
     private PreparedStatement psSelectComment;
     private PreparedStatement psSelectAllComments;
+    private PreparedStatement psGetCmtFileData;
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
 
     // FILE PREPARED STATEMENTS
     private PreparedStatement psInsertMessageFile;
     private PreparedStatement psSelectMessageFile;
+    private PreparedStatement psSelectAllMsgFiles;
+    private PreparedStatement psDeleteMsgFile;
+    private PreparedStatement psGetMsgFileID;
+
     private PreparedStatement psInsertCommentFile;
     private PreparedStatement psSelectCommentFile;
-
-    // PHASE 3 - SQL RUN ON HEROKU DATA EXPLORER TO EDIT TABLES
-    // ALTER TABLE messages ADD COLUMN msgLink INT
-    // ALTER TABLE messages ADD COLUMN cmtLink INT
-    // ALTER TABLE messages ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
-    // ALTER TABLE messages ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
-
-    // ALTER TABLE comments ADD COLUMN msgLink INT
-    // ALTER TABLE comments ADD COLUMN cmtLink INT
-    // ALTER TABLE comments ADD CONSTRAINT msg_link_key FOREIGN KEY(msgLink) REFERENCES messages(msgID)
-    // ALTER TABLE comments ADD CONSTRAINT cmt_link_key FOREIGN KEY(cmtLink) REFERENCES comments(cmtID)
-
+    private PreparedStatement psSelectAllCmtFiles;
+    private PreparedStatement psDeleteCmtFile;
+    private PreparedStatement psGetCmtFileID;
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -106,6 +128,19 @@ public class Database {
     private PreparedStatement mSelectOneBio;
     */ 
 
+    int createAllTables() {
+        try {
+            psUserTable.executeQuery();
+            psMessageTable.executeQuery();
+            psLikesTable.executeQuery();
+            psCommentTable.executeQuery();
+            psMsgFileTable.executeQuery();
+            psCmtFileTable.executeQuery();
+        } catch  (SQLException e) {
+            return -1;
+        }
+        return 1;
+    }
     /**
      * All objects for the User table
      */
@@ -121,30 +156,10 @@ public class Database {
 
     // add new user
     int insertUser (String user, String bio) {
-        // TODO: NEED TO CHECK TO SEE IF THE USER EMAIL ALREADY EXISTS
-        // i need to both check the overall validity of the strings getting passed in,
-        // as well as, in the case that we do get a valid string, if it already exists
-        
         int ret = 0;
-
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-
-        // TODO: what do the executeQuery things return? if user is not found, is that an error??
-        // check to see if user already exists in the User table
-        ResultSet rs = null;
-        // try {
-        //     System.out.println("checking if user is in database...");
-        //     psSelectUser.setString(1, user);
-        //     rs = psSelectUser.executeQuery();
-        // } catch (SQLException e1) {
-        //     e1.printStackTrace();
-        // } 
-        // System.out.println(rs);
-        // if (rs != null) { // if user is found in the table, return 1
-        //     return 1;
-        // }
         
         try {
             System.out.println("trying to add user to database...");
@@ -152,6 +167,7 @@ public class Database {
             psInsertUser.setString(2, bio);   // second param is being set as bio
             ret += psInsertUser.executeUpdate();
         } catch (SQLException e) {
+            // if error bc user already exists, return 0
             if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
                 ret = 0;
             }
@@ -178,6 +194,21 @@ public class Database {
         return res;
     }
 
+    // view all users (only accessible from admin CLI)
+    ArrayList<User> selectAllUsers() {
+        ArrayList<User> res = new ArrayList<User>();
+        try {
+            ResultSet rs = psSelectAllUsers.executeQuery();
+            while (rs.next()){
+                res.add(new User( rs.getString("userID"), rs.getString("bio")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
     // update user bio of a given user ID
     int updateUser (String user, String bio) {
         int ret = 0;
@@ -203,17 +234,23 @@ public class Database {
         int mCommentID;
         int mMsgID;
         String mContent;
+        ArrayList<MyFile> mFileData;
+        int mMsgLink;
+        int mCmtLink;
 
-        public Comment(int commentID, String userID, int msgID, String content) {
+        public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData) {
             mUserID = userID;
             mCommentID = commentID;
             mMsgID = msgID;
             mContent = content;
+            mFileData = fileData;
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
         }
     }
 
     // add a comment to the table
-    int insertComment (int msgID, String userID, String content) {
+    int insertComment (int msgID, String userID, String content, int msgLink, int cmtLink) {
         int ret = 0;
         // TODO: is there a testInt method to use to test msgID?
         if ( !testString(content) || !testString(userID) ) {   // generic validity check 
@@ -224,6 +261,8 @@ public class Database {
             psInsertComment.setInt(2, msgID);
             psInsertComment.setString(3, userID);
             psInsertComment.setString(4, content);
+            psInsertComment.setInt(5, msgLink);
+            psInsertComment.setInt(6, cmtLink);
 
             ret += psInsertComment.executeUpdate();
         } catch (SQLException e) {
@@ -233,6 +272,23 @@ public class Database {
         return ret;
     }
 
+    // get file matadata for a specific comment
+    ArrayList<MyFile> getCmtFiles(int cmtID) {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            psGetCmtFileData.setInt(1, cmtID);
+            ResultSet rs = psGetCmtFileData.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile( rs.getString("fileID"), rs.getInt("cmtID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // select one comment 
     Comment selectComment(int cmtID) {
         Comment res = null;
@@ -240,7 +296,9 @@ public class Database {
             psSelectComment.setInt(1, cmtID);
             ResultSet rs = psSelectComment.executeQuery();
             if(rs.next()){
-                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("bio"));
+                ArrayList<MyFile> fileData = getCmtFiles(cmtID);
+                res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), 
+                    rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -249,16 +307,15 @@ public class Database {
         return res;
     }
 
-    // select all comments for a specific message
-    // this is exactly the same as getMsgComments ...
-    ArrayList<Comment> selectAllComments(int msgID){
+    // select all comments in the database (only used by admin CLI)
+    ArrayList<Comment> selectAllComments(){
         ArrayList<Comment> res = new ArrayList<Comment>();
         try {
-            psGetMsgComments.setInt(1, msgID);
-            ResultSet rs = psGetMsgComments.executeQuery();
+            ResultSet rs = psSelectAllComments.executeQuery();
             while (rs.next()){
-                res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
+                ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -269,7 +326,6 @@ public class Database {
     }
 
     // update a comment
-    // TODO: should we do a testInt for cmtID?
     int updateComment (int cmtID, String content) {
         int ret = 0;
         if (testString(content) == false) {
@@ -372,19 +428,25 @@ public class Database {
         int mMsgID;
         String mContent;
         int mNumLikes;
+        int mMsgLink;
+        int mCmtLink;
         ArrayList<Comment> mComments;
+        ArrayList<MyFile> mFileData;
 
-        public Message(int msgID, String userID, String content, int numLikes, ArrayList<Comment> comments) {
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
             mNumLikes = numLikes;
-            mComments = comments; // this is maybe probably wrong b/c arraylists :D
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
+            mComments = comments; 
+            mFileData = fileData;
         }
     }
 
     // add a new message
-    int insertMessage (String userID, String content) {
+    int insertMessage (String userID, String content, int msgLink, int cmtLink) {
         int ret = 0; 
         if (testString(content) == false || testString(userID) == false) { // generic validity check
             return -1;
@@ -393,6 +455,8 @@ public class Database {
         try {
             psInsertMessage.setString(2, userID);
             psInsertMessage.setString(3, content);
+            psInsertMessage.setInt(4, msgLink);
+            psInsertMessage.setInt(5, cmtLink);
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -408,8 +472,9 @@ public class Database {
             psGetMsgComments.setInt(1, msgID);
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
-                res.add(new Comment(rs.getInt("cmtID"), 
-                        rs.getString("userID"), rs.getInt("msgID"), rs.getString("content")));
+                ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -437,6 +502,23 @@ public class Database {
         return like_count;
     }
 
+    // get file matadata for a specific comment
+    ArrayList<MyFile> getMsgFiles(int msgID) {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            psGetMsgFileData.setInt(1, msgID);
+            ResultSet rs = psGetMsgFileData.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile( rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // select a specific message
     Message selectMessage(int msgID) {
         Message res = null;
@@ -447,7 +529,9 @@ public class Database {
                 // populate ArrayList of all of this message's comments
                 ArrayList<Comment> allComments = getComments(msgID);
                 int likes = countLikes(msgID);
-                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, allComments);
+                ArrayList<MyFile> fileData = getMsgFiles(msgID);
+                res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -466,9 +550,11 @@ public class Database {
                 int this_msg = rs.getInt("msgID");
                 ArrayList<Comment> comments = getComments(this_msg);
                 int likes = countLikes(this_msg);
+                ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, comments);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData);
                 res.add(thisMessage);
             }
             rs.close();
@@ -480,7 +566,6 @@ public class Database {
     }
 
     // update a message
-    // TODO: should we do a testInt for msgID?
     int updateMessage (int msgID, String content) {
         int ret = 0;
         if (testString(content) == false) {
@@ -526,34 +611,124 @@ public class Database {
         }
     }
 
-    // TODO: work with backend to create a method to upload a file from the drive
-    String postFileContent(String file_content, String mime) {
-        /*File fileMetadata = new File();
-        fileMetadata.setName("photo.jpg");
-        java.io.File filePath = new java.io.File("files/photo.jpg");
-        FileContent mediaContent = new FileContent("image/jpeg", filePath);
-        File file = driveService.files().create(fileMetadata, mediaContent).setFields("id").execute();
+    // function to get the drive quota
+    int driveQuota() throws IOException {
+        Object quota = mService.about().get().setFields("storageQuota").execute();
 
-        // file_content is a bigass string of base64 stuff
-        */
-        String fileID = null; //file.getId();
+        System.out.println(quota);
+        return -1;
+    }
+
+    List<File> getLRU(int num) {
+        List<File> files = null;
+        FileList result;
+        try {
+            result = mService.files().list()
+                .setFields("nextPageToken, files(id, name, modifiedTime)")
+                .execute();
+            files = result.getFiles();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+    // function to test drive connection
+    List<File> getAllDriveFiles() {
+        FileList result;
+        List<File> files = null;
+        try {
+            result = mService.files().list()
+                .setFields("nextPageToken, files(id, name, modifiedTime)")
+                .execute();
+            files = result.getFiles();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return files;
+    }
+
+    String uploadFile(java.io.File content, String filename, String mime) {
+        // create metadata for the file
+        File fileMetadata = new File();
+        fileMetadata.setName(filename);
+        fileMetadata.setMimeType(mime);
+        // create file content
+        FileContent mediaContent = new FileContent(mime, content);
+
+        // upload the file to the drive
+        String fileID = null;
+        try {
+            File file = mService.files().create(fileMetadata, mediaContent)
+                .setFields("id")
+                .execute();
+            fileID = file.getId();
+            System.out.println("Entire file object:");
+            System.out.println(file);
+        } catch (IOException e) {
+            System.out.println("File upload error.");
+            e.printStackTrace();
+        }
         return fileID;
-
-        
     }
     // TODO: work with backend to create a method to download a file from the drive
-    String getFileContent(String fileID) {
-        String file_content = null;
-        return file_content;
+    byte[] downloadFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return null;
+        }
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            mService.files().get(fileID).executeMediaAndDownloadTo(outputStream);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        // convert output stream to byte array
+        ByteArrayOutputStream bytes_data= (ByteArrayOutputStream) outputStream;
+        byte[] data = bytes_data.toByteArray();
+        return data;
+
     }
 
-    int insertMessageFile(String fileID, int msgID, String mime, String filename) {
+    // method to delete a file from the database (helper function for deleteMsgFile and deleteCmtFile)
+    int deleteFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return -1;
+        }
+        int ret = 0;
+        try {
+            mService.files().delete(fileID).execute();
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e);
+        }
+        return ret;
+    }
+
+    int insertMsgFile(int msgID, java.io.File file) {
+        String fileID = null;
         int ret = 0; 
+
+        // get filename and mime
+        String filename = file.getName();
+        Path path = file.toPath();
+        String mime = "";
+        try {
+            mime = Files.probeContentType(path);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
         if (testString(mime) == false || testString(filename) == false) { // generic validity check
             return -1;
         }
         
-        try {
+        // upload file and get fileID
+        fileID = uploadFile(file, filename, mime); //upload file to the drive
+        if (fileID == null) {
+            return -1;
+        }
+        try { //add file metadata to the database
             psInsertMessageFile.setString(1, fileID);
             psInsertMessageFile.setInt(2, msgID);
             psInsertMessageFile.setString(3, mime);
@@ -567,8 +742,11 @@ public class Database {
     }
 
     // returns an object of all msg file metadata 
-    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    // in order to obtain file contents, need to use downloadFile (connection to Drive)
     MyFile selectMsgFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return null;
+        }
         MyFile res = null;
         try {
             psSelectMessageFile.setString(1, fileID);
@@ -583,13 +761,88 @@ public class Database {
         return res;
     }
 
-    int insertCommentFile(String fileID, int cmtID, String mime, String filename) {
+    ArrayList<String> getMsgFileID(String filename) {
+        ArrayList<String> fileIDs = new ArrayList<String>();
+        try {
+            psGetMsgFileID.setString(1, filename);
+            ResultSet rs = psGetMsgFileID.executeQuery();
+            while (rs.next()){
+                fileIDs.add(rs.getString("fileID"));
+            }
+            rs.close();
+            return fileIDs;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    ArrayList<MyFile> selectAllMsgFiles() {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            ResultSet rs = psSelectAllMsgFiles.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile(rs.getString("fileID"), rs.getInt("msgID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    int deleteMsgFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return -1;
+        }
+        // delete the file from the Drive
+        int res = deleteFile(fileID);
+        if (res == -1) {
+            System.out.println("Unable to delete file from the Drive.");
+            return -1;
+        }
+
+        // delete the file from the msgFile database
+        try {
+            psDeleteMsgFile.setString(1, fileID);
+            res = psDeleteMsgFile.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
+    }
+
+    int insertCmtFile(int cmtID, java.io.File file) {
+        String fileID = null;
         int ret = 0; 
+
+        // get filename and mime
+        String filename = file.getName();
+        Path path = file.toPath();
+        String mime = "";
+        try {
+            mime = Files.probeContentType(path);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        System.out.println("Mime: " + mime);
+        System.out.println("Filename: " + filename);
+        if (mime == null) {
+            System.out.println("Error, content type could not be determined.");
+            return -1;
+        }
         if (testString(mime) == false || testString(filename) == false) { // generic validity check
             return -1;
         }
-        
+
         try {
+            // upload file and get fileID
+            fileID = uploadFile(file, filename, mime); //upload file to the drive
+            if (fileID == null) {
+                return -1;
+            }
             psInsertCommentFile.setString(1, fileID);
             psInsertCommentFile.setInt(2, cmtID);
             psInsertCommentFile.setString(3, mime);
@@ -603,8 +856,11 @@ public class Database {
     }
 
     // returns an object of all msg file metadata 
-    // in order to obtain file contents, need to use getFileContent (connection to Drive)
+    // in order to obtain file contents, need to use downloadFile (connection to Drive)
     MyFile selectCmtFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return null;
+        }
         MyFile res = null;
         try {
             psSelectCommentFile.setString(1, fileID);
@@ -619,11 +875,65 @@ public class Database {
         return res;
     }
 
+    ArrayList<String> getCmtFileID(String filename) {
+        ArrayList<String> fileIDs = new ArrayList<String>();
+        try {
+            psGetCmtFileID.setString(1, filename);
+            ResultSet rs = psGetCmtFileID.executeQuery();
+            while (rs.next()){
+                fileIDs.add(rs.getString("fileID"));
+            }
+            rs.close();
+            return fileIDs;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    ArrayList<MyFile> selectAllCmtFiles() {
+        ArrayList<MyFile> res = new ArrayList<MyFile>();
+        try {
+            ResultSet rs = psSelectAllCmtFiles.executeQuery();
+            while (rs.next()){
+                res.add(new MyFile(rs.getString("fileID"), rs.getInt("cmtID"), rs.getString("mime"), rs.getString("filename")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    int deleteCmtFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return -1;
+        }
+        // delete the file from the Drive
+        int res = deleteFile(fileID);
+        if (res == -1) {
+            System.out.println("Unable to delete file from the Drive.");
+            return -1;
+        }
+
+        // delete the file from the msgFile database
+        try {
+            psDeleteCmtFile.setString(1, fileID);
+            res = psDeleteCmtFile.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
+    }
+
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
      */
-    private Database() {
+    private Database(Drive service) {
+        mService = service;
     }
 
     /**
@@ -637,9 +947,9 @@ public class Database {
      * 
      * @return A Database object, or null if we cannot connect properly
      */
-    static Database getDatabase(String url) {
+    static Database getDatabase(String url, Drive service) {
         // Create an un-configured Database object
-        Database db = new Database();
+        Database db = new Database(service);
 
         // Give the Database object a connection, fail if we cannot get one
         try {
@@ -690,24 +1000,26 @@ public class Database {
                 "CONSTRAINT like_key PRIMARY KEY (userID, msgID))");  // likes table uses the userID/msgID combo as the primary key
 
             db.psMsgFileTable = db.mConnection.prepareStatement(
-                "CREATE TABLE msgfiles (fileID TEXT, msgID INT, mime TEXT, filename VARCHAR(500), " +
+                "CREATE TABLE msgfiles (fileID TEXT PRIMARY KEY, msgID INT, mime TEXT, filename VARCHAR(500), " +
                 "CONSTRAINT msg_key FOREIGN KEY(msgID) REFERENCES messages(msgID) )"
             );
 
             db.psCmtFileTable = db.mConnection.prepareStatement(
-                "CREATE TABLE cmtfiles (fileID TEXT, cmtID INT, mime TEXT, filename VARCHAR(500), " +
+                "CREATE TABLE cmtfiles (fileID TEXT PRIMARY KEY, cmtID INT, mime TEXT, filename VARCHAR(500), " +
                 "CONSTRAINT cmt_key FOREIGN KEY(cmtID) REFERENCES comments(cmtID) )"
             );
 
             // USER prepared statements
             db.psInsertUser = db.mConnection.prepareStatement("INSERT INTO users VALUES (?, ?)");  
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
+            db.psSelectAllUsers = db.mConnection.prepareStatement("SELECT * from users");
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
 
             // MESSAGE prepared statements
-            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?)");
+            db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?, ?, ?)");
             db.psGetMsgLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
             db.psGetMsgComments = db.mConnection.prepareStatement("SELECT * from comments WHERE msgID = ?");
+            db.psGetMsgFileData = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE msgID = ?");
             db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from messages WHERE msgID = ?");
             db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM messages");
             db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE messages SET content = ? WHERE msgID = ?");
@@ -715,23 +1027,30 @@ public class Database {
   
             // LIKE prepared statements
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
-            // TODO: HOW TO UPDATE A LIKE WHEN WE ARE USING A JOINT PRIMARY KEY?
             db.psUpdateLike = db.mConnection.prepareStatement("UPDATE likes SET status = ? WHERE msgID = ? AND userID = ?");
             db.psSelectLike = db.mConnection.prepareStatement("SELECT * from likes where msgID = ? AND userID = ?");
             db.psSelectAllLikes = db.mConnection.prepareStatement("SELECT * from likes WHERE msgID = ?");
 
             // COMMENT prepared statements
-            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?)");
+            db.psInsertComment = db.mConnection.prepareStatement("INSERT INTO comments VALUES (default, ?, ?, ?, ?, ?)");
+            db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
+            db.psSelectAllComments = db.mConnection.prepareStatement("SELECT * from comments");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
 
             // FILE prepared statements (two tables: message files and comment files)
             db.psInsertMessageFile = db.mConnection.prepareStatement("INSERT INTO msgfiles VALUES (?, ?, ?, ?)");
             db.psSelectMessageFile = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE fileID = ?");
+            db.psGetMsgFileID = db.mConnection.prepareStatement("SELECT fileID from msgfiles WHERE filename = ?");
+            db.psSelectAllMsgFiles = db.mConnection.prepareStatement("SELECT * from msgfiles");
+            db.psDeleteMsgFile = db.mConnection.prepareStatement("DELETE FROM msgfiles WHERE fileID = ?");
 
             db.psInsertCommentFile = db.mConnection.prepareStatement("INSERT INTO cmtfiles VALUES (?, ?, ?, ?)");
             db.psSelectCommentFile = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE fileID = ?");
+            db.psGetCmtFileID = db.mConnection.prepareStatement("SELECT fileID from cmtfiles WHERE filename = ?");
+            db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
+            db.psDeleteCmtFile = db.mConnection.prepareStatement("DELETE FROM cmtfiles WHERE fileID = ?");
 
             // I commented these out because we may not need all of them
 
@@ -901,11 +1220,23 @@ public class Database {
      */
     public static boolean testString(String message){
         try {
-            if(message.equals("") || message == null){
+            if(message == null || message.equals("")){
                 throw new InvalidMessageException();
             }
         } catch(InvalidMessageException e){
             System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean validFileID(String fileID) {
+        fileID = fileID.strip();
+        if (fileID.contains(" ")) { // file ID should not include any spaces
+            return false;
+        }
+        int length = fileID.length();
+        if (length != 33) { // file ID generated by Drive API should be 33 characters
             return false;
         }
         return true;
@@ -915,7 +1246,7 @@ public class Database {
 //Exception to see if invalid message is passed
 class InvalidMessageException extends Exception {
     InvalidMessageException(){
-        super("Invalid Message");
+        super("Invalid String input");
     }
     
     InvalidMessageException(String message){
