@@ -31,9 +31,11 @@ class NewEntryForm {
         // file picker (event listener, event listening for change, every change results in converting file to base64 string array)
         document.getElementById("filePicker").addEventListener('change', this.onFilePickerChange.bind(this));
         this.getMessages();
+        this.getComments();
         this.attachmentFiles = [];
     }
 
+    // function to get messages from backend
     private getMessages() {
         //Issue a GET, and then pass the result to update()
         // $.ajax({
@@ -47,8 +49,22 @@ class NewEntryForm {
         });},1000);
     }
 
+     // function to get comments from backend
+     private getComments() {
+        //Issue a GET, and then pass the result to update()
+        // $.ajax({
+        //     type: "GET",
+        //     url: "/messages/comments/",
+        //     dataType: "json",
+        //     success: this.updateCommentSelect.bind(this)
+        // })
+        window.setTimeout(() => {this.updateCommentSelect({
+            mData:[{mId:"1", mMessage:"msg1", commentId: "1", commentContent: "comment1"}, {mId:"2", mMessage:"msg2", commentId: "2", commentContent: "comment2"}]
+        });},1000);
+    }
+
+    // fn to update the msg link select drop down
     private updateMsgSelect(msgData:any) {
-        
         const select = document.getElementById("msgLink");
         for (let index = select.children.length-1; index > 0; index--) {
             select.removeChild(select.children[index]); 
@@ -59,6 +75,22 @@ class NewEntryForm {
             let option = document.createElement("option");
             option.textContent = msgElements.mMessage;
             option.value = msgElements.mId;
+            select.appendChild(option); 
+        }
+    }
+
+       // fn to update the comment link select drop down
+       private updateCommentSelect(msgData:any) {
+        const select = document.getElementById("commentLink");
+        for (let index = select.children.length-1; index > 0; index--) {
+            select.removeChild(select.children[index]); 
+        }
+
+        for (let index = 0; index < msgData.mData.length; index++) {
+            const msgElements = msgData.mData[index];
+            let option = document.createElement("option");
+            option.textContent = msgElements.commentContent;
+            option.value = msgElements.commentId;
             select.appendChild(option); 
         }
     }
@@ -90,7 +122,10 @@ class NewEntryForm {
         // test by converting to base64 back into binary, compare to original binary
         // create blob and pass into method to get data, see if response has correct name, type, base64
         const msgLinkID:string|null = $("#msgLink").val() !== "" ? $("#msgLink").val() as string:null;
+        const commentLinkID:string|null = $("#commentLink").val() !== "" ? $("#commentLink").val() as string:null;
+
         console.log(`msgLinkID = ${msgLinkID}`);
+        console.log(`commentLinkID = ${commentLinkID}`);
         console.log('Attached files:', this.attachmentFiles);
         // set up an AJAX post.  When the server replies, the result will go to
         // onSubmitResponse
@@ -100,7 +135,7 @@ class NewEntryForm {
             contentType: 'application/json',
             dataType: "json",
             // include msg link and comment link if they exist
-            data: JSON.stringify({mMessage: msg, mFiles: this.attachmentFiles, mMsgLink: msgLinkID}),
+            data: JSON.stringify({mMessage: msg, mFiles: this.attachmentFiles, mMsgLink: msgLinkID, mCommentLink: commentLinkID}),
             //data: JSON.stringify({mMessage: msg}),
             success: newEntryForm.onSubmitResponse
         });
