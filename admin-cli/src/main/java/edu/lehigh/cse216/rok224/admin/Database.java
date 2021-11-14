@@ -154,7 +154,12 @@ public class Database {
         }
     }
 
-    // add new user
+    /**
+     * Add a new user to the database.
+     * @param user  String of the username to add to the database (primary key of the database)
+     * @param bio   String of the user bio to add to the database (optional)
+     * @return
+     */
     int insertUser (String user, String bio) {
         int ret = 0;
         if (testString(user) == false){ // generic validity check on both params
@@ -178,7 +183,11 @@ public class Database {
         return ret;
     }
 
-    // get user from ID
+    /**
+     * Get all data for a specific user in the database from their username.
+     * @param user  String of the username to get data about    
+     * @return      A Database.User objcet, which includes fields mUserID and mBio
+     */
     User selectUser(String user) {
         User res = null;
         try {
@@ -194,7 +203,10 @@ public class Database {
         return res;
     }
 
-    // view all users (only accessible from admin CLI)
+    /**
+     * Select all the users in the database. (should only be accessible from admin CLI)
+     * @return      An ArrayList of Database.User objects, where each Database.User includes mUserID and mBio
+     */
     ArrayList<User> selectAllUsers() {
         ArrayList<User> res = new ArrayList<User>();
         try {
@@ -209,7 +221,13 @@ public class Database {
             return null;
         }
     }
-    // update user bio of a given user ID
+
+    /**
+     * Update the user profile information of a specific user.
+     * @param user  String of the username of the user to update (primary key in the database)
+     * @param bio   String of the bio of the user account to update.
+     * @return
+     */
     int updateUser (String user, String bio) {
         int ret = 0;
         if (testString(bio) == false || testString(user) == false) {
@@ -227,7 +245,8 @@ public class Database {
     }
 
     /**
-     * All objects and functions for the Comment table
+     * All objects and functions for the Comment object.
+     * Includes mUserID, mCommentID, mMsgID, mContent, mFileData, mMsgLink, and mCmtLink.
      */
     public class Comment {
         String mUserID;
@@ -249,10 +268,17 @@ public class Database {
         }
     }
 
-    // add a comment to the table
+    /**
+     * Adds a comment to the comment database.
+     * @param msgID     The message id of the message that this comment refers to. (Must exist in messages table).
+     * @param userID    The username of the user who is posting the comment.
+     * @param content   String of the content of the comment.
+     * @param msgLink   Optional message id to link this comment to another message in the database.
+     * @param cmtLink   Option comment id to link this comment to another comment in the database.
+     * @return          New comment ID of the created comment on success, -1 on failure.
+     */
     int insertComment (int msgID, String userID, String content, int msgLink, int cmtLink) {
         int ret = 0;
-        // TODO: is there a testInt method to use to test msgID?
         if ( !testString(content) || !testString(userID) ) {   // generic validity check 
             return -1;
         } 
@@ -273,6 +299,12 @@ public class Database {
     }
 
     // get file matadata for a specific comment
+    /**
+     * Select all the files associated with a particular comment
+     * @param cmtID     ID of the comment from which to select files.
+     * @return          Arraylist of Database.MyFile objects, where each Database.MyFile includes:
+     *                  mFileID, mMsgCmtID, mMime, and mFilename.
+     */
     ArrayList<MyFile> getCmtFiles(int cmtID) {
         ArrayList<MyFile> res = new ArrayList<MyFile>();
         try {
@@ -290,6 +322,12 @@ public class Database {
     }
 
     // select one comment 
+    /**
+     * Select a specific comment from the database.
+     * @param cmtID     The comment ID of the comment to select.
+     * @return          A Database.Comment object, which includes:
+     *                  mUserID, mCommentID, mMsgID, mContent, mFileData, mMsgLink, and mCmtLink.
+     */
     Comment selectComment(int cmtID) {
         Comment res = null;
         try {
