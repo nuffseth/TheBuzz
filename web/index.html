@@ -19,7 +19,21 @@
             <textarea id="newMessage"></textarea>
             <!-- insert filepicker button that only allows access to img and pdf MIME types, can upload multiple files -->
             <input type="file" id="filePicker" multiple accept="image/*,.pdf">
-            <!-- TODO: add numerical fields for comments/msgs -->
+            <!-- field to add link to another message/comment -->
+            <div>
+                <label class="add-entry--label" for="msgLink">Add link to another message:</label>
+                <select name="msgLink" id="msgLink" class="add-entry--selector">
+                    <option value="" selected></option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="commentLink">Add link to another comment:</label>
+                <select name="commentLink" id="commentLink">
+                    <option value="" selected></option>
+                    
+                </select>
+            </div>
             <button id="addButton">Add</button>
             <button id="addCancel">Cancel</button>
         </div>
@@ -27,6 +41,7 @@
             <h3>Edit an Entry</h3>
             <label>Message</label>
             <textarea id="editMessage"></textarea>
+            <input type="file" id="editFilePicker" multiple accept="image/*,.pdf">
             <span id="editCreated"></span>
             <input type="hidden" id="editId"/>
             <button id="editButton">Update</button>
