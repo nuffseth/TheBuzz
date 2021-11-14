@@ -62,21 +62,21 @@
       <artifactId>google-api-services-docs</artifactId>
       <version>v1-rev20210707-1.32.1</version>
     </dependency>
-    <dependency>
+    <!-- <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-drive</artifactId>
       <version>v3-rev110-1.23.0</version>
-    </dependency>
-    <dependency>
+    </dependency> -->
+    <!-- <dependency>
       <groupId>com.google.oauth-client</groupId>
       <artifactId>google-oauth-client-jetty</artifactId>
       <version>1.23.0</version>
-    </dependency>
-    <dependency>
+    </dependency> -->
+    <!-- <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client-jackson2</artifactId>
       <version>1.20.0</version>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
