@@ -3,6 +3,8 @@ import 'package:myapp/comment.dart';
 import 'package:myapp/data_model.dart';
 //import 'package:myapp/login.dart';
 import 'package:myapp/network_data.dart';
+import 'package:myapp/camera.dart';
+import 'package:camera/camera.dart';
 //import 'package:myapp/profile.dart';
 //import 'package:myapp/splash.dart';
 
@@ -11,7 +13,13 @@ import 'data_model.dart';
 import 'network_data.dart';
 import 'add_post.dart';
 
-void main() => runApp(const MyApp());
+late var cameras;
+// void main() => runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
+  runApp(const MyApp());
+}
 
 /* 
 * This class is the ultimate root of the app
@@ -34,6 +42,8 @@ class MyApp extends StatelessWidget {
         '/home': (_) => const MyHomePage(title: 'The Buzz Home Page'),
         //'/profile': (_) => const ProfileScreen(),
         '/comments': (_) => const CommentScreen(),
+
+        '/camera': (_) => TakePictureScreen(camera: cameras[0]),
       },
     );
   }
@@ -50,6 +60,7 @@ class MyApp extends StatelessWidget {
 * always marked "final".
 */
 // homepage widget that gets "passed in"/returned in the home argument in app.build
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
@@ -64,8 +75,11 @@ class MyHomePage extends StatefulWidget {
 *
 * 
 */
+
+late Future<List<BuzzPost>> jsonPosts;
+
 class _BuzzPostsState extends State<MyHomePage> {
-  late Future<List<BuzzPost>> jsonPosts;
+  // late Future<List<BuzzPost>> jsonPosts;
 
   // list of posts
   final _posts = [];
@@ -282,7 +296,13 @@ class _BuzzPostsState extends State<MyHomePage> {
           IconButton(
               icon: Icon(Icons.add_box),
               onPressed: () {
+                // setMessageID(post.mId);
                 Navigator.pushReplacementNamed(context, '/comments');
+              }),
+          IconButton(
+              icon: Icon(Icons.add_a_photo_rounded),
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/camera');
               }),
           IconButton(
             icon: Icon(
