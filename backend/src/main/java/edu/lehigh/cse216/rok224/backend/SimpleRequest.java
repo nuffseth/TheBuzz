@@ -14,4 +14,7 @@ public class SimpleRequest {
     public String mMessage;
     public String mSessionKey; // maybe refactor to use an HTTP header??
     public String mEmail;
+    public jsonFile mFiles;
+    public int messageLink;
+    public int commentLink;
 }

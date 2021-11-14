@@ -17,6 +17,9 @@
             <h3>Add a New Entry</h3>
             <label>Message</label>
             <textarea id="newMessage"></textarea>
+            <!-- insert filepicker button that only allows access to img and pdf MIME types, can upload multiple files -->
+            <input type="file" id="filePicker" multiple accept="image/*,.pdf">
+            <!-- TODO: add numerical fields for comments/msgs -->
             <button id="addButton">Add</button>
             <button id="addCancel">Cancel</button>
         </div>
