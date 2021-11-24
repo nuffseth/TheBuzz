@@ -1,7 +1,6 @@
 var describe: any;
 var it: any;
 var expect: any;
-var $: any;
 
 describe("Tests of basic math functions", function() {
     it("Adding 1 should work", function() {
