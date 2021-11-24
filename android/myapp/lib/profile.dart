@@ -41,10 +41,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             body: Column(
               children: [
-                Image.network(account.photoUrl, height: 150),
-                Text(account.displayName),
-                Text(account.email),
-                Text(auth.idToken),
+                Image.network(account.photoUrl.toString(), height: 150),
+                Text(account.displayName!),
+                Text(account.email!),
+                Text(auth.idToken!),
               ],
             ),
           )
@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void getProfile() async {
     await googleSignIn.signInSilently();
-    account = googleSignIn.currentUser;
+    account = googleSignIn.currentUser!;
     auth = await account.authentication;
     setState(() {
       gotProfile = true;
