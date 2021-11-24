@@ -3,9 +3,6 @@ package edu.lehigh.cse216.rok224.backend;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-<<<<<<< HEAD
-import com.google.gson.*;
-=======
 import net.rubyeye.xmemcached.exception.MemcachedException;
 
 import com.google.gson.*;
@@ -15,7 +12,6 @@ import java.util.concurrent.TimeoutException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import java.util.Collections;
 import java.util.Map;
->>>>>>> backend
 
 /**
  * Unit test for simple App.
@@ -56,8 +52,6 @@ public class AppTest
         String response = gson.toJson(new StructuredResponse("ok", null, null));
         System.out.println(response);
         assertTrue(response.equals("{\"mStatus\":\"ok\"}"));
-<<<<<<< HEAD
-=======
     }
 
     // test that the hash table works for a valid entry and doesn't work for an invalid entry
@@ -108,6 +102,5 @@ public class AppTest
         // use our verifier to test bogus id_token, should return null
         String result = App.verifyIdToken(verifier, "adyn-is-$uperCool");
         assertTrue(result == null);
->>>>>>> backend
     }
 }
