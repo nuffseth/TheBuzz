@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Image.network(account.photoUrl.toString(), height: 150),
                 Text(account.displayName!),
-                Text(account.email!),
+                Text(account.email),
                 Text(auth.idToken!),
               ],
             ),

@@ -56,7 +56,7 @@ import java.util.Base64;
  * App is our basic admin app.  For now, it is a demonstration of the six key 
  * operations on a database: connect, insert, update, query, delete, disconnect
  */
-public class App implements Comparator<File>{
+public class App {
 
     /**
      * Set up connection to the Google Service Account Drive for file upload
