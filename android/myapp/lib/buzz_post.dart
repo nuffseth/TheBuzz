@@ -1,8 +1,8 @@
 class BuzzPost {
   // String mUserID;
-  int mId;
-  String mMessage;
-  int mLikes;
+  int mMsgId;
+  String mContent;
+  int mNumLikes;
   // int mMsgLink;
   // int mCmtLink;
   // mCmtList;
@@ -10,9 +10,9 @@ class BuzzPost {
 
   BuzzPost({
     // required this.mUserID,
-    required this.mId,
-    required this.mMessage,
-    required this.mLikes,
+    required this.mMsgId,
+    required this.mContent,
+    required this.mNumLikes,
     // required this.mMsgLink,
     // required this.mCmtLink
     // mCmtList,
@@ -22,9 +22,9 @@ class BuzzPost {
   factory BuzzPost.fromJson(Map<String, dynamic> json) {
     return BuzzPost(
       //mUserID: json['mUserID'] as String,
-      mId: json['mMsgID'] as int,
-      mMessage: json['mContent'] as String,
-      mLikes: json['mNumLikes'] as int,
+      mMsgId: json['mMsgID'] as int,
+      mContent: json['mContent'] as String,
+      mNumLikes: json['mNumLikes'] as int,
       // mMsgLink: json['mMsgLink'] as int,
       // mCmtLink: json['mCmtLink'] as int,
     );

@@ -8,7 +8,7 @@ import 'package:myapp/buzz_post.dart';
 
 Future<http.Response> createPost(String mMessage) async {
   return http.post(
-    Uri.parse('https://localhost:4567/messages'),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -20,7 +20,7 @@ Future<http.Response> createPost(String mMessage) async {
 
 Future<http.Response> editPost(String mMessage, String mId) async {
   return http.put(
-    Uri.parse('https://localhost:4567/messages/' + mId),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' + mId),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -32,7 +32,7 @@ Future<http.Response> editPost(String mMessage, String mId) async {
 
 Future<http.Response> deletePost(String mId) async {
   return http.delete(
-    Uri.parse('https://localhost:4567/messages/' + mId),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' + mId),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -41,7 +41,9 @@ Future<http.Response> deletePost(String mId) async {
 
 Future<http.Response> incrementLikes(String mId) {
   return http.post(
-    Uri.parse('https://localhost:4567/messages/' + mId + '/likes'),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
+        mId +
+        '/likes'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -50,7 +52,9 @@ Future<http.Response> incrementLikes(String mId) {
 
 Future<http.Response> decrementLikes(String mId) {
   return http.post(
-    Uri.parse('https://localhost:4567/messages/' + mId + '/dislikes'),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
+        mId +
+        '/dislikes'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -59,7 +63,9 @@ Future<http.Response> decrementLikes(String mId) {
 
 Future<http.Response> getComments(String mId) {
   return http.get(
-    Uri.parse('https://localhost:4567/messages/' + mId + '/comments'),
+    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
+        mId +
+        '/comments'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },

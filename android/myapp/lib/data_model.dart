@@ -13,8 +13,8 @@ class DataModel {
   Future<List<BuzzPost>> fetchBuzzList() async {
     final List<BuzzPost> _messages = [];
     // parses the json found on the heroku link
-    final response =
-        await http.get(Uri.parse('https://localhost:4567/messages'));
+    final response = await http.get(
+        Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {

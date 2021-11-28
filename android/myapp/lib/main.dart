@@ -111,17 +111,19 @@ class _BuzzPostsState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Buzz Buzz Buzz'),
-          backgroundColor: Colors.deepPurple,
+          title: const Text('Buzz Buzz Buzz!!!'),
+          backgroundColor: Colors.amber,
           actions: <Widget>[
             IconButton(
                 icon: Icon(Icons.account_circle),
                 onPressed: () {
-                  //Navigator.pushReplacementNamed(context, '/profile');
+                  //Navigator.pushReplacementNamed(context, '/login');
                 }),
           ],
         ),
-        //body: _buildPosts(),
+        //body: _buildPosts(),\
+
+        // display all messages
         body: Center(
             child: FutureBuilder<List<BuzzPost>>(
           future: jsonPosts,
@@ -142,6 +144,8 @@ class _BuzzPostsState extends State<MyHomePage> {
             return const CircularProgressIndicator();
           },
         )),
+
+        // post a new message
         floatingActionButton: FloatingActionButton(
           child: Icon(Icons.add_outlined),
           backgroundColor: Colors.deepPurple,
@@ -186,11 +190,6 @@ class _BuzzPostsState extends State<MyHomePage> {
   }
 
   /* buildPosts function
-   *
-   * 
-   * 
-   * 
-   * 
    */
   Widget _buildPosts(List<BuzzPost> postData) {
     // we use listview.builder since we don't know how many items we'll have
@@ -202,8 +201,7 @@ class _BuzzPostsState extends State<MyHomePage> {
       itemCount: postData.length,
       // will be called once per post - this is what actually creates the list items
       itemBuilder: (context, i) {
-        _posts.add(postData[i].mMessage);
-
+        _posts.add(postData[i].mContent);
         return _buildRow(postData[i]);
       },
       // how many items it should expect to build
@@ -211,21 +209,17 @@ class _BuzzPostsState extends State<MyHomePage> {
   }
 
   /* buildRow function
-   *
-   * 
-   * 
-   * 
-   * 
    */
 
   // v NOTE: STRING PLACEHOLDER
   Widget _buildRow(BuzzPost post) {
-    bool alreadyLiked = _liked.contains(post.mId);
-    bool alreadyDisliked = _disliked.contains(post.mId);
-    final editController = TextEditingController(text: post.mMessage);
+    bool alreadyLiked = _liked.contains(post.mMsgId);
+    bool alreadyDisliked = _disliked.contains(post.mMsgId);
+    final editController = TextEditingController(text: post.mContent);
 
     return ListTile(
-      title: Text(post.mMessage),
+      title: Text(post.mContent),
+      /*
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -362,6 +356,7 @@ class _BuzzPostsState extends State<MyHomePage> {
               }),
         ],
       ),
+      */
       //more stuff
     );
   }
