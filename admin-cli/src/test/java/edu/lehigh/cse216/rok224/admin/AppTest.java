@@ -67,4 +67,19 @@ public class AppTest extends TestCase {
         assert(Database.validFileID(validID) == true);
         assert(Database.validFileID(invalidID) == false);
     }
+
+    // create new message, insert a flag on the message, assert that the number of flags on message == 1
+    public void testInsertMessageFlag() {
+        String userID = "lindsey";
+        String content = "test content";
+        // int msgLink = null;
+        // int cmtLink = null;
+        int msgID = 1;
+
+        //Database.insertMessage(userID, content, msgLink, cmtLink);
+        //Database.insertMessageFlag(userID, msgID);
+
+    }
+        
+
 }

@@ -28,6 +28,7 @@ ALTER TABLE messages ADD COLUMN flag_count INT;
 ALTER TABLE comments ADD COLUMN flag_count INT;
 
 -- TODO add index to flag_count in the messages and comments tables
+-- add new flagged messages
 drop procedure add_new_flagged_msg;
 create or replace procedure add_new_flagged_msg(
     _msgid INT, 
@@ -51,6 +52,7 @@ begin
 end;$$
 ;
 
+-- add new flagged comments
 drop procedure add_new_flagged_comments;
 create or replace procedure add_new_flagged_comments(
     _cmtid INT, 
@@ -71,4 +73,22 @@ begin
     WHERE cmtid = _cmtid AND flag_count is null;
 
     commit;
-end;$$
+end;$$;
+
+-- deleting messages
+-- drop procedure delete_msg;
+-- create or replace procedure delete_msg(
+--     _msgid INT
+-- )
+-- language plpgsql    
+-- as $$
+-- begin
+--     DELETE FROM flagged_msgs WHERE msgid = _msgid;
+--     DELETE FROM cmtfiles WHERE cmtid in (select cmtid from comments where msgid=_msgid);
+--     DELETE FROM comments WHERE msgid=_msgid;
+--     DELETE FROM msgfiles WHERE msgid=_msgid;
+--     DELETE FROM likes WHERE msgid=_msgid;
+--     DELETE FROM messages WHERE msgid=_msgid;
+
+--     commit;
+-- end;$$;

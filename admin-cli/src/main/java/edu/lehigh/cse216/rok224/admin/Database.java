@@ -80,6 +80,7 @@ public class Database {
     private PreparedStatement psGetMsgComments;
     private PreparedStatement psGetMsgFileData;
     private PreparedStatement psSelectAllMessages;
+    private PreparedStatement psSelectAllMessagesWithFlags;
     private PreparedStatement psUpdateMessage;
     private PreparedStatement psDeleteMessage;
 
@@ -109,6 +110,9 @@ public class Database {
     private PreparedStatement psSelectAllCmtFiles;
     private PreparedStatement psDeleteCmtFile;
     private PreparedStatement psGetCmtFileID;
+
+    // MSG FLAG PREPARD STATEMENTS
+    private PreparedStatement psInsertMsgFlag;
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -470,8 +474,12 @@ public class Database {
         int mCmtLink;
         ArrayList<Comment> mComments;
         ArrayList<MyFile> mFileData;
+        int mNumFlags;
 
-        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
+        // TODO : add a class variable for the number of flags
+        // DONE.
+
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData, int numFlags) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
@@ -480,8 +488,22 @@ public class Database {
             mCmtLink = cmtLink;
             mComments = comments; 
             mFileData = fileData;
+            mNumFlags = numFlags;
+        }
+
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, int numFlags) {
+            mMsgID = msgID;
+            mUserID = userID;
+            mContent = content;
+            mNumLikes = numLikes;
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
+            mNumFlags = numFlags;
         }
     }
+
+    // TODO : add a constructor trhat does not require ArrayList<Comments> or ArrayList<MyFile> 
+    // DONE.
 
     // add a new message
     int insertMessage (String userID, String content, int msgLink, int cmtLink) {
@@ -569,7 +591,7 @@ public class Database {
                 int likes = countLikes(msgID);
                 ArrayList<MyFile> fileData = getMsgFiles(msgID);
                 res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
-                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData);
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData, rs.getInt("flag_count"));
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -591,8 +613,7 @@ public class Database {
                 ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
-                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData, rs.getInt("flag_count"));
                 res.add(thisMessage);
             }
             rs.close();
@@ -602,6 +623,30 @@ public class Database {
             return null;
         }
     }
+
+    ArrayList<Message> selectAllMessagesWithFlags(){
+        ArrayList<Message> res = new ArrayList<Message>();
+        try {
+            ResultSet rs = psSelectAllMessagesWithFlags.executeQuery();
+            while (rs.next()){
+                // for each message, get all comments and like count
+                int this_msg = rs.getInt("msgID");
+                int likes = countLikes(this_msg);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), rs.getInt("flag_count"));
+                res.add(thisMessage);   
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    // TODO create a ArrayList<Message> selectAllMessagesWithFlags()  function
+    // like selectAllMessages(), but only select where flag_count > 0 and 
+    // does not call countLikes() or getMessageFiles().  Hint use the new constructor
+    // DONE.
+
 
     // update a message
     int updateMessage (int msgID, String content) {
@@ -624,6 +669,11 @@ public class Database {
     int deleteMessage(int msgID){
         int res = -1;
         try {
+            // TODO update this function to call new stored procedure
+            // that removes messages from database that does not leave 
+            // the database with referential integrity issues
+            // DONE? -- didnt change anything here, changed the prepared statement
+
             psDeleteMessage.setInt(1, msgID);
             res = psDeleteMessage.executeUpdate();
         } catch (SQLException e){
@@ -966,6 +1016,36 @@ public class Database {
         return res;
     }
 
+    // class for flagged messages
+    public class MessageFlag {
+        String mUserID;
+        int mMsgID;
+
+        public MessageFlag(int msgID, String userID) {
+            mMsgID = msgID;
+            mUserID = userID;
+        }
+    }
+
+    // add a new flag to a message 
+    int insertMessageFlag (String userID, int msgID) {
+        int ret = 0;
+        if (testString(userID) == false) {  // general validity check
+            return -1;
+        }
+        try {
+            psInsertMsgFlag.setInt(1, msgID);
+            psInsertMsgFlag.setString(2, userID);
+            ret += psInsertMsgFlag.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+
+
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
@@ -1060,8 +1140,12 @@ public class Database {
             db.psGetMsgFileData = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE msgID = ?");
             db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from messages WHERE msgID = ?");
             db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM messages");
+            db.psSelectAllMessagesWithFlags = db.mConnection.prepareStatement("SELECT * FROM messages WHERE flag_count > 0");
             db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE messages SET content = ? WHERE msgID = ?");
-            db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM messages WHERE msgID = ?");
+            // db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM messages WHERE msgID = ?");
+            db.psDeleteMessage = db.mConnection.prepareStatement("call delete_msg(?)");
+            // TODO fix above to call stored procedure that deletes with ref integrity
+            // DONE.
   
             // LIKE prepared statements
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
@@ -1090,6 +1174,8 @@ public class Database {
             db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
             db.psDeleteCmtFile = db.mConnection.prepareStatement("DELETE FROM cmtfiles WHERE fileID = ?");
 
+            // MSG FLAG prepared statements
+            db.psInsertMsgFlag = db.mConnection.prepareStatement("call add_new_flagged_msg(?, ?)");
             // I commented these out because we may not need all of them
 
             // db.psUserTableUpdateName = db.mConnection.prepareStatement("UPDATE user SET username ?");    // this makes sense yes

@@ -112,7 +112,7 @@ public class App implements Comparator<File>{
         String actions = "?MUCFQq";
 
         switch(menu) { // change possible inputs if accessing a different menu
-            case 'M': actions = "MmpsxDqr"; break;
+            case 'M': actions = "MmpsfxDqr"; break;
             case 'U': actions = "Uauqr"; break;
             case 'C': actions = "Ccoldqr"; break;
             case 'F': actions = "FAvL^+#Q-qr"; break;
@@ -197,6 +197,9 @@ public class App implements Comparator<File>{
         System.out.println("    [m] View all messages");
         System.out.println("    [p] View specific message");
         System.out.println("    [s] List all comments on specific message");
+        System.out.println("    [f] View all flagged messages");
+        // TODO add new choice to list all flag messages 
+        // DONE.
         System.out.println("    [x] List all files attached to specific message");
         System.out.println("    [D] Delete a message from the database");
         System.out.println("    [q] Quit Program");
@@ -220,6 +223,10 @@ public class App implements Comparator<File>{
         }
         return;
     }
+
+    // TODO ADD new function view_messages_with_flags that prints the number 
+    // of flags instead of number of likes and calls db.selectAllMessagesWithFlags()
+    // DONE below.
 
     /**
      * Prompts the user for the ID of a specific message, if message exists in database, displays that message
@@ -304,6 +311,26 @@ public class App implements Comparator<File>{
         }
         return;
     }
+
+    /**
+     * Displays all flagged messages stored in the database
+     */
+    static void view_flagged_messages(Database db, BufferedReader in) {
+        ArrayList<Database.Message> messages = db.selectAllMessagesWithFlags();
+        System.out.println("--------------------");
+        System.out.println("Flagged Messages Table");
+        System.out.println("--------------------");
+        System.out.printf("%5s \t%-10s \t%-5s \t%-5s \t%s \n", "Msg ID", "User", "Likes", "Flags", "Content");
+        for( Database.Message message : messages) {
+            System.out.printf("%5d \t", message.mMsgID);
+            System.out.printf("%-10s \t", message.mUserID);
+            System.out.printf("%-5d \t", message.mNumLikes);
+            System.out.printf("%-5d \t", message.mNumFlags);
+            System.out.printf("%s \n", message.mContent);
+        }
+        return;
+    }
+
 
     /**
      * Prompts the user for the ID of a specific message, if message exists in database, deletes it
@@ -809,6 +836,9 @@ public class App implements Comparator<File>{
                 case 'p': view_one_message(db, in); break;
                 case 's': list_msg_comments(db, in); break;
                 case 'x': list_msg_files(db, in); break;
+                case 'f': view_flagged_messages(db, in); break;
+                // TODO: add listing of all flagged messages as 'f'
+                // DONe.
                 case 'D': delete_message(db, in); break;
 
                 // comment actions (only accessible form comment menu)
