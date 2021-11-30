@@ -528,6 +528,68 @@ public class App {
             }
         });
 
+
+
+        //
+        //// Flag routes
+        //
+
+        Spark.put("/messages/:id/flag", (request, response) -> {
+            int msg_idx = Integer.parseInt(request.params("id"));
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            int result = 0;
+            
+            if(database.selectMessageFlag(msg_idx) == null){
+                result = database.insertMessageFlag(msg_idx);
+            } else { //If the message is already flagged, remove the flag.
+                result = database.deleteMessageFlag(msg_idx);
+            }
+
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update flag", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        Spark.put("comments/:id/flag", (request, response) -> {
+            int comment_idx = Integer.parseInt(request.params("comment_id"));
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            if(dataBase.selectComment(comment_idx) == null){
+                return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
+            }
+
+            int result = 0;
+            
+            if(database.selectCommentFlag(comment_idx) == null){
+                result = database.insertCommentFlag(comment_idx);
+            } else { //If the message is already flagged, remove the flag.
+                result = database.deleteCommentFlag(comment_idx);
+            }
+
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update like", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
         //
         //// LIKES ROUTES
         //
@@ -772,7 +834,7 @@ public class App {
             response.status(200);
             response.type("application/json"); 
 
-            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+            if (!authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
                 return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
