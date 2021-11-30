@@ -61,10 +61,10 @@ Future<http.Response> decrementLikes(String mId) {
   );
 }
 
-Future<http.Response> getComments(String mId) {
+Future<http.Response> getComments(int mMsgId) {
   return http.get(
     Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
-        mId +
+        mMsgId.toString() +
         '/comments'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',

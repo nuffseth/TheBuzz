@@ -148,7 +148,7 @@ class _BuzzPostsState extends State<MyHomePage> {
         // post a new message
         floatingActionButton: FloatingActionButton(
           child: Icon(Icons.add_outlined),
-          backgroundColor: Colors.deepPurple,
+          backgroundColor: Colors.red,
           foregroundColor: Colors.white,
           onPressed: () {
             showDialog(
@@ -216,150 +216,164 @@ class _BuzzPostsState extends State<MyHomePage> {
     bool alreadyLiked = _liked.contains(post.mMsgId);
     bool alreadyDisliked = _disliked.contains(post.mMsgId);
     final editController = TextEditingController(text: post.mContent);
+    int _likes = post.mNumLikes;
 
     return ExpansionTile(
-      title: Text(post.mContent),
-      // trailing: Icon(Icons.more_vert),
-      // onTap: () {
-      //   setState(() {
-      //     return ListTile(title: "testing")
-      //   });
-      // },
-      children: [
-        IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                        scrollable: true,
-                        title: Text('Edit Post'),
-                        content: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Form(
-                            child: Column(
-                              children: <Widget>[
-                                TextFormField(
-                                  controller: editController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Message',
+        title: Text(post.mContent),
+        leading: Text(
+          '$_likes',
+        ),
+        // trailing: Icon(Icons.more_vert),
+        // onTap: () {
+        //   setState(() {
+        //     return ListTile(title: "testing")
+        //   });
+        // },
+        //leading: Text(post.mNumLikes.toString()),
+        children: [
+          Row(
+            children: [
+              // edit button
+              IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              scrollable: true,
+                              title: Text('Edit Post'),
+                              content: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Form(
+                                  child: Column(
+                                    children: <Widget>[
+                                      TextFormField(
+                                        controller: editController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Message',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        actions: [
-                          ElevatedButton(
-                              child: Text('Cancel'),
-                              onPressed: () => Navigator.pop(context)),
-                          ElevatedButton(
-                              child: Text('Submit'),
-                              onPressed: () {
-                                editPost(editController.text,
-                                    post.mMsgId.toString());
-                                _refreshData();
-                                Navigator.pop(context);
-                              })
-                        ]);
-                  });
-            }),
-        IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () => showDialog<String>(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              title: const Text('Warning'),
-              content: const Text(
-                  'Are you sure you would like to delete the message?'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'No'),
-                  child: const Text('No'),
+                              ),
+                              actions: [
+                                ElevatedButton(
+                                    child: Text('Cancel'),
+                                    onPressed: () => Navigator.pop(context)),
+                                ElevatedButton(
+                                    child: Text('Submit'),
+                                    onPressed: () {
+                                      editPost(editController.text,
+                                          post.mMsgId.toString());
+                                      _refreshData();
+                                      Navigator.pop(context);
+                                    })
+                              ]);
+                        });
+                  }),
+              // delete button
+              IconButton(
+                icon: Icon(Icons.delete),
+                onPressed: () => showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text('Warning'),
+                    content: const Text(
+                        'Are you sure you would like to delete the message?'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, 'No'),
+                        child: const Text('No'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          deletePost(post.mMsgId.toString());
+                          _refreshData();
+                          Navigator.pop(context, 'Yes');
+                        },
+                        child: const Text('Yes'),
+                      ),
+                    ],
+                  ),
                 ),
-                TextButton(
+              ),
+              // comments button
+              IconButton(
+                  icon: Icon(Icons.add_box),
                   onPressed: () {
-                    deletePost(post.mMsgId.toString());
-                    _refreshData();
-                    Navigator.pop(context, 'Yes');
-                  },
-                  child: const Text('Yes'),
+                    // setMessageID(post.mId);
+                    Navigator.pushReplacementNamed(context, '/comments');
+                  }),
+              // camera button
+              IconButton(
+                  icon: Icon(Icons.add_a_photo_rounded),
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/camera');
+                  }),
+              // like button
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_circle_up,
+                  color: alreadyLiked ? Colors.green : Colors.black,
                 ),
-              ],
-            ),
-          ),
-        ),
-        IconButton(
-            icon: Icon(Icons.add_box),
-            onPressed: () {
-              // setMessageID(post.mId);
-              Navigator.pushReplacementNamed(context, '/comments');
-            }),
-        IconButton(
-            icon: Icon(Icons.add_a_photo_rounded),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/camera');
-            }),
-        IconButton(
-          icon: Icon(
-            Icons.arrow_circle_up,
-            color: alreadyLiked ? Colors.green : Colors.black,
-          ),
-          onPressed: () {
-            setState(() {
-              alreadyLiked = _liked.contains(post.mMsgId);
-              alreadyDisliked = _disliked.contains(post.mMsgId);
-            });
-            if (alreadyLiked) {
-              _liked.remove(post.mMsgId);
-              decrementLikes(post.mMsgId.toString());
-              post.mNumLikes--;
-            } else {
-              if (alreadyDisliked) {
-                _liked.add(post.mMsgId);
-                _disliked.remove(post.mMsgId);
-                incrementLikes(post.mMsgId.toString());
-                incrementLikes(post.mMsgId.toString());
-                post.mNumLikes = post.mNumLikes + 2;
-              } else {
-                _liked.add(post.mMsgId);
-                incrementLikes(post.mMsgId.toString());
-                post.mNumLikes++;
-              }
-            }
-          },
-        ),
-        Text(post.mNumLikes.toString()),
-        IconButton(
-            icon: Icon(Icons.arrow_circle_down,
-                color: alreadyDisliked ? Colors.red : Colors.black),
-            onPressed: () {
-              setState(() {
-                alreadyLiked = _liked.contains(post.mMsgId);
-                alreadyDisliked = _disliked.contains(post.mMsgId);
-              });
-              if (alreadyDisliked) {
-                _disliked.remove(post.mMsgId);
-                incrementLikes(post.mMsgId.toString());
-                post.mNumLikes++;
-              } else {
-                if (alreadyLiked) {
-                  _disliked.add(post.mMsgId);
-                  _liked.remove(post.mMsgId);
-                  decrementLikes(post.mMsgId.toString());
-                  decrementLikes(post.mMsgId.toString());
-                  post.mNumLikes = post.mNumLikes - 2;
-                } else {
-                  _disliked.add(post.mMsgId);
-                  decrementLikes(post.mMsgId.toString());
-                  post.mNumLikes--;
-                }
-              }
-            }),
-      ],
-      //more stuff
-    );
+                onPressed: () {
+                  setState(() {
+                    alreadyLiked = _liked.contains(post.mMsgId);
+                    alreadyDisliked = _disliked.contains(post.mMsgId);
+                  });
+                  if (alreadyLiked) {
+                    _liked.remove(post.mMsgId);
+                    decrementLikes(post.mMsgId.toString());
+                    post.mNumLikes--;
+                  } else {
+                    if (alreadyDisliked) {
+                      _liked.add(post.mMsgId);
+                      _disliked.remove(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes = post.mNumLikes + 2;
+                    } else {
+                      _liked.add(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes++;
+                    }
+                  }
+                },
+              ),
+              // dislike button
+              IconButton(
+                  icon: Icon(Icons.arrow_circle_down,
+                      color: alreadyDisliked ? Colors.red : Colors.black),
+                  onPressed: () {
+                    setState(() {
+                      alreadyLiked = _liked.contains(post.mMsgId);
+                      alreadyDisliked = _disliked.contains(post.mMsgId);
+                    });
+                    if (alreadyDisliked) {
+                      _disliked.remove(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes++;
+                    } else {
+                      if (alreadyLiked) {
+                        _disliked.add(post.mMsgId);
+                        _liked.remove(post.mMsgId);
+                        decrementLikes(post.mMsgId.toString());
+                        decrementLikes(post.mMsgId.toString());
+                        post.mNumLikes = post.mNumLikes - 2;
+                      } else {
+                        _disliked.add(post.mMsgId);
+                        decrementLikes(post.mMsgId.toString());
+                        post.mNumLikes--;
+                      }
+                    }
+                  }),
+            ],
+          )
+        ]
+        //more stuff
+        );
   }
 
   Future _refreshData() async {
