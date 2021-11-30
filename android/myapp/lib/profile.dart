@@ -27,11 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return gotProfile
         ? Scaffold(
             appBar: AppBar(
-              title: Text(" Your Profile "),
+              title: const Text(" Your Profile "),
               centerTitle: true,
               actions: [
                 IconButton(
-                    icon: Icon(Icons.exit_to_app),
+                    icon: const Icon(Icons.exit_to_app),
                     onPressed: () async {
                       await googleSignIn.signOut();
                       Navigator.pushNamedAndRemoveUntil(
@@ -48,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           )
-        : LinearProgressIndicator();
+        : const LinearProgressIndicator();
   }
 
   void getProfile() async {

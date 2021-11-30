@@ -32,11 +32,24 @@ class DataModel {
     }
   }
 
+  Future<BuzzPost> postMessage(String url, {required Map body}) async {
+    return http.post(Uri.parse(url), body: body).then((http.Response response) {
+      final int statusCode = response.statusCode;
+
+      if (statusCode < 200 || statusCode > 400 || json == null) {
+        throw Exception("Error while fetching data");
+      }
+      return BuzzPost.fromJson(json.decode(response.body));
+    });
+  }
+
   Future<List<BuzzComment>> fetchCommentsList(int msgID) async {
     final List<BuzzComment> _comments = [];
     // parses the json found on the heroku link
     final response = await http.get(Uri.parse(
-        'https://limitless-caverns-65131.herokuapp.com/messages/1/comments'));
+        'https://limitless-caverns-65131.herokuapp.com/messages/' +
+            msgID.toString() +
+            '/comments'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
@@ -50,6 +63,42 @@ class DataModel {
     } else {
       // not 200 response = we are not, in fact, chillin
       throw Exception('Failed to load');
+    }
+  }
+
+  Future<bool> isFlagged(int msgID) async {}
+
+  Future<int> setFlagMsg(int msgID, String userID) async {
+    // parses the json found on the heroku link
+    final response = await http.put(Uri.parse(
+        'https://limitless-caverns-65131.herokuapp.com/messages/' +
+            msgID.toString() +
+            '/flags'));
+
+    // 200 response = we chillin
+    if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+      return 0;
+    } else {
+      // not 200 response = we are not, in fact, chillin
+      throw Exception('Failed to flag messsage');
+    }
+  }
+
+  void setFlagCmt(int msgID, int cmtID, String userID) async {
+    // parses the json found on the heroku link
+    final response = await http.put(Uri.parse(
+        'https://limitless-caverns-65131.herokuapp.com/messages/' +
+            msgID.toString() +
+            '/comments/' +
+            cmtID.toString() +
+            '/flags'));
+
+    // 200 response = we chillin
+    if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+      return;
+    } else {
+      // not 200 response = we are not, in fact, chillin
+      throw Exception('Failed to flag comment');
     }
   }
 }

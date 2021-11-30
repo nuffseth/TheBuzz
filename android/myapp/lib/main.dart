@@ -13,6 +13,7 @@ import 'data_model.dart';
 import 'network_data.dart';
 import 'add_post.dart';
 
+// ignore: prefer_typing_uninitialized_variables
 late var cameras;
 // void main() => runApp(const MyApp());
 void main() async {
@@ -87,6 +88,8 @@ class _BuzzPostsState extends State<MyHomePage> {
   final _disliked = [];
   final addController = TextEditingController();
   final editController = TextEditingController();
+  final sessionKey = "57bd40b6-34b3-464c-b47f-03430b0b31db";
+  final userEmail = "arg422";
 
   @override
   void dispose() {
@@ -115,7 +118,7 @@ class _BuzzPostsState extends State<MyHomePage> {
           backgroundColor: Colors.amber,
           actions: <Widget>[
             IconButton(
-                icon: Icon(Icons.account_circle),
+                icon: const Icon(Icons.account_circle),
                 onPressed: () {
                   //Navigator.pushReplacementNamed(context, '/login');
                 }),
@@ -147,7 +150,7 @@ class _BuzzPostsState extends State<MyHomePage> {
 
         // post a new message
         floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add_outlined),
+          child: const Icon(Icons.add_outlined),
           backgroundColor: Colors.red,
           foregroundColor: Colors.white,
           onPressed: () {
@@ -156,7 +159,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                 builder: (BuildContext context) {
                   return AlertDialog(
                       scrollable: true,
-                      title: Text('Add Post'),
+                      title: const Text('Add Post'),
                       content: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Form(
@@ -164,7 +167,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                             children: <Widget>[
                               TextFormField(
                                 controller: addController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   labelText: 'Message',
                                 ),
                               ),
@@ -174,10 +177,10 @@ class _BuzzPostsState extends State<MyHomePage> {
                       ),
                       actions: [
                         ElevatedButton(
-                            child: Text('Cancel'),
+                            child: const Text('Cancel'),
                             onPressed: () => Navigator.pop(context)),
                         ElevatedButton(
-                            child: Text('Submit'),
+                            child: const Text('Submit'),
                             onPressed: () {
                               createPost(addController.text);
                               _refreshData();
@@ -235,14 +238,14 @@ class _BuzzPostsState extends State<MyHomePage> {
             children: [
               // edit button
               IconButton(
-                  icon: Icon(Icons.edit),
+                  icon: const Icon(Icons.edit),
                   onPressed: () {
                     showDialog(
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
                               scrollable: true,
-                              title: Text('Edit Post'),
+                              title: const Text('Edit Post'),
                               content: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Form(
@@ -250,7 +253,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                                     children: <Widget>[
                                       TextFormField(
                                         controller: editController,
-                                        decoration: InputDecoration(
+                                        decoration: const InputDecoration(
                                           labelText: 'Message',
                                         ),
                                       ),
@@ -260,10 +263,10 @@ class _BuzzPostsState extends State<MyHomePage> {
                               ),
                               actions: [
                                 ElevatedButton(
-                                    child: Text('Cancel'),
+                                    child: const Text('Cancel'),
                                     onPressed: () => Navigator.pop(context)),
                                 ElevatedButton(
-                                    child: Text('Submit'),
+                                    child: const Text('Submit'),
                                     onPressed: () {
                                       editPost(editController.text,
                                           post.mMsgId.toString());
@@ -275,7 +278,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                   }),
               // delete button
               IconButton(
-                icon: Icon(Icons.delete),
+                icon: const Icon(Icons.delete),
                 onPressed: () => showDialog<String>(
                   context: context,
                   builder: (BuildContext context) => AlertDialog(
@@ -301,14 +304,14 @@ class _BuzzPostsState extends State<MyHomePage> {
               ),
               // comments button
               IconButton(
-                  icon: Icon(Icons.add_box),
+                  icon: const Icon(Icons.chat_bubble),
                   onPressed: () {
-                    // setMessageID(post.mId);
+                    //setMessageID(post.mId);
                     Navigator.pushReplacementNamed(context, '/comments');
                   }),
               // camera button
               IconButton(
-                  icon: Icon(Icons.add_a_photo_rounded),
+                  icon: const Icon(Icons.add_a_photo_rounded),
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/camera');
                   }),
@@ -369,6 +372,13 @@ class _BuzzPostsState extends State<MyHomePage> {
                       }
                     }
                   }),
+              //flag content button
+              IconButton(
+                  icon: const Icon(Icons.flag),
+                  onPressed: () {
+                    // send POST request to backend to flag this message
+                    setFlagMsg(post.mMsgId, "user");
+                  }),
             ],
           )
         ]
@@ -377,7 +387,7 @@ class _BuzzPostsState extends State<MyHomePage> {
   }
 
   Future _refreshData() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     jsonPosts = DataModel.model.fetchBuzzList();
     setState(() {});
   }

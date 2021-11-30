@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/buzz_post.dart';
 import 'package:myapp/data_model.dart';
 
 import 'buzz_comment.dart';
@@ -22,7 +21,7 @@ class _CommentScreenState extends State<CommentScreen> {
     super.initState();
 
     // get all the comments for a message
-    // currently msgID is hardcoded in as 1, need to change this!!!
+    // TODO: currently msgID is hardcoded in as 1, need to change this!!!
     comments = DataModel.model.fetchCommentsList(1);
   }
 
@@ -30,10 +29,10 @@ class _CommentScreenState extends State<CommentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text("Comments"),
+            title: const Text("Comments"),
             centerTitle: true,
             leading: IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/home');
                 })),
@@ -58,7 +57,7 @@ class _CommentScreenState extends State<CommentScreen> {
           },
         )),
         floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add_outlined),
+          child: const Icon(Icons.add_outlined),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
           onPressed: () {
@@ -67,7 +66,7 @@ class _CommentScreenState extends State<CommentScreen> {
                 builder: (BuildContext context) {
                   return AlertDialog(
                       scrollable: true,
-                      title: Text('Add Comment'),
+                      title: const Text('Add Comment'),
                       content: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Form(
@@ -75,7 +74,7 @@ class _CommentScreenState extends State<CommentScreen> {
                             children: <Widget>[
                               TextFormField(
                                 controller: commentController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   labelText: 'Comments',
                                 ),
                               ),
@@ -85,10 +84,10 @@ class _CommentScreenState extends State<CommentScreen> {
                       ),
                       actions: [
                         ElevatedButton(
-                            child: Text('Cancel'),
+                            child: const Text('Cancel'),
                             onPressed: () => Navigator.pop(context)),
                         ElevatedButton(
-                            child: Text('Submit'),
+                            child: const Text('Submit'),
                             onPressed: () {
                               createComment(commentController.text);
                               _refreshData();
@@ -104,18 +103,18 @@ class _CommentScreenState extends State<CommentScreen> {
     Widget build(BuildContext context) {
       return Scaffold(
         appBar: AppBar(
-            title: Text("Comments"),
+            title: const Text("Comments"),
             centerTitle: true,
             leading: IconButton(
-                icon: Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/home');
                 })),
-        body: Column(children: [
+        body: Column(children: const [
           //this is where all the comments go
         ]),
         floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add_outlined),
+          child: const Icon(Icons.add_outlined),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
           onPressed: () {
@@ -124,7 +123,7 @@ class _CommentScreenState extends State<CommentScreen> {
                 builder: (BuildContext context) {
                   return AlertDialog(
                       scrollable: true,
-                      title: Text('Add Comment'),
+                      title: const Text('Add Comment'),
                       content: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Form(
@@ -132,7 +131,7 @@ class _CommentScreenState extends State<CommentScreen> {
                             children: <Widget>[
                               TextFormField(
                                 controller: commentController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   labelText: 'Comments',
                                 ),
                               ),
@@ -142,10 +141,10 @@ class _CommentScreenState extends State<CommentScreen> {
                       ),
                       actions: [
                         ElevatedButton(
-                            child: Text('Cancel'),
+                            child: const Text('Cancel'),
                             onPressed: () => Navigator.pop(context)),
                         ElevatedButton(
-                            child: Text('Submit'),
+                            child: const Text('Submit'),
                             onPressed: () {
                               createComment(commentController.text);
                               _refreshData();
