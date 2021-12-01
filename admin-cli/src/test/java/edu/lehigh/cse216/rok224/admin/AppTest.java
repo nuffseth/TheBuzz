@@ -67,19 +67,12 @@ public class AppTest extends TestCase {
         assert(Database.validFileID(validID) == true);
         assert(Database.validFileID(invalidID) == false);
     }
-
-    // create new message, insert a flag on the message, assert that the number of flags on message == 1
+    
+    // focus on errors
+    // test if msg id is valid when trying to add a flag
     public void testInsertMessageFlag() {
-        String userID = "lindsey";
-        String content = "test content";
-        // int msgLink = null;
-        // int cmtLink = null;
-        int msgID = 1;
-
-        //Database.insertMessage(userID, content, msgLink, cmtLink);
-        //Database.insertMessageFlag(userID, msgID);
-
+        int invalidMsgID = -1;
+        assert(Database.psCheckMsgIDFlag(invalidMsgID) == null);
     }
-        
-
+// have it sort from most to least flagged using ORDER BY, in CLI too
 }

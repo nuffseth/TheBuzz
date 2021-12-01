@@ -1,5 +1,6 @@
 DROP TABLE flagged_msgs;
 DROP TABLE flagged_comments;
+DROP TABLE blocked;
 
 CREATE TABLE flagged_msgs (
     msgid INT, 
@@ -17,6 +18,14 @@ CREATE TABLE flagged_comments (
     primary key (cmtid, userid),
     CONSTRAINT comment_key FOREIGN KEY(cmtid) REFERENCES comments(cmtid),
     CONSTRAINT user_key FOREIGN KEY(userid) REFERENCES users(userid)
+);
+
+CREATE TABLE blocked (
+    user_blocked VARCHAR(500),
+    user_blocker VARCHAR(500),
+    primary key (user_blocked, user_blocker),
+    CONSTRAINT user_key FOREIGN KEY(user_blocked) REFERENCES users(userid),
+    CONSTRAINT user_key FOREIGN KEY(user_blocker) REFERENCES users(userid)
 );
 
 ALTER TABLE messages DROP COLUMN flagcount ;
@@ -49,8 +58,7 @@ begin
     WHERE msgid = _msgid AND flag_count is null;
 
     commit;
-end;$$
-;
+end;$$;
 
 -- add new flagged comments
 drop procedure add_new_flagged_comments;
@@ -92,3 +100,18 @@ end;$$;
 
 --     commit;
 -- end;$$;
+
+-- add new blocked user
+drop procedure add_new_blocked_user;
+create or replace procedure add_new_blocked_user(
+    _user_blocked VARCHAR(500), 
+    _user_blocker VARCHAR(500)
+)
+language plpgsql    
+as $$
+begin
+    INSERT INTO blocked(user_blocked, user_blocker)
+    VALUES(_user_blocked, _user_blocker); 
+
+    commit;
+end;$$;

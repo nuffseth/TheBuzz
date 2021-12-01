@@ -114,7 +114,7 @@ public class App implements Comparator<File>{
         switch(menu) { // change possible inputs if accessing a different menu
             case 'M': actions = "MmpsfxDqr"; break;
             case 'U': actions = "Uauqr"; break;
-            case 'C': actions = "Ccoldqr"; break;
+            case 'C': actions = "Cco>ldqr"; break;
             case 'F': actions = "FAvL^+#Q-qr"; break;
         }
 
@@ -197,7 +197,7 @@ public class App implements Comparator<File>{
         System.out.println("    [m] View all messages");
         System.out.println("    [p] View specific message");
         System.out.println("    [s] List all comments on specific message");
-        System.out.println("    [f] View all flagged messages");
+        System.out.println("    [f] View all flagged messages sorted by number of flags");
         // TODO add new choice to list all flag messages 
         // DONE.
         System.out.println("    [x] List all files attached to specific message");
@@ -212,7 +212,7 @@ public class App implements Comparator<File>{
     static void view_messages(Database db, BufferedReader in) {
         ArrayList<Database.Message> messages = db.selectAllMessages();
         System.out.println("--------------------");
-        System.out.println("Messagess Table");
+        System.out.println("Messages Table");
         System.out.println("--------------------");
         System.out.printf("%5s \t%-10s \t%-5s \t%s\n", "Msg ID", "User", "Likes", "Content");
         for( Database.Message message : messages) {
@@ -419,6 +419,7 @@ public class App implements Comparator<File>{
         System.out.println("    [C] View comments table menu (this message)");
         System.out.println("    [c] View all comments (for all messages)");
         System.out.println("    [o] View specific comment");
+        System.out.println("    [>] View all flagged comments sorted by number of flags");
         System.out.println("    [l] List all files attached to specific comment");
         System.out.println("    [d] Delete a comment from the database");
         System.out.println("    [q] Quit Program");
@@ -457,6 +458,24 @@ public class App implements Comparator<File>{
             System.out.printf("%5d \t", comment.mCommentID);
             System.out.printf("%5d \t", comment.mMsgID);
             System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%s \n", comment.mContent);
+        }
+        return;
+    }
+
+     /**
+     * Displays all flagged comments stored in the database
+     */
+    static void view_flagged_comments(Database db, BufferedReader in) {
+        ArrayList<Database.Comment> comments = db.selectAllCommentsWithFlags();
+        System.out.println("--------------------");
+        System.out.println("Flagged Comments Table");
+        System.out.println("--------------------");
+        System.out.printf("%5s \t%-10s \t%-5s \t%-5s \n", "Comment ID", "User", "Flags", "Content");
+        for( Database.Comment comment : comments) {
+            System.out.printf("%10d \t", comment.mCommentID);
+            System.out.printf("%-10s \t", comment.mUserID);
+            System.out.printf("%-5d \t", comment.mNumFlags);
             System.out.printf("%s \n", comment.mContent);
         }
         return;
@@ -844,6 +863,7 @@ public class App implements Comparator<File>{
                 // comment actions (only accessible form comment menu)
                 case 'c': view_comments(db, in); break;
                 case 'o': view_one_comment(db, in); break;
+                case '>': view_flagged_comments(db, in); break;
                 case 'l': list_cmt_files(db, in); break;
                 case 'd': delete_comment(db, in); break;
 
