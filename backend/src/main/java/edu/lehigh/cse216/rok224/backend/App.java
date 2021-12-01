@@ -168,6 +168,7 @@ public class App {
         try {
             idToken = verifier.verify(idTokenString);
             if (idToken == null) { // check if id token not verified, give error
+                System.out.println("Invalid id token");
                 return null;
             } 
             Payload payload = idToken.getPayload(); 
