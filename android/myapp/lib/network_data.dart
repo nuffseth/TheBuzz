@@ -13,7 +13,9 @@ Future<http.Response> createPost(String mMessage) async {
       'Content-Type': 'application/json; charset=UTF-8',
     },
     body: jsonEncode(<String, String>{
-      'mMessage': mMessage,
+      "mMessage": "testing harcoded message post",
+      "mSessionKey": "57bd40b6-34b3-464c-b47f-03430b0b31db",
+      "mEmail": "arg422",
     }),
   );
 }

@@ -2,6 +2,10 @@
 * Page to add new BuzzPost
 */
 import 'package:flutter/material.dart';
+import 'package:myapp/simple_request.dart';
+import 'package:myapp/data_model.dart';
+
+import 'buzz_post.dart';
 
 // Define a custom Form widget.
 class MyAddForm extends StatefulWidget {
@@ -52,7 +56,7 @@ class MyAddFormState extends State<MyAddForm> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Validate returns true if the form is valid, or false otherwise.
                 if (_formKey.currentState!.validate()) {
                   // If the form is valid, display a snackbar. In the real world,
@@ -61,7 +65,17 @@ class MyAddFormState extends State<MyAddForm> {
                     const SnackBar(content: Text('Processing Data')),
                   );
                   // call the actual POST request
-
+                  SimpleRequest request = new SimpleRequest(
+                    mMessage: "testing harcoded message post",
+                    mSessionKey: "57bd40b6-34b3-464c-b47f-03430b0b31db",
+                    mEmail: "arg422",
+                    messageLink: 0,
+                    commentLink: 0,
+                  );
+                  BuzzPost response = await DataModel.model.postMessage(
+                      'https://limitless-caverns-65131.herokuapp.com/messages',
+                      body: request.toMap());
+                  print(response.mContent);
                 }
               },
               child: const Text('Submit'),

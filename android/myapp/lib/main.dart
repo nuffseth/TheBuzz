@@ -9,6 +9,7 @@ import 'package:camera/camera.dart';
 //import 'package:myapp/splash.dart';
 
 import 'buzz_post.dart';
+import 'constants.dart';
 import 'data_model.dart';
 import 'network_data.dart';
 import 'add_post.dart';
@@ -88,6 +89,7 @@ class _BuzzPostsState extends State<MyHomePage> {
   final _disliked = [];
   final addController = TextEditingController();
   final editController = TextEditingController();
+  final newThing = Constants.sessionKey;
   final sessionKey = "57bd40b6-34b3-464c-b47f-03430b0b31db";
   final userEmail = "arg422";
 
@@ -377,7 +379,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                   icon: const Icon(Icons.flag),
                   onPressed: () {
                     // send POST request to backend to flag this message
-                    setFlagMsg(post.mMsgId, "user");
+                    // setFlagMsg(post.mMsgId, "user");
                   }),
             ],
           )

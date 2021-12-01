@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-//import 'package:myapp/main.dart';
+import 'package:myapp/main.dart';
 
 // everything we need to communicate with the backend server exists here
 
@@ -66,7 +66,7 @@ class DataModel {
     }
   }
 
-  Future<bool> isFlagged(int msgID) async {}
+  // Future<bool> isFlagged(int msgID) async {}
 
   Future<int> setFlagMsg(int msgID, String userID) async {
     // parses the json found on the heroku link
