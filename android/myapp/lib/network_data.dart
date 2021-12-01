@@ -137,6 +137,29 @@ Future<http.Response> editComment(String mMessage, int msgId, int cmtId) async {
   return response;
 }
 
+Future<http.Response> deleteComment(int msgId, int cmtId) async {
+  final response = await http.delete(
+    Uri.parse(Constants.url +
+        '/messages/' +
+        msgId.toString() +
+        '/comments/' +
+        cmtId.toString()),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to edit messsage');
+  }
+  print(response.body);
+  return response;
+}
+
 Future<http.Response> flagMsg(int mId) async {
   final response = await http.put(
     Uri.parse(Constants.url + '/messages/' + mId.toString() + '/flags'),

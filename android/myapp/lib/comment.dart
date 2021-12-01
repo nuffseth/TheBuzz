@@ -224,6 +224,32 @@ class _CommentScreenState extends State<CommentScreen> {
                           ]);
                     });
               }),
+          // delete button
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('Warning'),
+                content: const Text(
+                    'Are you sure you would like to delete the comment?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'No'),
+                    child: const Text('No'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      deleteComment(Constants.currentMsg, comment.mCmtId);
+                      _refreshData();
+                      Navigator.pop(context, 'Yes');
+                    },
+                    child: const Text('Yes'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       )
     ]
