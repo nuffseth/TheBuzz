@@ -382,7 +382,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                   icon: const Icon(Icons.flag),
                   onPressed: () {
                     // send POST request to backend to flag this message
-                    // setFlagMsg(post.mMsgId, "user");
+                    flagMsg(post.mMsgId);
                   }),
             ],
           )

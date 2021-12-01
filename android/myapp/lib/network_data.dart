@@ -112,3 +112,22 @@ Future<http.Response> getComments(int mMsgId) {
     },
   );
 }
+
+Future<http.Response> flagMsg(int mId) async {
+  final response = await http.put(
+    Uri.parse(Constants.url + '/messages/' + mId.toString() + '/flags'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to flag messsage');
+  }
+  print(response.body);
+  return response;
+}
