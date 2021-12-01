@@ -364,11 +364,16 @@ public class App {
             System.out.println("idTokenString = " + idTokenString);
 
             // ensure status 200 OK, with a MIME type of JSON
+            System.out.println("ensuring response status");
             response.status(200);
+            System.out.println("ensuring response MIME type");
             response.type("application/json");
             
             // verify the id token sent to us from the frontend
+            System.out.println("getting email... ");
             String email = verifyIdToken(verifier, idTokenString);
+
+            System.out.println("email = " + email);
 
             // check that email ends in @lehigh.edu
             String[] values = email.split("@", 0); 
