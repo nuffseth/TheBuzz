@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:myapp/main.dart';
+import 'constants.dart';
 
 // everything we need to communicate with the backend server exists here
 
@@ -14,8 +15,7 @@ class DataModel {
   Future<List<BuzzPost>> fetchBuzzList() async {
     final List<BuzzPost> _messages = [];
     // parses the json found on the heroku link
-    final response = await http.get(
-        Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages'));
+    final response = await http.get(Uri.parse(Constants.url + '/messages'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
@@ -70,10 +70,8 @@ class DataModel {
 
   Future<int> setFlagMsg(int msgID, String userID) async {
     // parses the json found on the heroku link
-    final response = await http.put(Uri.parse(
-        'https://limitless-caverns-65131.herokuapp.com/messages/' +
-            msgID.toString() +
-            '/flags'));
+    final response = await http.put(
+        Uri.parse(Constants.url + '/messages/' + msgID.toString() + '/flags'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
@@ -86,12 +84,12 @@ class DataModel {
 
   void setFlagCmt(int msgID, int cmtID, String userID) async {
     // parses the json found on the heroku link
-    final response = await http.put(Uri.parse(
-        'https://limitless-caverns-65131.herokuapp.com/messages/' +
-            msgID.toString() +
-            '/comments/' +
-            cmtID.toString() +
-            '/flags'));
+    final response = await http.put(Uri.parse(Constants.url +
+        '/messages/' +
+        msgID.toString() +
+        '/comments/' +
+        cmtID.toString() +
+        '/flags'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {

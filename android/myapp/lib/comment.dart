@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/constants.dart';
 import 'package:myapp/data_model.dart';
 
 import 'buzz_comment.dart';
@@ -22,7 +23,7 @@ class _CommentScreenState extends State<CommentScreen> {
 
     // get all the comments for a message
     // TODO: currently msgID is hardcoded in as 1, need to change this!!!
-    comments = DataModel.model.fetchCommentsList(1);
+    comments = DataModel.model.fetchCommentsList(Constants.currentMsg);
   }
 
   @override

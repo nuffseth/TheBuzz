@@ -107,6 +107,9 @@ class _BuzzPostsState extends State<MyHomePage> {
 
     // this should still be a yucky list of json shit that we still wanna convert
     jsonPosts = DataModel.model.fetchBuzzList();
+
+    // set session key
+    login(Constants.idTokenString);
   }
 
   /*
@@ -270,8 +273,8 @@ class _BuzzPostsState extends State<MyHomePage> {
                                 ElevatedButton(
                                     child: const Text('Submit'),
                                     onPressed: () {
-                                      editPost(editController.text,
-                                          post.mMsgId.toString());
+                                      editPost(
+                                          editController.text, post.mMsgId);
                                       _refreshData();
                                       Navigator.pop(context);
                                     })
@@ -294,7 +297,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                       ),
                       TextButton(
                         onPressed: () {
-                          deletePost(post.mMsgId.toString());
+                          deletePost(post.mMsgId);
                           _refreshData();
                           Navigator.pop(context, 'Yes');
                         },
@@ -308,7 +311,7 @@ class _BuzzPostsState extends State<MyHomePage> {
               IconButton(
                   icon: const Icon(Icons.chat_bubble),
                   onPressed: () {
-                    //setMessageID(post.mId);
+                    Constants.currentMsg = post.mMsgId;
                     Navigator.pushReplacementNamed(context, '/comments');
                   }),
               // camera button
