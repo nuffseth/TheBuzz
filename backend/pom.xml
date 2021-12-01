@@ -123,7 +123,7 @@
         <version>3.0.4</version>
         <configuration>
           <jdkVersion>1.8</jdkVersion>
-          <appName>limitless-caverns-65131</appName>
+          <appName>boom-zoom-debug</appName>
           <processTypes>
             <web>java -jar ./target/backend-1.0-SNAPSHOT-jar-with-dependencies.jar</web>
           </processTypes>

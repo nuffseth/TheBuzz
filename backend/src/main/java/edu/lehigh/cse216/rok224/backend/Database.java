@@ -160,21 +160,22 @@ public class Database {
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-        
-        try {
-            System.out.println("trying to add user to database...");
-            psInsertUser.setString(1, user);  // first param is being set as user
-            psInsertUser.setString(2, bio);   // second param is being set as bio
-            ret += psInsertUser.executeUpdate();
-        } catch (SQLException e) {
-            // if error bc user already exists, return 0
-            if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
-                ret = 0;
-            }
-            else {
+
+        User exists = selectUser(user);
+        System.out.println(exists);
+        if (exists != null) {
+            return 0;
+        } else {
+            try {
+                System.out.println("trying to add user to database...");
+                psInsertUser.setString(1, user);  // first param is being set as user
+                psInsertUser.setString(2, bio);   // second param is being set as bio
+                ret += psInsertUser.executeUpdate();
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        
         return ret;
     }
 
@@ -451,12 +452,13 @@ public class Database {
         if (testString(content) == false || testString(userID) == false) { // generic validity check
             return -1;
         }
+        System.out.println("userID: " + userID);
         
         try {
-            psInsertMessage.setString(2, userID);
-            psInsertMessage.setString(3, content);
-            psInsertMessage.setInt(4, msgLink);
-            psInsertMessage.setInt(5, cmtLink);
+            psInsertMessage.setString(1, userID);
+            psInsertMessage.setString(2, content);
+            psInsertMessage.setInt(3, msgLink);
+            psInsertMessage.setInt(4, cmtLink);
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

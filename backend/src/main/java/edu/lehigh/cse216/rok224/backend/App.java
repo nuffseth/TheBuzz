@@ -97,7 +97,7 @@ public class App {
 
     // create local hash table for storing temporary session keys and corresponding user email
     // map user email to session key
-    //protected static HashMap<String, String> hash_map = new HashMap<String, String>();
+    protected static HashMap<String, String> hash_map = new HashMap<String, String>();
     static MemcachedClient mc;
 
     /**
@@ -123,7 +123,8 @@ public class App {
      * @param map           Hash map that maps session key to user email
      * @return              true if user/key combo is found in hash map, false otherwise
      */
-    protected static boolean authenticate(String email, String session_key) {
+    /*
+     protected static boolean authenticate(String email, String session_key) {
         // search the provided hash map for the session_key and make sure it matches the email
         String map_value;
         try {
@@ -144,6 +145,19 @@ public class App {
         } catch (MemcachedException me) {
             System.err.println("Memcached error during get or set: " +
                             me.getMessage());
+        }
+        return false; // email/session_key pair not found in hash map
+    }
+    */
+    protected static boolean authenticate(String email, String session_key) {
+        // search the provided hash map for the session_key and make sure it matches the email
+        String map_value = hash_map.get(email);
+        // make sure the session key sent matches the value on the hash map
+        if ( map_value == null ) { // if email not found, return false
+            return false;
+        }
+        if ( map_value.equals(session_key)) { // if user/session_key combo is valid, return true
+            return true;
         }
         return false; // email/session_key pair not found in hash map
     }
@@ -371,11 +385,12 @@ public class App {
             // save user and session key in local hash table
             String session_key = UUID.randomUUID().toString(); // make a random string
             System.out.println("random session key: " + session_key);
-            mc.set(username, 3600, session_key);
+            // mc.set(username, 3600, session_key);
+            hash_map.put(username, session_key);
 
             // add user to user table, Database.java shouldn't add duplicates
             System.out.println("inserting user into database...");
-            int result = dataBase.insertUser(username, "");
+            int result = dataBase.insertUser(username, "empty bio");
 
             // send the session key back to the frontend
             if (result == -1) { // return an error if unable to add user
@@ -447,7 +462,7 @@ public class App {
             }
 
             // add input message and current user to messages table
-            int result = dataBase.insertMessage(req.mMessage, req.mEmail, req.messageLink, req.commentLink);
+            int result = dataBase.insertMessage(req.mEmail, req.mMessage, req.messageLink, req.commentLink);
             
 
             if (result == -1) {
@@ -538,7 +553,7 @@ public class App {
         //
         //// Flag routes
         //
-
+        /*
         Spark.put("/messages/:id/flag", (request, response) -> {
             int msg_idx = Integer.parseInt(request.params("id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
@@ -594,6 +609,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
         });
+        */
 
         //
         //// LIKES ROUTES
