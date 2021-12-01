@@ -504,8 +504,9 @@ public class App {
             }
 
             // // make sure current user matches the one who created the message
-            if (dataBase.selectMessage(idx).mUserID != req.mEmail) {
-                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
+            String original_poster = dataBase.selectMessage(idx).mUserID;
+            if (!original_poster.equals(req.mEmail)) {
+                return gson.toJson(new StructuredResponse("error", "current user " + req.mEmail + " doesn't match post by user " + original_poster  , null));
             }
 
             int result = dataBase.updateMessage(idx, req.mMessage);
@@ -538,7 +539,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "unable to select message " + idx, null));
             }
             // make sure current user matches the one who created the message
-            if (dataBase.selectMessage(idx).mUserID != req.mEmail) {
+            if (!dataBase.selectMessage(idx).mUserID.equals(req.mEmail)) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
             }
 
@@ -834,7 +835,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.selectComment(comment_idx).mUserID != req.mEmail) {
+            if (!dataBase.selectComment(comment_idx).mUserID.equals(req.mEmail)) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
@@ -870,7 +871,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.selectComment(comment_idx).mUserID != req.mEmail) {
+            if (!dataBase.selectComment(comment_idx).mUserID.equals(req.mEmail)) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
@@ -906,9 +907,9 @@ public class App {
             String username = request.params("username"); 
 
             // // make sure username requested matches current user
-            if ( !username.equals(req.mEmail) ) {
-                return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
-            }
+            // if ( !username.equals(req.mEmail) ) {
+            //     return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
+            // }
 
             Database.User data = dataBase.selectUser(username); // get the user object
 
