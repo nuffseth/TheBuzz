@@ -817,7 +817,7 @@ public class App {
         // TO DO: make sure selectOne works for comments (admin)
         // TO DO: need a way to get the email of user who posted a comment (maybe an update to selectOne) ?
         // TO DO: make sure updateContentCommentsTable works (should take in comment id instead of user id) (admin)
-        Spark.put("/messages/:id/comments/comment_id", (request, response) -> {
+        Spark.put("/messages/:id/comments/:comment_id", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
             int comment_idx = Integer.parseInt(request.params("comment_id")); // 500 error if fails
