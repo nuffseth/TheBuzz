@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/constants.dart';
 import 'package:myapp/data_model.dart';
+import 'package:myapp/network_data.dart';
 
 import 'buzz_comment.dart';
 
@@ -183,6 +184,46 @@ class _CommentScreenState extends State<CommentScreen> {
       Row(
         children: [
           // add buttons here if u want
+          // edit button
+          IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                          scrollable: true,
+                          title: const Text('Edit Post'),
+                          content: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Form(
+                              child: Column(
+                                children: <Widget>[
+                                  TextFormField(
+                                    controller: commentController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Message',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          actions: [
+                            ElevatedButton(
+                                child: const Text('Cancel'),
+                                onPressed: () => Navigator.pop(context)),
+                            ElevatedButton(
+                                child: const Text('Submit'),
+                                onPressed: () {
+                                  editComment(commentController.text,
+                                      Constants.currentMsg, comment.mCmtId);
+                                  _refreshData();
+                                  Navigator.pop(context);
+                                })
+                          ]);
+                    });
+              }),
         ],
       )
     ]
@@ -190,5 +231,9 @@ class _CommentScreenState extends State<CommentScreen> {
         );
   }
 
-  void _refreshData() {}
+  Future<void> _refreshData() async {
+    await Future.delayed(const Duration(seconds: 1));
+    comments = DataModel.model.fetchCommentsList(Constants.currentMsg);
+    setState(() {});
+  }
 }

@@ -225,6 +225,8 @@ class _BuzzPostsState extends State<MyHomePage> {
     bool alreadyDisliked = _disliked.contains(post.mMsgId);
     final editController = TextEditingController(text: post.mContent);
     int _likes = post.mNumLikes;
+    // final isFlagged = isFlaggedMsg(post.mMsgId) as bool;
+    const isFlagged = false;
 
     return ExpansionTile(
         title: Text(post.mContent),
@@ -379,7 +381,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                   }),
               //flag content button
               IconButton(
-                  icon: const Icon(Icons.flag),
+                  icon: Icon(isFlagged ? Icons.flag : Icons.flag_outlined),
                   onPressed: () {
                     // send POST request to backend to flag this message
                     flagMsg(post.mMsgId);
