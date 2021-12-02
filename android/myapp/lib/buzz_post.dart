@@ -7,6 +7,7 @@ class BuzzPost {
   // int mCmtLink;
   // mCmtList;
   // mFileList
+  String ad;
 
   BuzzPost({
     required this.mUserID,
@@ -17,6 +18,7 @@ class BuzzPost {
     // required this.mCmtLink
     // mCmtList,
     // mFileList
+    required this.ad,
   });
 
   factory BuzzPost.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,8 @@ class BuzzPost {
       mNumLikes: json['mNumLikes'] as int,
       // mMsgLink: json['mMsgLink'] as int,
       // mCmtLink: json['mCmtLink'] as int,
+      // ad: json['mAd'] as String,
+      ad: "insert isEven ad here",
     );
   }
 
@@ -36,6 +40,7 @@ class BuzzPost {
     map["mMsgID"] = mMsgId;
     map["mContent"] = mContent;
     map["mNumLikes"] = mNumLikes;
+    // map["mAd"] = ad;
 
     return map;
   }

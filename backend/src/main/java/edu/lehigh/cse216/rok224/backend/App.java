@@ -899,9 +899,9 @@ public class App {
             response.status(200);
             response.type("application/json");
 
-            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
-                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
-            }
+            // if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+            //     return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            // }
 
             // get username from URL and find in database
             String username = request.params("username"); 

@@ -5,6 +5,8 @@ import 'package:myapp/data_model.dart';
 import 'package:myapp/network_data.dart';
 import 'package:myapp/camera.dart';
 import 'package:camera/camera.dart';
+import 'package:myapp/profile.dart';
+import 'package:myapp/user.dart';
 //import 'package:myapp/profile.dart';
 //import 'package:myapp/splash.dart';
 
@@ -43,6 +45,7 @@ class MyApp extends StatelessWidget {
         //'/login': (_) => const LoginScreen(),
         '/home': (_) => const MyHomePage(title: 'The Buzz Home Page'),
         //'/profile': (_) => const ProfileScreen(),
+        '/user': (_) => const UserScreen(),
         '/comments': (_) => const CommentScreen(),
 
         '/camera': (_) => TakePictureScreen(camera: cameras[0]),
@@ -230,9 +233,15 @@ class _BuzzPostsState extends State<MyHomePage> {
 
     return ExpansionTile(
         title: Text(post.mContent),
-        leading: Text(
-          '$_likes',
+        leading: TextButton(
+          child: Text(post.mUserID),
+          onPressed: () {
+            Constants.currentUser = post.mUserID;
+            Navigator.pushReplacementNamed(context, '/user');
+          },
         ),
+
+        // leading: Text(post.mUserID),
         // trailing: Icon(Icons.more_vert),
         // onTap: () {
         //   setState(() {
@@ -352,6 +361,10 @@ class _BuzzPostsState extends State<MyHomePage> {
                   }
                 },
               ),
+              // like count
+              Text(
+                '$_likes',
+              ),
               // dislike button
               IconButton(
                   icon: Icon(Icons.arrow_circle_down,
@@ -387,7 +400,8 @@ class _BuzzPostsState extends State<MyHomePage> {
                     flagMsg(post.mMsgId);
                   }),
             ],
-          )
+          ),
+          Text(post.ad),
         ]
         //more stuff
         );
