@@ -113,7 +113,7 @@ public class App implements Comparator<File>{
 
         switch(menu) { // change possible inputs if accessing a different menu
             case 'M': actions = "MmpsfxDqr"; break;
-            case 'U': actions = "Uauqr"; break;
+            case 'U': actions = "UauVbBqr"; break;
             case 'C': actions = "Cco>ldqr"; break;
             case 'F': actions = "FAvL^+#Q-qr"; break;
         }
@@ -374,6 +374,9 @@ public class App implements Comparator<File>{
         System.out.println("    [q] Quit Program");
         System.out.println("    [u] View all users");
         System.out.println("    [a] Create a new user account");
+        System.out.println("    [V] View blocked users table");
+        System.out.println("    [b] Block a user");
+        System.out.println("    [B] Unblock a user");
         System.out.println("    [r] Return to general menu");
     }
 
@@ -392,6 +395,22 @@ public class App implements Comparator<File>{
         }
         return;
     }
+
+    // display blocked users
+    static void view_blocked_users(Database db, BufferedReader in) {
+        ArrayList<Database.User> users = db.selectAllBlockedUsers();
+        System.out.println("--------------------");
+        System.out.println("Blocked Users Table");
+        System.out.println("--------------------");
+        System.out.printf("%20s \tBlocker of User\n", "Blocked User");
+        for( Database.User user : users) {
+            System.out.printf("%20s \t", user.mUserID);
+            System.out.println(user.mBio);
+        }
+        return;
+    }
+
+    // TODO: figure out how to block user
 
     /**
      * Prompt the user for a username and optional bio to add to the users table.
@@ -849,6 +868,9 @@ public class App implements Comparator<File>{
                 // user actions (only accessible from user menu)
                 case 'u': view_users(db, in); break;
                 case 'a': create_account(db, in); break;
+                // case 'b': block_user(db, in); break;
+                // case 'B': unblock_user(db, in); break;
+                case 'V': view_blocked_users(db, in); break;
 
                 // message actions (only accessible from message mentu)
                 case 'm': view_messages(db, in); break;

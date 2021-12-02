@@ -11,6 +11,12 @@ CREATE TABLE flagged_msgs (
     CONSTRAINT user_key FOREIGN KEY(userid) REFERENCES users(userid)
 );
 
+/**/
+SELECT msgID, COUNT(flagged_msgs.userid) AS flag_count FROM messages INNER JOIN flagged_msgs ON messages.msgId = flagged_msgs.msgid GROUP BY msgId ORDER BY flag_count DESC;
+
+SELECT COUNT(flagged_msgs.userid) AS flag_count FROM messages INNER JOIN flagged_msgs ON messages.msgId = flagged_msgs.msgid GROUP BY msgId WHERE messages.msgID = ?;
+/**/
+
 CREATE TABLE flagged_comments (
     cmtid INT, 
     userid VARCHAR(500), 
@@ -24,17 +30,20 @@ CREATE TABLE blocked (
     user_blocked VARCHAR(500),
     user_blocker VARCHAR(500),
     primary key (user_blocked, user_blocker),
-    CONSTRAINT user_key FOREIGN KEY(user_blocked) REFERENCES users(userid),
-    CONSTRAINT user_key FOREIGN KEY(user_blocker) REFERENCES users(userid)
+    CONSTRAINT user_key_blocked FOREIGN KEY(user_blocked) REFERENCES users(userid),
+    CONSTRAINT user_key_blocker FOREIGN KEY(user_blocker) REFERENCES users(userid)
 );
 
-ALTER TABLE messages DROP COLUMN flagcount ;
-ALTER TABLE comments DROP COLUMN flagcount ;
 ALTER TABLE messages DROP COLUMN flag_count ;
 ALTER TABLE comments DROP COLUMN flag_count ;
+ALTER TABLE messages DROP COLUMN ad ;
+ALTER TABLE messages DROP COLUMN is_even ;
 
 ALTER TABLE messages ADD COLUMN flag_count INT;
 ALTER TABLE comments ADD COLUMN flag_count INT;
+
+ALTER TABLE messages ADD COLUMN ad VARCHAR(500);
+ALTER TABLE messages ADD COLUMN is_even BOOLEAN;
 
 -- TODO add index to flag_count in the messages and comments tables
 -- add new flagged messages
@@ -115,3 +124,8 @@ begin
 
     commit;
 end;$$;
+
+-- delete blocked user
+-- add blocked to cli
+-- isEven api
+-- add new collum in messages that has the ad string, column for boolean, change Message fields

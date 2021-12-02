@@ -72,6 +72,7 @@ public class Database {
     private PreparedStatement psSelectUser;
     private PreparedStatement psSelectAllUsers;
     private PreparedStatement psUpdateUser;
+    private PreparedStatement psSelectBlockedUser;
 
     // MESSAGE PREPARED STATEMENTS
     private PreparedStatement psInsertMessage;
@@ -122,6 +123,10 @@ public class Database {
 
     // CHECK MSGID PREPARED STATEMENT
     private PreparedStatement psCheckMsgIDFlag;
+
+    // BLOCK USER PREPARED STATEMENT
+    private PreparedStatement psBlockUser;
+    private PreparedStatement psSelectAllBlockedUsers;
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -178,7 +183,7 @@ public class Database {
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-        
+        // check if user in database (selectuser function), return 0 if it does exist, add if doesnt
         try {
             System.out.println("trying to add user to database...");
             psInsertUser.setString(1, user);  // first param is being set as user
@@ -208,6 +213,21 @@ public class Database {
             ResultSet rs = psSelectUser.executeQuery();
             if(rs.next()){
                 res = new User(rs.getString("userID"), rs.getString("bio"));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    }
+
+    User selectBlockedUser(String blockedUser) {
+        User res = null;
+        try {
+            psSelectUser.setString(1, blockedUser);
+            ResultSet rs = psSelectUser.executeQuery();
+            if(rs.next()){
+                res = new User(rs.getString("user_blocked"), rs.getString("user_blocker"));
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -505,11 +525,13 @@ public class Database {
         ArrayList<Comment> mComments;
         ArrayList<MyFile> mFileData;
         int mNumFlags;
+        String mAd;
+        boolean mIsEven;
 
         // TODO : add a class variable for the number of flags
         // DONE.
 
-        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData, int numFlags) {
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData, int numFlags, String ad, boolean is_even) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
@@ -519,9 +541,11 @@ public class Database {
             mComments = comments; 
             mFileData = fileData;
             mNumFlags = numFlags;
+            mAd = ad;
+            mIsEven = is_even;
         }
 
-        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, int numFlags) {
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, int numFlags, String ad, boolean is_even) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
@@ -529,6 +553,8 @@ public class Database {
             mMsgLink = msgLink;
             mCmtLink = cmtLink;
             mNumFlags = numFlags;
+            mAd = ad;
+            mIsEven = is_even;
         }
     }
 
@@ -543,10 +569,10 @@ public class Database {
         }
         
         try {
-            psInsertMessage.setString(2, userID);
-            psInsertMessage.setString(3, content);
-            psInsertMessage.setInt(4, msgLink);
-            psInsertMessage.setInt(5, cmtLink);
+            psInsertMessage.setString(1, userID);
+            psInsertMessage.setString(2, content);
+            psInsertMessage.setInt(3, msgLink);
+            psInsertMessage.setInt(4, cmtLink);
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -563,8 +589,7 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
-                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
-                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -621,7 +646,7 @@ public class Database {
                 int likes = countLikes(msgID);
                 ArrayList<MyFile> fileData = getMsgFiles(msgID);
                 res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
-                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData, rs.getInt("flag_count"));
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -643,7 +668,7 @@ public class Database {
                 ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData, rs.getInt("flag_count"));
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
                 res.add(thisMessage);
             }
             rs.close();
@@ -662,7 +687,7 @@ public class Database {
                 // for each message, get all comments and like count
                 int this_msg = rs.getInt("msgID");
                 int likes = countLikes(this_msg);
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), rs.getInt("flag_count"));
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
                 res.add(thisMessage);   
             }
             rs.close();
@@ -1139,6 +1164,35 @@ public class Database {
         return res;
     } 
 
+    // block a user
+    int addBlockedUser(String user_blocked, String user_blocker){
+        int res = -1;
+        try {
+            psBlockUser.setString(1, user_blocked);
+            psBlockUser.setString(2, user_blocker);
+            res = psBlockUser.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
+    }
+    
+    // select all blocked users
+    ArrayList<User> selectAllBlockedUsers(){
+        ArrayList<User> res = new ArrayList<User>();
+        try {
+            ResultSet rs = psSelectAllBlockedUsers.executeQuery();
+            while (rs.next()){
+                res.add(new User( rs.getString("user_blocked"), rs.getString("user_blocker")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 
     /**
@@ -1227,6 +1281,7 @@ public class Database {
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
             db.psSelectAllUsers = db.mConnection.prepareStatement("SELECT * from users");
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
+            db.psSelectBlockedUser = db.mConnection.prepareStatement("SELECT * FROM blocked WHERE user_blocked = ?");
 
             // MESSAGE prepared statements
             db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?, ?, ?)");
@@ -1280,6 +1335,10 @@ public class Database {
 
             //check if msgid exists in flagged messages table
             db.psCheckMsgIDFlag = db.mConnection.prepareStatement("SELECT * FROM flagged_msgs WHERE msgid = ?");
+
+            // block user
+            db.psBlockUser = db.mConnection.prepareStatement("call add_new_blocked_user(?, ?)");
+            db.psSelectAllBlockedUsers = db.mConnection.prepareStatement("SELECT * FROM blocked");
 
             // I commented these out because we may not need all of them
 
@@ -1437,6 +1496,22 @@ public class Database {
             psDecrementLikes.execute();
             return 1;
         } catch(SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    int countMessageFlags(int id) {
+        try {
+            psCountMessageFlags.setInt(1, id);
+            ResultSet rs = psCountMessageFlags.executeQuery();
+            while (rs.next()){
+                res.add( rs.getInt("flag_count")));
+            }
+            rs.close();
+            return res;
+            return 0;
+        } catch(SQLException e) {
             e.printStackTrace();
             return -1;
         }
