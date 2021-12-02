@@ -160,17 +160,21 @@ Future<http.Response> deleteComment(int msgId, int cmtId) async {
   return response;
 }
 
-Future<String> getBio(String userID) async {
+Future<String> blockUser(String userID) async {
   String bio = "hardcoded user bio";
-  final response = await http.get(
-    Uri.parse(Constants.url + '/users/' + userID),
+  final response = await http.post(
+    Uri.parse(Constants.url + '/users/' + userID + '/block'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
   );
   if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
     // get the session key from the response
     var parsedJson = jsonDecode(response.body);
   } else {
     // not 200 response = we are not, in fact, chillin
-    throw Exception('Failed to get user');
+    throw Exception('Failed to block user');
   }
   print(response.body);
   return bio;
