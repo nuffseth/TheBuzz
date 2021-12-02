@@ -16,8 +16,7 @@ class DataModel {
   Future<List<BuzzPost>> fetchBuzzList() async {
     final List<BuzzPost> _messages = [];
     // parses the json found on the heroku link
-    final response = await http.get(
-        Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages'));
+    final response = await http.get(Uri.parse(Constants.url + '/messages'));
 
     // 200 response = we chillin
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
@@ -78,14 +77,12 @@ class DataModel {
     if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
       // this will contain all of our messages but in json language
       final _user = jsonDecode(response.body);
-      for (var e in _user["mData"]) {
-        return BuzzUser.fromJson(e);
-      }
+      final data = _user["mData"];
+      return BuzzUser.fromJson(data);
     } else {
       // not 200 response = we are not, in fact, chillin
       throw Exception('Failed to load user ' + userID);
     }
-    throw Exception('something weird happened');
   }
 
   // Future<bool> isFlagged(int msgID) async {}

@@ -13,12 +13,4 @@ class BuzzUser {
       mBio: json['mBio'] as String,
     );
   }
-
-  Map toMap() {
-    var map = new Map();
-    map["mUserID"] = mUserID;
-    map["mBio"] = mBio;
-
-    return map;
-  }
 }
