@@ -641,7 +641,7 @@ public class App {
             int result = 0;
             
             if(dataBase.selectBlockedUser(req.mEmail) == null){
-                result = dataBase.addBlockedUser(req.mEmail, user_idx);
+                result = dataBase.addBlockedUser(user_idx, req.mEmail);
             } else { //If the user is already blocked unblock them.
                 result = dataBase.deleteBlockedUser(req.mEmail);
             }
