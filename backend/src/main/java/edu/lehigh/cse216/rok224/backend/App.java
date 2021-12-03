@@ -624,9 +624,8 @@ public class App {
         //// Blocked User routes
         //
         Spark.put("/users/:id/block", (request, response) -> {
-            int user_idx = Integer.parseInt(request.params("id"));
+            String user_idx = request.params("id");
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
-            String idTokenString = req.mMessage;
 
             response.status(200);
             response.type("application/json");
@@ -635,16 +634,6 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
-            String email = verifyIdToken(verifier, idTokenString);
-            String[] values = email.split("@", 0);
-
-            if(values.length != 2 || !values[1].equals("lehigh.edu")){
-                response.status(403);
-                return gson.toJson(new StructuredResponse("error", "invalid email (must be @lehigh.edu)", null));
-            }
-
-            String username = values[0];
-
             if(dataBase.selectUser(req.mEmail) == null){
                 return gson.toJson(new StructuredResponse("error", "user " + user_idx + " not found", null));
             }
@@ -652,7 +641,7 @@ public class App {
             int result = 0;
             
             if(dataBase.selectBlockedUser(req.mEmail) == null){
-                result = dataBase.addBlockedUser(req.mEmail, username);
+                result = dataBase.addBlockedUser(req.mEmail, user_idx);
             } else { //If the user is already blocked unblock them.
                 result = dataBase.deleteBlockedUser(req.mEmail);
             }
