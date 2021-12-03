@@ -183,19 +183,28 @@ public class Database {
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-        // check if user in database (selectuser function), return 0 if it does exist, add if doesnt
-        try {
-            System.out.println("trying to add user to database...");
-            psInsertUser.setString(1, user);  // first param is being set as user
-            psInsertUser.setString(2, bio);   // second param is being set as bio
-            ret += psInsertUser.executeUpdate();
-        } catch (SQLException e) {
-            // if error bc user already exists, return 0
-            if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
-                ret = 0;
-            }
-            else {
+
+        User existingUser = selectUser(user);
+        // check if user already exists before trying to add to the database
+        if (existingUser != null) {
+            return 0;
+        } 
+        else {
+            try {
+                System.out.println("trying to add user to database...");
+                psInsertUser.setString(1, user);  // first param is being set as user
+                psInsertUser.setString(2, bio);   // second param is being set as bio
+                ret += psInsertUser.executeUpdate();
+            } catch (SQLException e) {
+                // // if error bc user already exists, return 0
+                // if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
+                //     ret = 0;
+                // }
+                // else {
+                //     e.printStackTrace();
+                // }
                 e.printStackTrace();
+                return -1;
             }
         }
         return ret;
@@ -224,7 +233,7 @@ public class Database {
     User selectBlockedUser(String blockedUser) {
         User res = null;
         try {
-            psSelectUser.setString(1, blockedUser);
+            psSelectBlockedUser.setString(1, blockedUser);
             ResultSet rs = psSelectUser.executeQuery();
             if(rs.next()){
                 res = new User(rs.getString("user_blocked"), rs.getString("user_blocker"));
@@ -589,7 +598,7 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
-                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count")));
             }
             rs.close();
             return res;
@@ -1501,21 +1510,21 @@ public class Database {
         }
     }
 
-    int countMessageFlags(int id) {
-        try {
-            psCountMessageFlags.setInt(1, id);
-            ResultSet rs = psCountMessageFlags.executeQuery();
-            while (rs.next()){
-                res.add( rs.getInt("flag_count")));
-            }
-            rs.close();
-            return res;
-            return 0;
-        } catch(SQLException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
+    // int countMessageFlags(int id) {
+    //     try {
+    //         psCountMessageFlags.setInt(1, id);
+    //         ResultSet rs = psCountMessageFlags.executeQuery();
+    //         while (rs.next()){
+    //             res.add( rs.getInt("flag_count")));
+    //         }
+    //         rs.close();
+    //         return res;
+    //         return 0;
+    //     } catch(SQLException e) {
+    //         e.printStackTrace();
+    //         return -1;
+    //     }
+    // }
 
     /**
      * Tests to see if a message is valid
