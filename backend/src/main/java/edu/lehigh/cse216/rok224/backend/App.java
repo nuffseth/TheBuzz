@@ -534,7 +534,37 @@ public class App {
         //// Flag routes
         //
 
-        Spark.put("/messages/:id/flag", (request, response) -> {
+        Spark.get("/messages/:id/flags", (request, response) -> {
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            if(database.selectMessageFlag(req.mEmail, msg_idx) == null){
+                return gson.toJson(new StructuredResponse("ok", null, false));
+            } else { //If the message is already flagged, remove the flag.
+                return gson.toJson(new StructuredResponse("ok", null, true));
+            }
+        });
+
+        Spark.get("/messages/:id/comments/comment_id/flags", (request, response) -> {
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
+                return gson.toJson(new StructuredResponse("ok", null, false));
+            } else { //If the message is already flagged, remove the flag.
+                return gson.toJson(new StructuredResponse("ok", null, true));
+            }
+        });
+
+        Spark.put("/messages/:id/flags", (request, response) -> {
             int msg_idx = Integer.parseInt(request.params("id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
@@ -547,10 +577,10 @@ public class App {
 
             int result = 0;
             
-            if(database.selectMessageFlag(msg_idx) == null){
-                result = database.insertMessageFlag(msg_idx);
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
+                result = dataBase.insertMessageFlag(req.mEmail, msg_idx);
             } else { //If the message is already flagged, remove the flag.
-                result = database.deleteMessageFlag(msg_idx);
+                result = dataBase.deleteMessageFlag(msg_idx);
             }
 
             if (result == -1) {
@@ -560,7 +590,7 @@ public class App {
             }
         });
 
-        Spark.put("comments/:id/flag", (request, response) -> {
+        Spark.put("messages/:id/comments/comment_id/flags", (request, response) -> {
             int comment_idx = Integer.parseInt(request.params("comment_id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
@@ -577,14 +607,14 @@ public class App {
 
             int result = 0;
             
-            if(database.selectCommentFlag(comment_idx) == null){
-                result = database.insertCommentFlag(comment_idx);
+            if(dataBase.selectCommentFlag(req.mEmail, comment_idx) == null){
+                result = dataBase.insertCommentFlag(req.mEmail, comment_idx);
             } else { //If the message is already flagged, remove the flag.
-                result = database.deleteCommentFlag(comment_idx);
+                result = dataBase.deleteCommentFlag(comment_idx);
             }
 
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to insert/update like", null));
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update flag", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
@@ -909,6 +939,21 @@ public class App {
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
+        });
+
+        //
+        // ISEVEN ROUTES
+        //
+        
+        // GET route that returns the ad and whether or not a number is even
+        Spark.get("https://api.isevenapi.xyz/api/iseven/:number", (request, response) -> {
+            // get number from URL and find in database
+            int number = Integer.parseInt(request.params("number")); // if id not an int, 500 error
+
+            // ensure status 200 OK, with a MIME type of JSON, and return
+            response.status(200);
+            response.type("application/json");
+            return gson.toJson(new StructuredResponse("ok", null, null));//Placeholder
         });
     }
 }
