@@ -250,6 +250,16 @@ class _CommentScreenState extends State<CommentScreen> {
               ),
             ),
           ),
+          // flag button
+          IconButton(
+              icon: Icon(comment.isFlagged ? Icons.flag : Icons.flag_outlined),
+              onPressed: () {
+                // send POST request to backend to flag this message
+                setState(() {
+                  comment.isFlagged = !comment.isFlagged;
+                });
+                flagCmt(comment.mCmtId);
+              }),
         ],
       )
     ]

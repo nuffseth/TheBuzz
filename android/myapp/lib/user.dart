@@ -45,6 +45,7 @@ class _UserScreenState extends State<UserScreen> {
               tooltip: 'Block this user',
               onPressed: () {
                 // block the user
+                blockUser(Constants.currentUser);
               },
             )
           ]),

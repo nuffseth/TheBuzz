@@ -95,6 +95,7 @@ class _BuzzPostsState extends State<MyHomePage> {
   final newThing = Constants.sessionKey;
   final sessionKey = "57bd40b6-34b3-464c-b47f-03430b0b31db";
   final userEmail = "arg422";
+  bool _isFlagged = false;
 
   @override
   void dispose() {
@@ -228,8 +229,8 @@ class _BuzzPostsState extends State<MyHomePage> {
     bool alreadyDisliked = _disliked.contains(post.mMsgId);
     final editController = TextEditingController(text: post.mContent);
     int _likes = post.mNumLikes;
-    // final isFlagged = isFlaggedMsg(post.mMsgId) as bool;
-    const isFlagged = false;
+    //final isFlagged = isFlaggedMsg(post.mMsgId) as bool;
+    bool isFlagged = _isFlagged;
 
     return ExpansionTile(
         title: Text(post.mContent),
@@ -394,10 +395,14 @@ class _BuzzPostsState extends State<MyHomePage> {
                   }),
               //flag content button
               IconButton(
-                  icon: Icon(isFlagged ? Icons.flag : Icons.flag_outlined),
+                  icon: Icon(post.isFlagged ? Icons.flag : Icons.flag_outlined),
                   onPressed: () {
                     // send POST request to backend to flag this message
+                    setState(() {
+                      post.isFlagged = !post.isFlagged;
+                    });
                     flagMsg(post.mMsgId);
+                    //flagMsg(post.mMsgId);
                   }),
             ],
           ),
