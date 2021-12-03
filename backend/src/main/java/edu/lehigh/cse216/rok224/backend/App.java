@@ -542,14 +542,14 @@ public class App {
             // ensure status 200 OK, with a MIME type of JSON
             response.status(200);
             response.type("application/json");
-            if(database.selectMessageFlag(req.mEmail, msg_idx) == null){
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
                 return gson.toJson(new StructuredResponse("ok", null, false));
             } else { //If the message is already flagged, remove the flag.
                 return gson.toJson(new StructuredResponse("ok", null, true));
             }
         });
 
-        Spark.get("/messages/:id/comments/comment_id/flags", (request, response) -> {
+        Spark.get("/messages/:id/comments/:comment_id/flags", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
 
@@ -590,7 +590,7 @@ public class App {
             }
         });
 
-        Spark.put("messages/:id/comments/comment_id/flags", (request, response) -> {
+        Spark.put("messages/:id/comments/:comment_id/flags", (request, response) -> {
             int comment_idx = Integer.parseInt(request.params("comment_id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
@@ -617,6 +617,72 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "unable to insert/update flag", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        //
+        //// Blocked User routes
+        //
+        Spark.put("/users/:id/block", (request, response) -> {
+            int user_idx = Integer.parseInt(request.params("id"));
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            String idTokenString = req.mMessage;
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            String email = verifyIdToken(verifier, idTokenString);
+            String[] values = email.split("@", 0);
+
+            if(values.length != 2 || !values[1].equals("lehigh.edu")){
+                response.status(403);
+                return gson.toJson(new StructuredResponse("error", "invalid email (must be @lehigh.edu)", null));
+            }
+
+            String username = values[0];
+
+            if(dataBase.selectUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("error", "user " + user_idx + " not found", null));
+            }
+
+            int result = 0;
+            
+            if(dataBase.selectBlockedUser(req.mEmail) == null){
+                result = dataBase.addBlockedUser(req.mEmail, username);
+            } else { //If the user is already blocked unblock them.
+                result = dataBase.deleteBlockedUser(req.mEmail);
+            }
+
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update block", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        Spark.get("users/:id/block", (request, response) -> {
+            int user_idx = Integer.parseInt(request.params("id"));
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            if(dataBase.selectUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("error", "user " + user_idx + " not found", null));
+            }
+
+            if(dataBase.selectBlockedUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            } else { //If the user is already blocked unblock them.
+                return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(req.mEmail)));
             }
         });
 
@@ -901,7 +967,7 @@ public class App {
             response.status(200);
             response.type("application/json");
 
-            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+            if (!authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
                 return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
@@ -909,7 +975,7 @@ public class App {
             String username = request.params("username"); 
 
             // // make sure username requested matches current user
-            if ( !username.equals(req.mEmail) ) {
+            if (!username.equals(req.mEmail) ) {
                 return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
             }
 
@@ -955,5 +1021,8 @@ public class App {
             response.type("application/json");
             return gson.toJson(new StructuredResponse("ok", null, null));//Placeholder
         });
+
+        //
+        // B
     }
 }

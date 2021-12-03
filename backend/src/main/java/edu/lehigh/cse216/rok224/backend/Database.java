@@ -72,6 +72,7 @@ public class Database {
     private PreparedStatement psSelectUser;
     private PreparedStatement psSelectAllUsers;
     private PreparedStatement psUpdateUser;
+    private PreparedStatement psSelectBlockedUser;
 
     // MESSAGE PREPARED STATEMENTS
     private PreparedStatement psInsertMessage;
@@ -80,6 +81,7 @@ public class Database {
     private PreparedStatement psGetMsgComments;
     private PreparedStatement psGetMsgFileData;
     private PreparedStatement psSelectAllMessages;
+    private PreparedStatement psSelectAllMessagesWithFlags;
     private PreparedStatement psUpdateMessage;
     private PreparedStatement psDeleteMessage;
 
@@ -93,6 +95,7 @@ public class Database {
     private PreparedStatement psInsertComment;
     private PreparedStatement psSelectComment;
     private PreparedStatement psSelectAllComments;
+    private PreparedStatement psSelectAllCommentsWithFlags;
     private PreparedStatement psGetCmtFileData;
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
@@ -109,6 +112,21 @@ public class Database {
     private PreparedStatement psSelectAllCmtFiles;
     private PreparedStatement psDeleteCmtFile;
     private PreparedStatement psGetCmtFileID;
+
+    // MSG FLAG PREPARD STATEMENTS
+    private PreparedStatement psInsertMsgFlag;
+    private PreparedStatement psSelectMessageFlag;
+
+    // CMT FLAG PREPARED STATEMENTS
+    private PreparedStatement psInsertCmtFlag;
+    private PreparedStatement psSelectCommentFlag;
+
+    // CHECK MSGID PREPARED STATEMENT
+    private PreparedStatement psCheckMsgIDFlag;
+
+    // BLOCK USER PREPARED STATEMENT
+    private PreparedStatement psBlockUser;
+    private PreparedStatement psSelectAllBlockedUsers;
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -154,13 +172,18 @@ public class Database {
         }
     }
 
-    // add new user
+    /**
+     * Add a new user to the database.
+     * @param user  String of the username to add to the database (primary key of the database)
+     * @param bio   String of the user bio to add to the database (optional)
+     * @return
+     */
     int insertUser (String user, String bio) {
         int ret = 0;
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
-        
+        // check if user in database (selectuser function), return 0 if it does exist, add if doesnt
         try {
             System.out.println("trying to add user to database...");
             psInsertUser.setString(1, user);  // first param is being set as user
@@ -178,7 +201,11 @@ public class Database {
         return ret;
     }
 
-    // get user from ID
+    /**
+     * Get all data for a specific user in the database from their username.
+     * @param user  String of the username to get data about    
+     * @return      A Database.User objcet, which includes fields mUserID and mBio
+     */
     User selectUser(String user) {
         User res = null;
         try {
@@ -194,7 +221,25 @@ public class Database {
         return res;
     }
 
-    // view all users (only accessible from admin CLI)
+    User selectBlockedUser(String blockedUser) {
+        User res = null;
+        try {
+            psSelectUser.setString(1, blockedUser);
+            ResultSet rs = psSelectUser.executeQuery();
+            if(rs.next()){
+                res = new User(rs.getString("user_blocked"), rs.getString("user_blocker"));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    }
+
+    /**
+     * Select all the users in the database. (should only be accessible from admin CLI)
+     * @return      An ArrayList of Database.User objects, where each Database.User includes mUserID and mBio
+     */
     ArrayList<User> selectAllUsers() {
         ArrayList<User> res = new ArrayList<User>();
         try {
@@ -209,7 +254,13 @@ public class Database {
             return null;
         }
     }
-    // update user bio of a given user ID
+
+    /**
+     * Update the user profile information of a specific user.
+     * @param user  String of the username of the user to update (primary key in the database)
+     * @param bio   String of the bio of the user account to update.
+     * @return
+     */
     int updateUser (String user, String bio) {
         int ret = 0;
         if (testString(bio) == false || testString(user) == false) {
@@ -227,7 +278,8 @@ public class Database {
     }
 
     /**
-     * All objects and functions for the Comment table
+     * All objects and functions for the Comment object.
+     * Includes mUserID, mCommentID, mMsgID, mContent, mFileData, mMsgLink, and mCmtLink.
      */
     public class Comment {
         String mUserID;
@@ -237,8 +289,9 @@ public class Database {
         ArrayList<MyFile> mFileData;
         int mMsgLink;
         int mCmtLink;
+        int mNumFlags;
 
-        public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData) {
+        public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData, int numFlags) {
             mUserID = userID;
             mCommentID = commentID;
             mMsgID = msgID;
@@ -246,13 +299,21 @@ public class Database {
             mFileData = fileData;
             mMsgLink = msgLink;
             mCmtLink = cmtLink;
+            mNumFlags = numFlags;
         }
     }
 
-    // add a comment to the table
+    /**
+     * Adds a comment to the comment database.
+     * @param msgID     The message id of the message that this comment refers to. (Must exist in messages table).
+     * @param userID    The username of the user who is posting the comment.
+     * @param content   String of the content of the comment.
+     * @param msgLink   Optional message id to link this comment to another message in the database.
+     * @param cmtLink   Option comment id to link this comment to another comment in the database.
+     * @return          New comment ID of the created comment on success, -1 on failure.
+     */
     int insertComment (int msgID, String userID, String content, int msgLink, int cmtLink) {
         int ret = 0;
-        // TODO: is there a testInt method to use to test msgID?
         if ( !testString(content) || !testString(userID) ) {   // generic validity check 
             return -1;
         } 
@@ -273,6 +334,12 @@ public class Database {
     }
 
     // get file matadata for a specific comment
+    /**
+     * Select all the files associated with a particular comment
+     * @param cmtID     ID of the comment from which to select files.
+     * @return          Arraylist of Database.MyFile objects, where each Database.MyFile includes:
+     *                  mFileID, mMsgCmtID, mMime, and mFilename.
+     */
     ArrayList<MyFile> getCmtFiles(int cmtID) {
         ArrayList<MyFile> res = new ArrayList<MyFile>();
         try {
@@ -290,6 +357,12 @@ public class Database {
     }
 
     // select one comment 
+    /**
+     * Select a specific comment from the database.
+     * @param cmtID     The comment ID of the comment to select.
+     * @return          A Database.Comment object, which includes:
+     *                  mUserID, mCommentID, mMsgID, mContent, mFileData, mMsgLink, and mCmtLink.
+     */
     Comment selectComment(int cmtID) {
         Comment res = null;
         try {
@@ -298,7 +371,7 @@ public class Database {
             if(rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(cmtID);
                 res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), 
-                    rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData);
+                    rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count"));
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -315,7 +388,26 @@ public class Database {
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
                 res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
-                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    ArrayList<Comment> selectAllCommentsWithFlags(){
+        ArrayList<Comment> res = new ArrayList<Comment>();
+        try {
+            ResultSet rs = psSelectAllCommentsWithFlags.executeQuery();
+            while (rs.next()){
+                // for each message, get all comments and like count
+                int this_cmt = rs.getInt("cmtID");
+                ArrayList<MyFile> fileData = getCmtFiles(this_cmt);
+                Comment thisComment = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count"));
+                res.add(thisComment);   
             }
             rs.close();
             return res;
@@ -432,8 +524,14 @@ public class Database {
         int mCmtLink;
         ArrayList<Comment> mComments;
         ArrayList<MyFile> mFileData;
+        int mNumFlags;
+        String mAd;
+        boolean mIsEven;
 
-        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
+        // TODO : add a class variable for the number of flags
+        // DONE.
+
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData, int numFlags, String ad, boolean is_even) {
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
@@ -442,8 +540,26 @@ public class Database {
             mCmtLink = cmtLink;
             mComments = comments; 
             mFileData = fileData;
+            mNumFlags = numFlags;
+            mAd = ad;
+            mIsEven = is_even;
+        }
+
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, int numFlags, String ad, boolean is_even) {
+            mMsgID = msgID;
+            mUserID = userID;
+            mContent = content;
+            mNumLikes = numLikes;
+            mMsgLink = msgLink;
+            mCmtLink = cmtLink;
+            mNumFlags = numFlags;
+            mAd = ad;
+            mIsEven = is_even;
         }
     }
+
+    // TODO : add a constructor trhat does not require ArrayList<Comments> or ArrayList<MyFile> 
+    // DONE.
 
     // add a new message
     int insertMessage (String userID, String content, int msgLink, int cmtLink) {
@@ -453,10 +569,10 @@ public class Database {
         }
         
         try {
-            psInsertMessage.setString(2, userID);
-            psInsertMessage.setString(3, content);
-            psInsertMessage.setInt(4, msgLink);
-            psInsertMessage.setInt(5, cmtLink);
+            psInsertMessage.setString(1, userID);
+            psInsertMessage.setString(2, content);
+            psInsertMessage.setInt(3, msgLink);
+            psInsertMessage.setInt(4, cmtLink);
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -473,8 +589,7 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
-                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
-                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
             }
             rs.close();
             return res;
@@ -531,7 +646,7 @@ public class Database {
                 int likes = countLikes(msgID);
                 ArrayList<MyFile> fileData = getMsgFiles(msgID);
                 res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
-                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData);
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -553,8 +668,7 @@ public class Database {
                 ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
-                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
-                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
                 res.add(thisMessage);
             }
             rs.close();
@@ -564,6 +678,30 @@ public class Database {
             return null;
         }
     }
+
+    ArrayList<Message> selectAllMessagesWithFlags(){
+        ArrayList<Message> res = new ArrayList<Message>();
+        try {
+            ResultSet rs = psSelectAllMessagesWithFlags.executeQuery();
+            while (rs.next()){
+                // for each message, get all comments and like count
+                int this_msg = rs.getInt("msgID");
+                int likes = countLikes(this_msg);
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
+                res.add(thisMessage);   
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    // TODO create a ArrayList<Message> selectAllMessagesWithFlags()  function
+    // like selectAllMessages(), but only select where flag_count > 0 and 
+    // does not call countLikes() or getMessageFiles().  Hint use the new constructor
+    // DONE.
+
 
     // update a message
     int updateMessage (int msgID, String content) {
@@ -586,6 +724,11 @@ public class Database {
     int deleteMessage(int msgID){
         int res = -1;
         try {
+            // TODO update this function to call new stored procedure
+            // that removes messages from database that does not leave 
+            // the database with referential integrity issues
+            // DONE? -- didnt change anything here, changed the prepared statement
+
             psDeleteMessage.setInt(1, msgID);
             res = psDeleteMessage.executeUpdate();
         } catch (SQLException e){
@@ -928,6 +1071,130 @@ public class Database {
         return res;
     }
 
+    // class for flagged messages
+    public class MessageFlag {
+        String mUserID;
+        int mMsgID;
+
+        public MessageFlag(int msgID, String userID) {
+            mMsgID = msgID;
+            mUserID = userID;
+        }
+    }
+
+    // add a new flag to a message 
+    int insertMessageFlag (String userID, int msgID) {
+        int ret = 0;
+        if (testString(userID) == false) {  // general validity check
+            return -1;
+        }
+        try {
+            psInsertMsgFlag.setInt(1, msgID);
+            psInsertMsgFlag.setString(2, userID);
+            ret += psInsertMsgFlag.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+     // select a specific flagged message
+     MessageFlag selectMessageFlag(String userID, int msgID) {
+        MessageFlag res = null; 
+        try {
+            psSelectMessageFlag.setInt(1, msgID);
+            psSelectMessageFlag.setString(2, userID);
+            ResultSet rs = psSelectMessageFlag.executeQuery();
+            if(rs.next()){
+                res = new MessageFlag(rs.getInt("msgID"), rs.getString("userID"));
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    } 
+
+
+
+
+    // class for flagged comments
+    public class CommentFlag {
+        String mUserID;
+        int mCmtID;
+
+        public CommentFlag(int cmtID, String userID) {
+            mCmtID = cmtID;
+            mUserID = userID;
+        }
+    }
+
+    // add a new flag to a comment 
+    int insertCommentFlag (String userID, int cmtID) {
+        int ret = 0;
+        if (testString(userID) == false) {  // general validity check
+            return -1;
+        }
+        try {
+            psInsertCmtFlag.setInt(1, cmtID);
+            psInsertCmtFlag.setString(2, userID);
+            ret += psInsertCmtFlag.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+        return ret;
+    }
+
+    // select a specific flagged comment
+    CommentFlag selectCommentFlag(String userID, int cmtID) {
+        CommentFlag res = null; 
+        try {
+            psSelectCommentFlag.setInt(1, cmtID);
+            psSelectCommentFlag.setString(2, userID);
+            ResultSet rs = psSelectCommentFlag.executeQuery();
+            if(rs.next()){
+                res = new CommentFlag(rs.getInt("cmtID"), rs.getString("userID"));
+            }
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return res;
+    } 
+
+    // block a user
+    int addBlockedUser(String user_blocked, String user_blocker){
+        int res = -1;
+        try {
+            psBlockUser.setString(1, user_blocked);
+            psBlockUser.setString(2, user_blocker);
+            res = psBlockUser.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+        return res;
+    }
+    
+    // select all blocked users
+    ArrayList<User> selectAllBlockedUsers(){
+        ArrayList<User> res = new ArrayList<User>();
+        try {
+            ResultSet rs = psSelectAllBlockedUsers.executeQuery();
+            while (rs.next()){
+                res.add(new User( rs.getString("user_blocked"), rs.getString("user_blocker")));
+            }
+            rs.close();
+            return res;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
@@ -1014,6 +1281,7 @@ public class Database {
             db.psSelectUser = db.mConnection.prepareStatement("SELECT * from users where userID = ?");
             db.psSelectAllUsers = db.mConnection.prepareStatement("SELECT * from users");
             db.psUpdateUser = db.mConnection.prepareStatement("UPDATE users SET bio = ? WHERE userID = ?");
+            db.psSelectBlockedUser = db.mConnection.prepareStatement("SELECT * FROM blocked WHERE user_blocked = ?");
 
             // MESSAGE prepared statements
             db.psInsertMessage = db.mConnection.prepareStatement("INSERT INTO messages VALUES (default, ?, ?, ?, ?)");
@@ -1022,8 +1290,12 @@ public class Database {
             db.psGetMsgFileData = db.mConnection.prepareStatement("SELECT * from msgfiles WHERE msgID = ?");
             db.psSelectMessage = db.mConnection.prepareStatement("SELECT * from messages WHERE msgID = ?");
             db.psSelectAllMessages = db.mConnection.prepareStatement("SELECT * FROM messages");
+            db.psSelectAllMessagesWithFlags = db.mConnection.prepareStatement("SELECT * FROM messages WHERE flag_count > 0 ORDER BY flag_count DESC");
             db.psUpdateMessage = db.mConnection.prepareStatement("UPDATE messages SET content = ? WHERE msgID = ?");
-            db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM messages WHERE msgID = ?");
+            // db.psDeleteMessage = db.mConnection.prepareStatement("DELETE FROM messages WHERE msgID = ?");
+            db.psDeleteMessage = db.mConnection.prepareStatement("call delete_msg(?)");
+            // TODO fix above to call stored procedure that deletes with ref integrity
+            // DONE.
   
             // LIKE prepared statements
             db.psInsertLike = db.mConnection.prepareStatement("INSERT INTO likes VALUES (?, ?, ?)");
@@ -1036,6 +1308,7 @@ public class Database {
             db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
             db.psSelectAllComments = db.mConnection.prepareStatement("SELECT * from comments");
+            db.psSelectAllCommentsWithFlags = db.mConnection.prepareStatement("SELECT * FROM comments WHERE flag_count > 0 ORDER BY flag_count DESC");
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
 
@@ -1051,6 +1324,21 @@ public class Database {
             db.psGetCmtFileID = db.mConnection.prepareStatement("SELECT fileID from cmtfiles WHERE filename = ?");
             db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
             db.psDeleteCmtFile = db.mConnection.prepareStatement("DELETE FROM cmtfiles WHERE fileID = ?");
+
+            // MSG FLAG prepared statements
+            db.psInsertMsgFlag = db.mConnection.prepareStatement("call add_new_flagged_msg(?, ?)");
+            db.psSelectMessageFlag = db.mConnection.prepareStatement("SELECT * from flagged_msgs where msgID = ? AND userID = ?");
+
+            // CMT FLAG prepared statements
+            db.psInsertCmtFlag = db.mConnection.prepareStatement("call add_new_flagged_comments(?, ?)");
+            db.psSelectCommentFlag = db.mConnection.prepareStatement("SELECT * from flagged_comments where cmtID = ? AND userID = ?");
+
+            //check if msgid exists in flagged messages table
+            db.psCheckMsgIDFlag = db.mConnection.prepareStatement("SELECT * FROM flagged_msgs WHERE msgid = ?");
+
+            // block user
+            db.psBlockUser = db.mConnection.prepareStatement("call add_new_blocked_user(?, ?)");
+            db.psSelectAllBlockedUsers = db.mConnection.prepareStatement("SELECT * FROM blocked");
 
             // I commented these out because we may not need all of them
 
@@ -1208,6 +1496,22 @@ public class Database {
             psDecrementLikes.execute();
             return 1;
         } catch(SQLException e){
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    int countMessageFlags(int id) {
+        try {
+            psCountMessageFlags.setInt(1, id);
+            ResultSet rs = psCountMessageFlags.executeQuery();
+            while (rs.next()){
+                res.add( rs.getInt("flag_count")));
+            }
+            rs.close();
+            return res;
+            return 0;
+        } catch(SQLException e) {
             e.printStackTrace();
             return -1;
         }
