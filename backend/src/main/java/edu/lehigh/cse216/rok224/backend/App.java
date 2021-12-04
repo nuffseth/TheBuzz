@@ -3,7 +3,6 @@ package edu.lehigh.cse216.rok224.backend;
 // Import the Spark package, so that we can make use of the "get" function to 
 // create an HTTP GET route
 import spark.Spark;
-import java.util.*;
 
 // commented out IOException import, was unused
 // import java.io.IOException;
@@ -97,7 +96,7 @@ public class App {
 
     // create local hash table for storing temporary session keys and corresponding user email
     // map user email to session key
-    protected static HashMap<String, String> hash_map = new HashMap<String, String>();
+    //protected static HashMap<String, String> hash_map = new HashMap<String, String>();
     static MemcachedClient mc;
 
     /**
@@ -123,8 +122,7 @@ public class App {
      * @param map           Hash map that maps session key to user email
      * @return              true if user/key combo is found in hash map, false otherwise
      */
-    /*
-     protected static boolean authenticate(String email, String session_key) {
+    protected static boolean authenticate(String email, String session_key) {
         // search the provided hash map for the session_key and make sure it matches the email
         String map_value;
         try {
@@ -148,19 +146,6 @@ public class App {
         }
         return false; // email/session_key pair not found in hash map
     }
-    */
-    protected static boolean authenticate(String email, String session_key) {
-        // search the provided hash map for the session_key and make sure it matches the email
-        String map_value = hash_map.get(email);
-        // make sure the session key sent matches the value on the hash map
-        if ( map_value == null ) { // if email not found, return false
-            return false;
-        }
-        if ( map_value.equals(session_key)) { // if user/session_key combo is valid, return true
-            return true;
-        }
-        return false; // email/session_key pair not found in hash map
-    }
 
     protected static String verifyIdToken(GoogleIdTokenVerifier verifier, String idTokenString) {
         // verify the id token sent to us from the frontend
@@ -168,7 +153,6 @@ public class App {
         try {
             idToken = verifier.verify(idTokenString);
             if (idToken == null) { // check if id token not verified, give error
-                System.out.println("Invalid id token");
                 return null;
             } 
             Payload payload = idToken.getPayload(); 
@@ -340,10 +324,6 @@ public class App {
         //// GENERAL ROUTES
         //
 
-        
-        // Get the port on which to listen for requests
-        Spark.port(getIntFromEnv("PORT", 4567));
-
         // Set up a route for serving the main page
         Spark.get("/", (req, res) -> {
             res.redirect("/index.html");
@@ -365,16 +345,11 @@ public class App {
             System.out.println("idTokenString = " + idTokenString);
 
             // ensure status 200 OK, with a MIME type of JSON
-            System.out.println("ensuring response status");
             response.status(200);
-            System.out.println("ensuring response MIME type");
             response.type("application/json");
             
             // verify the id token sent to us from the frontend
-            System.out.println("getting email... ");
             String email = verifyIdToken(verifier, idTokenString);
-
-            System.out.println("email = " + email);
 
             // check that email ends in @lehigh.edu
             String[] values = email.split("@", 0); 
@@ -391,12 +366,11 @@ public class App {
             // save user and session key in local hash table
             String session_key = UUID.randomUUID().toString(); // make a random string
             System.out.println("random session key: " + session_key);
-            // mc.set(username, 3600, session_key);
-            hash_map.put(username, session_key);
+            mc.set(username, 3600, session_key);
 
             // add user to user table, Database.java shouldn't add duplicates
             System.out.println("inserting user into database...");
-            int result = dataBase.insertUser(username, "empty bio");
+            int result = dataBase.insertUser(username, "");
 
             // send the session key back to the frontend
             if (result == -1) { // return an error if unable to add user
@@ -468,7 +442,7 @@ public class App {
             }
 
             // add input message and current user to messages table
-            int result = dataBase.insertMessage(req.mEmail, req.mMessage, req.messageLink, req.commentLink);
+            int result = dataBase.insertMessage(req.mMessage, req.mEmail, req.messageLink, req.commentLink);
             
 
             if (result == -1) {
@@ -504,9 +478,8 @@ public class App {
             }
 
             // // make sure current user matches the one who created the message
-            String original_poster = dataBase.selectMessage(idx).mUserID;
-            if (!original_poster.equals(req.mEmail)) {
-                return gson.toJson(new StructuredResponse("error", "current user " + req.mEmail + " doesn't match post by user " + original_poster  , null));
+            if (dataBase.selectMessage(idx).mUserID != req.mEmail) {
+                return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
             }
 
             int result = dataBase.updateMessage(idx, req.mMessage);
@@ -539,7 +512,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "unable to select message " + idx, null));
             }
             // make sure current user matches the one who created the message
-            if (!dataBase.selectMessage(idx).mUserID.equals(req.mEmail)) {
+            if (dataBase.selectMessage(idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, row  " + idx, null));
             }
 
@@ -560,8 +533,38 @@ public class App {
         //
         //// Flag routes
         //
-        /*
-        Spark.put("/messages/:id/flag", (request, response) -> {
+
+        Spark.get("/messages/:id/flags", (request, response) -> {
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
+                return gson.toJson(new StructuredResponse("ok", null, false));
+            } else { //If the message is already flagged, remove the flag.
+                return gson.toJson(new StructuredResponse("ok", null, true));
+            }
+        });
+
+        Spark.get("/messages/:id/comments/:comment_id/flags", (request, response) -> {
+            // get all info from request
+            int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
+
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+            // ensure status 200 OK, with a MIME type of JSON
+            response.status(200);
+            response.type("application/json");
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
+                return gson.toJson(new StructuredResponse("ok", null, false));
+            } else { //If the message is already flagged, remove the flag.
+                return gson.toJson(new StructuredResponse("ok", null, true));
+            }
+        });
+
+        Spark.put("/messages/:id/flags", (request, response) -> {
             int msg_idx = Integer.parseInt(request.params("id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
@@ -574,10 +577,10 @@ public class App {
 
             int result = 0;
             
-            if(database.selectMessageFlag(msg_idx) == null){
-                result = database.insertMessageFlag(msg_idx);
+            if(dataBase.selectMessageFlag(req.mEmail, msg_idx) == null){
+                result = dataBase.insertMessageFlag(req.mEmail, msg_idx);
             } else { //If the message is already flagged, remove the flag.
-                result = database.deleteMessageFlag(msg_idx);
+                result = dataBase.deleteMessageFlag(msg_idx);
             }
 
             if (result == -1) {
@@ -587,7 +590,7 @@ public class App {
             }
         });
 
-        Spark.put("comments/:id/flag", (request, response) -> {
+        Spark.put("messages/:id/comments/:comment_id/flags", (request, response) -> {
             int comment_idx = Integer.parseInt(request.params("comment_id"));
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
@@ -604,19 +607,73 @@ public class App {
 
             int result = 0;
             
-            if(database.selectCommentFlag(comment_idx) == null){
-                result = database.insertCommentFlag(comment_idx);
+            if(dataBase.selectCommentFlag(req.mEmail, comment_idx) == null){
+                result = dataBase.insertCommentFlag(req.mEmail, comment_idx);
             } else { //If the message is already flagged, remove the flag.
-                result = database.deleteCommentFlag(comment_idx);
+                result = dataBase.deleteCommentFlag(comment_idx);
             }
 
             if (result == -1) {
-                return gson.toJson(new StructuredResponse("error", "unable to insert/update like", null));
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update flag", null));
             } else {
                 return gson.toJson(new StructuredResponse("ok", null, null));
             }
         });
-        */
+
+        //
+        //// Blocked User routes
+        //
+        Spark.put("/users/:id/block", (request, response) -> {
+            String user_idx = request.params("id");
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            if(dataBase.selectUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("error", "user " + user_idx + " not found", null));
+            }
+
+            int result = 0;
+            
+            if(dataBase.selectBlockedUser(req.mEmail) == null){
+                result = dataBase.addBlockedUser(user_idx, req.mEmail);
+            } else { //If the user is already blocked unblock them.
+                result = dataBase.deleteBlockedUser(req.mEmail);
+            }
+
+            if (result == -1) {
+                return gson.toJson(new StructuredResponse("error", "unable to insert/update block", null));
+            } else {
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            }
+        });
+
+        Spark.get("users/:id/block", (request, response) -> {
+            int user_idx = Integer.parseInt(request.params("id"));
+            SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
+
+            response.status(200);
+            response.type("application/json");
+
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
+
+            if(dataBase.selectUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("error", "user " + user_idx + " not found", null));
+            }
+
+            if(dataBase.selectBlockedUser(req.mEmail) == null){
+                return gson.toJson(new StructuredResponse("ok", null, null));
+            } else { //If the user is already blocked unblock them.
+                return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(req.mEmail)));
+            }
+        });
 
         //
         //// LIKES ROUTES
@@ -817,7 +874,7 @@ public class App {
         // TO DO: make sure selectOne works for comments (admin)
         // TO DO: need a way to get the email of user who posted a comment (maybe an update to selectOne) ?
         // TO DO: make sure updateContentCommentsTable works (should take in comment id instead of user id) (admin)
-        Spark.put("/messages/:id/comments/:comment_id", (request, response) -> {
+        Spark.put("/messages/:id/comments/comment_id", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
             int comment_idx = Integer.parseInt(request.params("comment_id")); // 500 error if fails
@@ -835,7 +892,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (!dataBase.selectComment(comment_idx).mUserID.equals(req.mEmail)) {
+            if (dataBase.selectComment(comment_idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
@@ -871,7 +928,7 @@ public class App {
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (!dataBase.selectComment(comment_idx).mUserID.equals(req.mEmail)) {
+            if (dataBase.selectComment(comment_idx).mUserID != req.mEmail) {
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
@@ -899,17 +956,17 @@ public class App {
             response.status(200);
             response.type("application/json");
 
-            // if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
-            //     return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
-            // }
+            if (!authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+                return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
+            }
 
             // get username from URL and find in database
             String username = request.params("username"); 
 
             // // make sure username requested matches current user
-            // if ( !username.equals(req.mEmail) ) {
-            //     return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
-            // }
+            if (!username.equals(req.mEmail) ) {
+                return gson.toJson(new StructuredResponse("error", "current user is not " + username, null));
+            }
 
             Database.User data = dataBase.selectUser(username); // get the user object
 
@@ -938,5 +995,23 @@ public class App {
                 return gson.toJson(new StructuredResponse("ok", null, data));
             }
         });
+
+        //
+        // ISEVEN ROUTES
+        //
+        
+        // GET route that returns the ad and whether or not a number is even
+        Spark.get("https://api.isevenapi.xyz/api/iseven/:number", (request, response) -> {
+            // get number from URL and find in database
+            int number = Integer.parseInt(request.params("number")); // if id not an int, 500 error
+
+            // ensure status 200 OK, with a MIME type of JSON, and return
+            response.status(200);
+            response.type("application/json");
+            return gson.toJson(new StructuredResponse("ok", null, null));//Placeholder
+        });
+
+        //
+        // B
     }
 }
