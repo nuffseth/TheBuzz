@@ -162,7 +162,7 @@ Future<http.Response> deleteComment(int msgId, int cmtId) async {
 
 Future<String> blockUser(String userID) async {
   String bio = "hardcoded user bio";
-  final response = await http.post(
+  final response = await http.put(
     Uri.parse(Constants.url + '/users/' + userID + '/block'),
     body: jsonEncode(<String, String>{
       "mSessionKey": Constants.sessionKey,
