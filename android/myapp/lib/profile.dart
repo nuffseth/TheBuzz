@@ -27,11 +27,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return gotProfile
         ? Scaffold(
             appBar: AppBar(
-              title: Text(" Your Profile "),
+              title: const Text(" Your Profile "),
               centerTitle: true,
               actions: [
                 IconButton(
-                    icon: Icon(Icons.exit_to_app),
+                    icon: const Icon(Icons.exit_to_app),
                     onPressed: () async {
                       await googleSignIn.signOut();
                       Navigator.pushNamedAndRemoveUntil(
@@ -41,19 +41,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             body: Column(
               children: [
-                Image.network(account.photoUrl, height: 150),
-                Text(account.displayName),
+                Image.network(account.photoUrl.toString(), height: 150),
+                Text(account.displayName!),
                 Text(account.email),
-                Text(auth.idToken),
+                Text(auth.idToken!),
               ],
             ),
           )
-        : LinearProgressIndicator();
+        : const LinearProgressIndicator();
   }
 
   void getProfile() async {
     await googleSignIn.signInSilently();
-    account = googleSignIn.currentUser;
+    account = googleSignIn.currentUser!;
     auth = await account.authentication;
     setState(() {
       gotProfile = true;

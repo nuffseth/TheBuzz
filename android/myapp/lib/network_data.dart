@@ -5,69 +5,238 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:myapp/buzz_post.dart';
+import 'package:myapp/structured_response.dart';
+
+import 'constants.dart';
+
+void login(String mMessage) async {
+  String sessionKey = "";
+  // parses the json found on the heroku link
+  final response = await http.post(
+    Uri.parse(Constants.url + '/login'),
+    // headers: <String, String>{
+    //   'Content-Type': 'application/json; charset=UTF-8',
+    // },
+    body: jsonEncode(<String, String>{
+      "mMessage": Constants.idTokenString,
+    }),
+  );
+
+  // 200 response = we chillin
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+    Constants.sessionKey = parsedJson['mData'];
+    print(Constants.sessionKey);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Invalid Session Key');
+  }
+}
 
 Future<http.Response> createPost(String mMessage) async {
   return http.post(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+    Uri.parse(Constants.url + '/messages'),
     body: jsonEncode(<String, String>{
-      'mMessage': mMessage,
+      "mMessage": mMessage,
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
     }),
   );
 }
 
-Future<http.Response> editPost(String mMessage, String mId) async {
-  return http.put(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' + mId),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+Future<http.Response> editPost(String mMessage, int mId) async {
+  final response = await http.put(
+    Uri.parse(Constants.url + '/messages/' + mId.toString()),
     body: jsonEncode(<String, String>{
-      'mMessage': mMessage,
+      "mMessage": mMessage,
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
     }),
   );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to edit messsage');
+  }
+  print(response.body);
+  return response;
 }
 
-Future<http.Response> deletePost(String mId) async {
-  return http.delete(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' + mId),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+Future<http.Response> deletePost(int mId) async {
+  final response = await http.delete(
+    Uri.parse(Constants.url + '/messages/' + mId.toString()),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
   );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to delete messsage');
+  }
+  print(response.body);
+  return response;
 }
 
 Future<http.Response> incrementLikes(String mId) {
   return http.post(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
-        mId +
-        '/likes'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+    Uri.parse(Constants.url + '/messages/' + mId + '/likes'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
   );
 }
 
 Future<http.Response> decrementLikes(String mId) {
   return http.post(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
-        mId +
-        '/dislikes'),
+    Uri.parse(Constants.url + '/messages/' + mId + '/dislikes'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+}
+
+Future<http.Response> getComments(int mMsgId) {
+  return http.get(
+    Uri.parse(Constants.url + '/messages/' + mMsgId.toString() + '/comments'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
   );
 }
 
-Future<http.Response> getComments(String mId) {
-  return http.get(
-    Uri.parse('https://limitless-caverns-65131.herokuapp.com/messages/' +
-        mId +
-        '/comments'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+Future<http.Response> editComment(String mMessage, int msgId, int cmtId) async {
+  final response = await http.put(
+    Uri.parse(Constants.url +
+        '/messages/' +
+        msgId.toString() +
+        '/comments/' +
+        cmtId.toString()),
+    body: jsonEncode(<String, String>{
+      "mMessage": mMessage,
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
   );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to edit messsage');
+  }
+  print(response.body);
+  return response;
+}
+
+Future<http.Response> deleteComment(int msgId, int cmtId) async {
+  final response = await http.delete(
+    Uri.parse(Constants.url +
+        '/messages/' +
+        msgId.toString() +
+        '/comments/' +
+        cmtId.toString()),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to edit messsage');
+  }
+  print(response.body);
+  return response;
+}
+
+Future<String> blockUser(String userID) async {
+  String bio = "hardcoded user bio";
+  final response = await http.put(
+    Uri.parse(Constants.url + '/users/' + userID + '/block'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to block user');
+  }
+  print(response.body);
+  return bio;
+}
+
+Future<http.Response> flagMsg(int mId) async {
+  final response = await http.put(
+    Uri.parse(Constants.url + '/messages/' + mId.toString() + '/flags'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to flag messsage');
+  }
+  print(response.body);
+  return response;
+}
+
+Future<http.Response> flagCmt(int cmtID) async {
+  final response = await http.put(
+    Uri.parse(Constants.url +
+        '/messages/' +
+        Constants.currentMsg.toString() +
+        '/comments/' +
+        cmtID.toString() +
+        '/flags'),
+    body: jsonEncode(<String, String>{
+      "mSessionKey": Constants.sessionKey,
+      "mEmail": Constants.username,
+    }),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to flag comment');
+  }
+  print(response.body);
+  return response;
+}
+
+Future<bool> isFlaggedMsg(int mId) async {
+  bool isFlagged = false;
+  final response = await http.get(
+    Uri.parse(Constants.url + '/messages/' + mId.toString() + '/flags'),
+  );
+  if (response.statusCode == 200 && jsonDecode(response.body) != Null) {
+    // get the session key from the response
+    var parsedJson = jsonDecode(response.body);
+    isFlagged = parsedJson['mData'];
+    print(isFlagged);
+  } else {
+    // not 200 response = we are not, in fact, chillin
+    throw Exception('Failed to check if message is flagged');
+  }
+  print(response.body);
+  return isFlagged;
 }

@@ -183,6 +183,7 @@ public class Database {
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
+<<<<<<< HEAD
         // check if user in database (selectuser function), return 0 if it does exist, add if doesnt
         try {
             System.out.println("trying to add user to database...");
@@ -195,9 +196,24 @@ public class Database {
                 ret = 0;
             }
             else {
+=======
+
+        User exists = selectUser(user);
+        System.out.println(exists);
+        if (exists != null) {
+            return 0;
+        } else {
+            try {
+                System.out.println("trying to add user to database...");
+                psInsertUser.setString(1, user);  // first param is being set as user
+                psInsertUser.setString(2, bio);   // second param is being set as bio
+                ret += psInsertUser.executeUpdate();
+            } catch (SQLException e) {
+>>>>>>> android
                 e.printStackTrace();
             }
         }
+        
         return ret;
     }
 
@@ -567,6 +583,7 @@ public class Database {
         if (testString(content) == false || testString(userID) == false) { // generic validity check
             return -1;
         }
+        System.out.println("userID: " + userID);
         
         try {
             psInsertMessage.setString(1, userID);
@@ -1071,6 +1088,7 @@ public class Database {
         return res;
     }
 
+<<<<<<< HEAD
     // class for flagged messages
     public class MessageFlag {
         String mUserID;
@@ -1195,6 +1213,8 @@ public class Database {
     }
 
 
+=======
+>>>>>>> android
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.

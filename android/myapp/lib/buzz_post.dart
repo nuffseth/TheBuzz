@@ -1,19 +1,48 @@
 class BuzzPost {
-  int mId;
-  String mMessage;
-  int mLikes;
+  String mUserID;
+  int mMsgId;
+  String mContent;
+  int mNumLikes;
+  // int mMsgLink;
+  // int mCmtLink;
+  // mCmtList;
+  // mFileList
+  String ad;
+  bool isFlagged;
 
   BuzzPost({
-    required this.mId,
-    required this.mMessage,
-    required this.mLikes,
+    required this.mUserID,
+    required this.mMsgId,
+    required this.mContent,
+    required this.mNumLikes,
+    // required this.mMsgLink,
+    // required this.mCmtLink
+    // mCmtList,
+    // mFileList
+    required this.ad,
+    required this.isFlagged,
   });
 
   factory BuzzPost.fromJson(Map<String, dynamic> json) {
     return BuzzPost(
-      mId: json['mId'] as int,
-      mMessage: json['mMessage'] as String,
-      mLikes: json['mLikes'] as int,
-    );
+        mUserID: json['mUserID'] as String,
+        mMsgId: json['mMsgID'] as int,
+        mContent: json['mContent'] as String,
+        mNumLikes: json['mNumLikes'] as int,
+        // mMsgLink: json['mMsgLink'] as int,
+        // mCmtLink: json['mCmtLink'] as int,
+        ad: json['mAd'] as String,
+        isFlagged: false);
   }
+
+  // Map toMap() {
+  //   var map = new Map();
+  //   map["mUserID"] = mUserID;
+  //   map["mMsgID"] = mMsgId;
+  //   map["mContent"] = mContent;
+  //   map["mNumLikes"] = mNumLikes;
+  //   map["mAd"] = ad;
+
+  //   return map;
+  // }
 }

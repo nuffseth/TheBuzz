@@ -96,7 +96,10 @@ public class Database {
     private PreparedStatement psInsertComment;
     private PreparedStatement psSelectComment;
     private PreparedStatement psSelectAllComments;
+<<<<<<< HEAD
     private PreparedStatement psSelectAllCommentsWithFlags;
+=======
+>>>>>>> android
     private PreparedStatement psGetCmtFileData;
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
@@ -114,6 +117,7 @@ public class Database {
     private PreparedStatement psSelectAllCmtFiles;
     private PreparedStatement psDeleteCmtFile;
     private PreparedStatement psGetCmtFileID;
+<<<<<<< HEAD
 
     // MSG FLAG PREPARD STATEMENTS
     private PreparedStatement psInsertMsgFlag;
@@ -130,6 +134,8 @@ public class Database {
     private PreparedStatement psBlockUser;
     private PreparedStatement psSelectAllBlockedUsers;
     private PreparedStatement psDeleteBlockedUser;
+=======
+>>>>>>> android
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
@@ -186,6 +192,7 @@ public class Database {
         if (testString(user) == false){ // generic validity check on both params
             return -1;
         }
+<<<<<<< HEAD
 
         User existingUser = selectUser(user);
         // check if user already exists before trying to add to the database
@@ -206,6 +213,20 @@ public class Database {
                 // else {
                 //     e.printStackTrace();
                 // }
+=======
+        
+        try {
+            System.out.println("trying to add user to database...");
+            psInsertUser.setString(1, user);  // first param is being set as user
+            psInsertUser.setString(2, bio);   // second param is being set as bio
+            ret += psInsertUser.executeUpdate();
+        } catch (SQLException e) {
+            // if error bc user already exists, return 0
+            if (e.toString().contains("Key (userid)=(" + user + ") already exists.")) {
+                ret = 0;
+            }
+            else {
+>>>>>>> android
                 e.printStackTrace();
                 return -1;
             }
@@ -233,6 +254,7 @@ public class Database {
         return res;
     }
 
+<<<<<<< HEAD
     User selectBlockedUser(String blockedUser) {
         User res = null;
         try {
@@ -248,6 +270,8 @@ public class Database {
         return res;
     }
 
+=======
+>>>>>>> android
     /**
      * Select all the users in the database. (should only be accessible from admin CLI)
      * @return      An ArrayList of Database.User objects, where each Database.User includes mUserID and mBio
@@ -301,9 +325,14 @@ public class Database {
         ArrayList<MyFile> mFileData;
         int mMsgLink;
         int mCmtLink;
+<<<<<<< HEAD
         int mNumFlags;
 
         public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData, int numFlags) {
+=======
+
+        public Comment(int commentID, String userID, int msgID, String content, int msgLink, int cmtLink, ArrayList<MyFile> fileData) {
+>>>>>>> android
             mUserID = userID;
             mCommentID = commentID;
             mMsgID = msgID;
@@ -311,7 +340,10 @@ public class Database {
             mFileData = fileData;
             mMsgLink = msgLink;
             mCmtLink = cmtLink;
+<<<<<<< HEAD
             mNumFlags = numFlags;
+=======
+>>>>>>> android
         }
     }
 
@@ -383,7 +415,11 @@ public class Database {
             if(rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(cmtID);
                 res = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), 
+<<<<<<< HEAD
                     rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count"));
+=======
+                    rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData);
+>>>>>>> android
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -397,6 +433,7 @@ public class Database {
         ArrayList<Comment> res = new ArrayList<Comment>();
         try {
             ResultSet rs = psSelectAllComments.executeQuery();
+<<<<<<< HEAD
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
                 res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
@@ -420,6 +457,12 @@ public class Database {
                 ArrayList<MyFile> fileData = getCmtFiles(this_cmt);
                 Comment thisComment = new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count"));
                 res.add(thisComment);   
+=======
+            while (rs.next()){
+                ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+>>>>>>> android
             }
             rs.close();
             return res;
@@ -536,6 +579,7 @@ public class Database {
         int mCmtLink;
         ArrayList<Comment> mComments;
         ArrayList<MyFile> mFileData;
+<<<<<<< HEAD
         int mNumFlags;
         String mAd;
         boolean mIsEven;
@@ -544,6 +588,10 @@ public class Database {
         // DONE.
 
         public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData, int numFlags, String ad, boolean is_even) {
+=======
+
+        public Message(int msgID, String userID, String content, int numLikes, int msgLink, int cmtLink, ArrayList<Comment> comments, ArrayList<MyFile> fileData) {
+>>>>>>> android
             mMsgID = msgID;
             mUserID = userID;
             mContent = content;
@@ -552,6 +600,7 @@ public class Database {
             mCmtLink = cmtLink;
             mComments = comments; 
             mFileData = fileData;
+<<<<<<< HEAD
             mNumFlags = numFlags;
             mAd = ad;
             mIsEven = is_even;
@@ -567,6 +616,8 @@ public class Database {
             mNumFlags = numFlags;
             mAd = ad;
             mIsEven = is_even;
+=======
+>>>>>>> android
         }
     }
 
@@ -581,10 +632,17 @@ public class Database {
         }
         
         try {
+<<<<<<< HEAD
             psInsertMessage.setString(1, userID);
             psInsertMessage.setString(2, content);
             psInsertMessage.setInt(3, msgLink);
             psInsertMessage.setInt(4, cmtLink);
+=======
+            psInsertMessage.setString(2, userID);
+            psInsertMessage.setString(3, content);
+            psInsertMessage.setInt(4, msgLink);
+            psInsertMessage.setInt(5, cmtLink);
+>>>>>>> android
             ret += psInsertMessage.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -601,7 +659,12 @@ public class Database {
             ResultSet rs = psGetMsgComments.executeQuery();
             while (rs.next()){
                 ArrayList<MyFile> fileData = getCmtFiles(rs.getInt("cmtID"));
+<<<<<<< HEAD
                 res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData, rs.getInt("flag_count")));
+=======
+                res.add(new Comment(rs.getInt("cmtID"), rs.getString("userID"), rs.getInt("msgID"), rs.getString("content"), 
+                        rs.getInt("msgLink"), rs.getInt("cmtLink"), fileData));
+>>>>>>> android
             }
             rs.close();
             return res;
@@ -658,7 +721,11 @@ public class Database {
                 int likes = countLikes(msgID);
                 ArrayList<MyFile> fileData = getMsgFiles(msgID);
                 res = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+<<<<<<< HEAD
                         likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
+=======
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), allComments, fileData);
+>>>>>>> android
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -680,7 +747,12 @@ public class Database {
                 ArrayList<MyFile> fileData = getMsgFiles(this_msg);
 
                 // create Message object and add to our ArrayList
+<<<<<<< HEAD
                 Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData, rs.getInt("flag_count"), rs.getString("ad"), rs.getBoolean("is_even"));
+=======
+                Message thisMessage = new Message(rs.getInt("msgID"), rs.getString("userID"), rs.getString("content"), 
+                        likes, rs.getInt("msgLink"), rs.getInt("cmtLink"), comments, fileData);
+>>>>>>> android
                 res.add(thisMessage);
             }
             rs.close();
@@ -845,6 +917,7 @@ public class Database {
         byte[] data = bytes_data.toByteArray();
         return data;
 
+<<<<<<< HEAD
     }
 
     // method to delete a file from the database (helper function for deleteMsgFile and deleteCmtFile)
@@ -861,6 +934,24 @@ public class Database {
         return ret;
     }
 
+=======
+    }
+
+    // method to delete a file from the database (helper function for deleteMsgFile and deleteCmtFile)
+    int deleteFile(String fileID) {
+        if (!validFileID(fileID)) { // make sure fileID is valid
+            return -1;
+        }
+        int ret = 0;
+        try {
+            mService.files().delete(fileID).execute();
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e);
+        }
+        return ret;
+    }
+
+>>>>>>> android
     int insertMsgFile(int msgID, java.io.File file) {
         String fileID = null;
         int ret = 0; 
@@ -1083,6 +1174,7 @@ public class Database {
         return res;
     }
 
+<<<<<<< HEAD
     // class for flagged messages
     public class MessageFlag {
         String mUserID;
@@ -1207,6 +1299,8 @@ public class Database {
     }
 
 
+=======
+>>>>>>> android
     /**
      * The Database constructor is private: we only create Database objects 
      * through the getDatabase() method.
@@ -1320,7 +1414,10 @@ public class Database {
             db.psGetCmtFileData = db.mConnection.prepareStatement("SELECT * from cmtfiles WHERE cmtID = ?");
             db.psSelectComment = db.mConnection.prepareStatement("SELECT * from comments WHERE cmtID = ?");
             db.psSelectAllComments = db.mConnection.prepareStatement("SELECT * from comments");
+<<<<<<< HEAD
             db.psSelectAllCommentsWithFlags = db.mConnection.prepareStatement("SELECT * FROM comments WHERE flag_count > 0 ORDER BY flag_count DESC");
+=======
+>>>>>>> android
             db.psUpdateComment = db.mConnection.prepareStatement("UPDATE comments SET content = ? WHERE cmtID = ?");
             db.psDeleteComment = db.mConnection.prepareStatement("DELETE FROM comments WHERE cmtID = ?");
 
@@ -1336,6 +1433,7 @@ public class Database {
             db.psGetCmtFileID = db.mConnection.prepareStatement("SELECT fileID from cmtfiles WHERE filename = ?");
             db.psSelectAllCmtFiles = db.mConnection.prepareStatement("SELECT * from cmtfiles");
             db.psDeleteCmtFile = db.mConnection.prepareStatement("DELETE FROM cmtfiles WHERE fileID = ?");
+<<<<<<< HEAD
 
             // MSG FLAG prepared statements
             db.psInsertMsgFlag = db.mConnection.prepareStatement("call add_new_flagged_msg(?, ?)");
@@ -1351,6 +1449,8 @@ public class Database {
             // block user
             db.psBlockUser = db.mConnection.prepareStatement("call add_new_blocked_user(?, ?)");
             db.psSelectAllBlockedUsers = db.mConnection.prepareStatement("SELECT * FROM blocked");
+=======
+>>>>>>> android
 
             // I commented these out because we may not need all of them
 

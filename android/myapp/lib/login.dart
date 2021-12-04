@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -19,12 +21,12 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Text(
+          const Text(
             'Sign in with Google!',
             style: TextStyle(fontSize: 30),
           ),
           ElevatedButton(
-            child: Text('Tap to Sign in'),
+            child: const Text('Tap to Sign in'),
             onPressed: () {
               statrSignIn();
             },

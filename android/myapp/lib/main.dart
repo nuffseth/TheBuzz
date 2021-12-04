@@ -5,14 +5,18 @@ import 'package:myapp/data_model.dart';
 import 'package:myapp/network_data.dart';
 import 'package:myapp/camera.dart';
 import 'package:camera/camera.dart';
+import 'package:myapp/profile.dart';
+import 'package:myapp/user.dart';
 //import 'package:myapp/profile.dart';
 //import 'package:myapp/splash.dart';
 
 import 'buzz_post.dart';
+import 'constants.dart';
 import 'data_model.dart';
 import 'network_data.dart';
 import 'add_post.dart';
 
+// ignore: prefer_typing_uninitialized_variables
 late var cameras;
 // void main() => runApp(const MyApp());
 void main() async {
@@ -41,6 +45,7 @@ class MyApp extends StatelessWidget {
         //'/login': (_) => const LoginScreen(),
         '/home': (_) => const MyHomePage(title: 'The Buzz Home Page'),
         //'/profile': (_) => const ProfileScreen(),
+        '/user': (_) => const UserScreen(),
         '/comments': (_) => const CommentScreen(),
 
         '/camera': (_) => TakePictureScreen(camera: cameras[0]),
@@ -87,6 +92,10 @@ class _BuzzPostsState extends State<MyHomePage> {
   final _disliked = [];
   final addController = TextEditingController();
   final editController = TextEditingController();
+  final newThing = Constants.sessionKey;
+  final sessionKey = "57bd40b6-34b3-464c-b47f-03430b0b31db";
+  final userEmail = "arg422";
+  bool _isFlagged = false;
 
   @override
   void dispose() {
@@ -102,6 +111,9 @@ class _BuzzPostsState extends State<MyHomePage> {
 
     // this should still be a yucky list of json shit that we still wanna convert
     jsonPosts = DataModel.model.fetchBuzzList();
+
+    // set session key
+    login(Constants.idTokenString);
   }
 
   /*
@@ -111,17 +123,19 @@ class _BuzzPostsState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Buzz Buzz Buzz'),
-          backgroundColor: Colors.deepPurple,
+          title: const Text('Buzz Buzz Buzz!!!'),
+          backgroundColor: Colors.amber,
           actions: <Widget>[
             IconButton(
-                icon: Icon(Icons.account_circle),
+                icon: const Icon(Icons.account_circle),
                 onPressed: () {
-                  //Navigator.pushReplacementNamed(context, '/profile');
+                  //Navigator.pushReplacementNamed(context, '/login');
                 }),
           ],
         ),
-        //body: _buildPosts(),
+        //body: _buildPosts(),\
+
+        // display all messages
         body: Center(
             child: FutureBuilder<List<BuzzPost>>(
           future: jsonPosts,
@@ -142,9 +156,11 @@ class _BuzzPostsState extends State<MyHomePage> {
             return const CircularProgressIndicator();
           },
         )),
+
+        // post a new message
         floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add_outlined),
-          backgroundColor: Colors.deepPurple,
+          child: const Icon(Icons.add_outlined),
+          backgroundColor: Colors.red,
           foregroundColor: Colors.white,
           onPressed: () {
             showDialog(
@@ -152,7 +168,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                 builder: (BuildContext context) {
                   return AlertDialog(
                       scrollable: true,
-                      title: Text('Add Post'),
+                      title: const Text('Add Post'),
                       content: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Form(
@@ -160,7 +176,7 @@ class _BuzzPostsState extends State<MyHomePage> {
                             children: <Widget>[
                               TextFormField(
                                 controller: addController,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   labelText: 'Message',
                                 ),
                               ),
@@ -170,10 +186,10 @@ class _BuzzPostsState extends State<MyHomePage> {
                       ),
                       actions: [
                         ElevatedButton(
-                            child: Text('Cancel'),
+                            child: const Text('Cancel'),
                             onPressed: () => Navigator.pop(context)),
                         ElevatedButton(
-                            child: Text('Submit'),
+                            child: const Text('Submit'),
                             onPressed: () {
                               createPost(addController.text);
                               _refreshData();
@@ -186,11 +202,6 @@ class _BuzzPostsState extends State<MyHomePage> {
   }
 
   /* buildPosts function
-   *
-   * 
-   * 
-   * 
-   * 
    */
   Widget _buildPosts(List<BuzzPost> postData) {
     // we use listview.builder since we don't know how many items we'll have
@@ -202,8 +213,7 @@ class _BuzzPostsState extends State<MyHomePage> {
       itemCount: postData.length,
       // will be called once per post - this is what actually creates the list items
       itemBuilder: (context, i) {
-        _posts.add(postData[i].mMessage);
-
+        _posts.add(postData[i].mContent);
         return _buildRow(postData[i]);
       },
       // how many items it should expect to build
@@ -211,163 +221,199 @@ class _BuzzPostsState extends State<MyHomePage> {
   }
 
   /* buildRow function
-   *
-   * 
-   * 
-   * 
-   * 
    */
 
   // v NOTE: STRING PLACEHOLDER
   Widget _buildRow(BuzzPost post) {
-    bool alreadyLiked = _liked.contains(post.mId);
-    bool alreadyDisliked = _disliked.contains(post.mId);
-    final editController = TextEditingController(text: post.mMessage);
+    bool alreadyLiked = _liked.contains(post.mMsgId);
+    bool alreadyDisliked = _disliked.contains(post.mMsgId);
+    final editController = TextEditingController(text: post.mContent);
+    int _likes = post.mNumLikes;
+    //final isFlagged = isFlaggedMsg(post.mMsgId) as bool;
+    bool isFlagged = _isFlagged;
 
-    return ListTile(
-      title: Text(post.mMessage),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return ExpansionTile(
+        title: Text(post.mContent),
+        leading: TextButton(
+          child: Text(post.mUserID),
+          onPressed: () {
+            Constants.currentUser = post.mUserID;
+            Navigator.pushReplacementNamed(context, '/user');
+          },
+        ),
+
+        // leading: Text(post.mUserID),
+        // trailing: Icon(Icons.more_vert),
+        // onTap: () {
+        //   setState(() {
+        //     return ListTile(title: "testing")
+        //   });
+        // },
+        //leading: Text(post.mNumLikes.toString()),
         children: [
-          IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                          scrollable: true,
-                          title: Text('Edit Post'),
-                          content: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Form(
-                              child: Column(
-                                children: <Widget>[
-                                  TextFormField(
-                                    controller: editController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Message',
-                                    ),
+          Row(
+            children: [
+              // edit button
+              IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              scrollable: true,
+                              title: const Text('Edit Post'),
+                              content: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Form(
+                                  child: Column(
+                                    children: <Widget>[
+                                      TextFormField(
+                                        controller: editController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Message',
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                          actions: [
-                            ElevatedButton(
-                                child: Text('Cancel'),
-                                onPressed: () => Navigator.pop(context)),
-                            ElevatedButton(
-                                child: Text('Submit'),
-                                onPressed: () {
-                                  editPost(
-                                      editController.text, post.mId.toString());
-                                  _refreshData();
-                                  Navigator.pop(context);
-                                })
-                          ]);
-                    });
-              }),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () => showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => AlertDialog(
-                title: const Text('Warning'),
-                content: const Text(
-                    'Are you sure you would like to delete the message?'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, 'No'),
-                    child: const Text('No'),
+                              actions: [
+                                ElevatedButton(
+                                    child: const Text('Cancel'),
+                                    onPressed: () => Navigator.pop(context)),
+                                ElevatedButton(
+                                    child: const Text('Submit'),
+                                    onPressed: () {
+                                      editPost(
+                                          editController.text, post.mMsgId);
+                                      _refreshData();
+                                      Navigator.pop(context);
+                                    })
+                              ]);
+                        });
+                  }),
+              // delete button
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text('Warning'),
+                    content: const Text(
+                        'Are you sure you would like to delete the message?'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, 'No'),
+                        child: const Text('No'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          deletePost(post.mMsgId);
+                          _refreshData();
+                          Navigator.pop(context, 'Yes');
+                        },
+                        child: const Text('Yes'),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () {
-                      deletePost(post.mId.toString());
-                      _refreshData();
-                      Navigator.pop(context, 'Yes');
-                    },
-                    child: const Text('Yes'),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          IconButton(
-              icon: Icon(Icons.add_box),
-              onPressed: () {
-                // setMessageID(post.mId);
-                Navigator.pushReplacementNamed(context, '/comments');
-              }),
-          IconButton(
-              icon: Icon(Icons.add_a_photo_rounded),
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/camera');
-              }),
-          IconButton(
-            icon: Icon(
-              Icons.arrow_circle_up,
-              color: alreadyLiked ? Colors.green : Colors.black,
-            ),
-            onPressed: () {
-              setState(() {
-                alreadyLiked = _liked.contains(post.mId);
-                alreadyDisliked = _disliked.contains(post.mId);
-              });
-              if (alreadyLiked) {
-                _liked.remove(post.mId);
-                decrementLikes(post.mId.toString());
-                post.mLikes--;
-              } else {
-                if (alreadyDisliked) {
-                  _liked.add(post.mId);
-                  _disliked.remove(post.mId);
-                  incrementLikes(post.mId.toString());
-                  incrementLikes(post.mId.toString());
-                  post.mLikes = post.mLikes + 2;
-                } else {
-                  _liked.add(post.mId);
-                  incrementLikes(post.mId.toString());
-                  post.mLikes++;
-                }
-              }
-            },
-          ),
-          Text(post.mLikes.toString()),
-          IconButton(
-              icon: Icon(Icons.arrow_circle_down,
-                  color: alreadyDisliked ? Colors.red : Colors.black),
-              onPressed: () {
-                setState(() {
-                  alreadyLiked = _liked.contains(post.mId);
-                  alreadyDisliked = _disliked.contains(post.mId);
-                });
-                if (alreadyDisliked) {
-                  _disliked.remove(post.mId);
-                  incrementLikes(post.mId.toString());
-                  post.mLikes++;
-                } else {
+              // comments button
+              IconButton(
+                  icon: const Icon(Icons.chat_bubble),
+                  onPressed: () {
+                    Constants.currentMsg = post.mMsgId;
+                    Navigator.pushReplacementNamed(context, '/comments');
+                  }),
+              // camera button
+              IconButton(
+                  icon: const Icon(Icons.add_a_photo_rounded),
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/camera');
+                  }),
+              // like button
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_circle_up,
+                  color: alreadyLiked ? Colors.green : Colors.black,
+                ),
+                onPressed: () {
+                  setState(() {
+                    alreadyLiked = _liked.contains(post.mMsgId);
+                    alreadyDisliked = _disliked.contains(post.mMsgId);
+                  });
                   if (alreadyLiked) {
-                    _disliked.add(post.mId);
-                    _liked.remove(post.mId);
-                    decrementLikes(post.mId.toString());
-                    decrementLikes(post.mId.toString());
-                    post.mLikes = post.mLikes - 2;
+                    _liked.remove(post.mMsgId);
+                    decrementLikes(post.mMsgId.toString());
+                    post.mNumLikes--;
                   } else {
-                    _disliked.add(post.mId);
-                    decrementLikes(post.mId.toString());
-                    post.mLikes--;
+                    if (alreadyDisliked) {
+                      _liked.add(post.mMsgId);
+                      _disliked.remove(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes = post.mNumLikes + 2;
+                    } else {
+                      _liked.add(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes++;
+                    }
                   }
-                }
-              }),
-        ],
-      ),
-      //more stuff
-    );
+                },
+              ),
+              // like count
+              Text(
+                '$_likes',
+              ),
+              // dislike button
+              IconButton(
+                  icon: Icon(Icons.arrow_circle_down,
+                      color: alreadyDisliked ? Colors.red : Colors.black),
+                  onPressed: () {
+                    setState(() {
+                      alreadyLiked = _liked.contains(post.mMsgId);
+                      alreadyDisliked = _disliked.contains(post.mMsgId);
+                    });
+                    if (alreadyDisliked) {
+                      _disliked.remove(post.mMsgId);
+                      incrementLikes(post.mMsgId.toString());
+                      post.mNumLikes++;
+                    } else {
+                      if (alreadyLiked) {
+                        _disliked.add(post.mMsgId);
+                        _liked.remove(post.mMsgId);
+                        decrementLikes(post.mMsgId.toString());
+                        decrementLikes(post.mMsgId.toString());
+                        post.mNumLikes = post.mNumLikes - 2;
+                      } else {
+                        _disliked.add(post.mMsgId);
+                        decrementLikes(post.mMsgId.toString());
+                        post.mNumLikes--;
+                      }
+                    }
+                  }),
+              //flag content button
+              IconButton(
+                  icon: Icon(post.isFlagged ? Icons.flag : Icons.flag_outlined),
+                  onPressed: () {
+                    // send POST request to backend to flag this message
+                    setState(() {
+                      post.isFlagged = !post.isFlagged;
+                    });
+                    flagMsg(post.mMsgId);
+                    //flagMsg(post.mMsgId);
+                  }),
+            ],
+          ),
+          Text(post.ad),
+        ]
+        //more stuff
+        );
   }
 
   Future _refreshData() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     jsonPosts = DataModel.model.fetchBuzzList();
     setState(() {});
   }

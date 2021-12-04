@@ -636,7 +636,11 @@ public class App {
         });
 
         Spark.get("users/:id/block", (request, response) -> {
+<<<<<<< HEAD
             String user_idx = request.params("id");
+=======
+            int user_idx = Integer.parseInt(request.params("id"));
+>>>>>>> android
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
             response.status(200);
@@ -653,7 +657,11 @@ public class App {
             if(dataBase.selectBlockedUser(req.mEmail) == null){
                 return gson.toJson(new StructuredResponse("ok", null, null));
             } else { //If the user is already blocked unblock them.
+<<<<<<< HEAD
                 return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(user_idx)));
+=======
+                return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(req.mEmail)));
+>>>>>>> android
             }
         });
 
