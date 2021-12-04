@@ -30,8 +30,6 @@ import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
@@ -58,8 +56,6 @@ import net.rubyeye.xmemcached.utils.AddrUtil;
 
 import java.lang.InterruptedException;
 import java.net.InetSocketAddress;
-import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -67,25 +63,11 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 
 import org.apache.commons.io.FileUtils;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
 /**
  * For now, our app creates an HTTP server that can only get and add data.
  */
@@ -654,7 +636,7 @@ public class App {
         });
 
         Spark.get("users/:id/block", (request, response) -> {
-            int user_idx = Integer.parseInt(request.params("id"));
+            String user_idx = request.params("id");
             SimpleRequest req = gson.fromJson(request.body(), SimpleRequest.class);
 
             response.status(200);
@@ -671,7 +653,7 @@ public class App {
             if(dataBase.selectBlockedUser(req.mEmail) == null){
                 return gson.toJson(new StructuredResponse("ok", null, null));
             } else { //If the user is already blocked unblock them.
-                return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(req.mEmail)));
+                return gson.toJson(new StructuredResponse("ok", null, dataBase.selectBlockedUser(user_idx)));
             }
         });
 
@@ -874,7 +856,7 @@ public class App {
         // TO DO: make sure selectOne works for comments (admin)
         // TO DO: need a way to get the email of user who posted a comment (maybe an update to selectOne) ?
         // TO DO: make sure updateContentCommentsTable works (should take in comment id instead of user id) (admin)
-        Spark.put("/messages/:id/comments/comment_id", (request, response) -> {
+        Spark.put("/messages/:id/comments/:comment_id", (request, response) -> {
             // get all info from request
             int msg_idx = Integer.parseInt(request.params("id")); // 500 error if fails
             int comment_idx = Integer.parseInt(request.params("comment_id")); // 500 error if fails
@@ -883,16 +865,16 @@ public class App {
             response.status(200);
             response.type("application/json"); 
 
-            if ( !authenticate(req.mEmail, req.mSessionKey)) { // error if session key not found (not logged in)
+            if(!authenticate(req.mEmail, req.mSessionKey)){ // error if session key not found (not logged in)
                 return gson.toJson(new StructuredResponse("error", "invalid session key/user combination", null));
             }
 
             // // make sure comment exists
-            if ( dataBase.selectComment(comment_idx) == null ) {
+            if(dataBase.selectComment(comment_idx) == null ){
                 return gson.toJson(new StructuredResponse("error", "comment " + comment_idx + " not found", null));
             }
             // make sure current user matches the one who created the comment
-            if (dataBase.selectComment(comment_idx).mUserID != req.mEmail) {
+            if(dataBase.selectComment(comment_idx).mUserID != req.mEmail){
                 return gson.toJson(new StructuredResponse("error", "user mismatch, comment id  " + comment_idx, null));
             }
 
