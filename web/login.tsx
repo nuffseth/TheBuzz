@@ -1,13 +1,13 @@
 import * as React from "react";
 import GoogleLogin from "react-google-login";
-import * as ReactDOM from "react-dom";
+import * as ReactDOM from "react-dom"
 
 export class Login extends React.Component {
 
     responseGoogle = (response: any) => {
         // console.log(response);
-        // console.log(response.profileObj);
-        const email = response.profileObj.email;
+        console.log(response.profileObj);
+        window.email = response.profileObj.email;
         //response.getAuthResponse().id_token)
         $.ajax({
             type: "POST",
@@ -19,10 +19,11 @@ export class Login extends React.Component {
                 //console.log(response);
                 //TODO: Figure out how to get session key.
                 console.log(result.mData);
+                window.token = result.mData as string;
             }
         });
       }
-
+ 
     render(){
         return (
             <div>
