@@ -84,6 +84,7 @@ public class Database {
     private PreparedStatement psSelectAllMessagesWithFlags;
     private PreparedStatement psUpdateMessage;
     private PreparedStatement psDeleteMessage;
+    private PreparedStatement psDeleteMessageFlag;
 
     // LIKE PREPARED STATEMENTS
     private PreparedStatement psInsertLike;
@@ -99,6 +100,7 @@ public class Database {
     private PreparedStatement psGetCmtFileData;
     private PreparedStatement psUpdateComment;
     private PreparedStatement psDeleteComment;
+    private PreparedStatement psDeleteCommentFlag;
 
     // FILE PREPARED STATEMENTS
     private PreparedStatement psInsertMessageFile;
@@ -127,6 +129,7 @@ public class Database {
     // BLOCK USER PREPARED STATEMENT
     private PreparedStatement psBlockUser;
     private PreparedStatement psSelectAllBlockedUsers;
+    private PreparedStatement psDeleteBlockedUser;
 
     /** DEPRECATED PREPARED STATEMENTS
     private PreparedStatement mCommentTableUpdateContent;
