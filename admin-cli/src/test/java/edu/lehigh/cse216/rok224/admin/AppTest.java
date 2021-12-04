@@ -12,6 +12,13 @@ import java.util.Map;
 /**
  * Unit test for simple App.
  */
+
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.docs.v1.model.SuggestedTableCellStyle;
+import com.google.api.services.drive.Drive;
 public class AppTest extends TestCase {
     /**
      * Create the test case
@@ -67,4 +74,70 @@ public class AppTest extends TestCase {
         assert(Database.validFileID(validID) == true);
         assert(Database.validFileID(invalidID) == false);
     }
+    
+    // focus on errors
+    // test if msg id is valid when trying to add a flag
+    // invalid id (-1) should return null
+    public void testInsertMessageFlag() {
+        int invalidMsgID = -1;
+        //assert(Database.psCheckMsgIDFlag(invalidMsgID) == null);
+    }
+
+    // insert 2 messages, one with flag
+    // assert that selectMessageFlag for flagged message is not null, the other is null
+    public void testSelectMessageFlag() {
+        String msg1 = "test msg 1";
+        String msg2 = "test msg 2";
+        String user1 = "testUser1";
+        String user2 = "testUser2";
+        int msgid1 = 10;
+        int msgid2 = 11;
+
+        // //Connect to Database
+        // // JUnit Setup
+        // Map<String, String> env = System.getenv();
+        // String db_url = env.get("DATABASE_URL");
+        // JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+        // Drive service = null;
+        // try {
+        //     NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        //     service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials())
+        //             .setApplicationName(APPLICATION_NAME)
+        //             .build();
+
+            
+        // } catch (Exception e) {
+        //     System.out.println("Unable to connect to Google Drive, file uploads/downloads won't work");
+        //     e.printStackTrace();
+        // }
+
+
+        //Database db = Database.getDatabase(db_url, service);
+
+        // db.insertMessage(user1, msg1, 0, 0);
+        // db.insertMessage(user2, msg2, 0, 0);
+        
+        // db.insertMessageFlag(user1, msgid1);
+
+        // //assert msg1 is flagged, msg2 is not
+        // assert(db.selectMessageFlag(user1, msgid1) != null);
+        // assert(db.selectMessageFlag(user2, msgid2) == null);
+        
+    }
+
+    // create a user then block them
+    // assert that selectBlockedUser is not null when checking that user, meaning they were successfully blocked
+    public void testAddBlockedUser() {
+        
+        String user = "user1";
+        String bio = "bio1";
+        String blocker  = "blocker";
+
+        // Database.insertUser(user, bio);
+        // Database.insertUser(blocker, bio);
+        // Database.addBlockedUser(user, blocker);
+        // assert(Database.selectBlockedUser(user) != null);
+    }
+
+
 }
