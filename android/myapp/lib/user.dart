@@ -25,7 +25,7 @@ class _UserScreenState extends State<UserScreen> {
   void initState() {
     super.initState();
     // get the user
-    user = DataModel.model.fetchUser(Constants.currentUser);
+    user = DataModel.model.fetchUser(Constants.currentUser, http.Client());
   }
 
   @override

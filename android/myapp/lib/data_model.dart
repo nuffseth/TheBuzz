@@ -67,10 +67,10 @@ class DataModel {
     }
   }
 
-  Future<BuzzUser> fetchUser(String userID) async {
+  Future<BuzzUser> fetchUser(String userID, http.Client client) async {
     // parses the json found on the heroku link
     final response =
-        await http.get(Uri.parse(Constants.url + '/users/' + userID));
+        await client.get(Uri.parse(Constants.url + '/users/' + userID));
 
     // BuzzUser user;
     // 200 response = we chillin
